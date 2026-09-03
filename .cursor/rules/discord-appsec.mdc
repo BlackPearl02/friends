@@ -1,0 +1,29 @@
+---
+description: Friends Discord AppSec — OAuth, Activity exchange, instance rooms
+globs: apps/api/src/discord/**/*,apps/activity/**/*
+alwaysApply: false
+---
+
+# Friends — Discord / Activity AppSec
+
+## MUST
+
+- OAuth Activity exchange: **exact** redirect allowlist (or documented candidate list), one-time code, rate limit.
+- Identity only from server-side Discord API after exchange — **MUST NOT** trust userId/guildId/instanceId from the Activity client as authz.
+- Room join: authenticated user + server-stored `discordInstanceId`. Client participant lists are UX, not authorization.
+- Bot/application permissions: minimum required; do not widen scopes without approval.
+
+## MUST NOT
+
+- Log Discord access tokens or authorization codes.
+- Process a second exchange of the same code as success.
+- Treat Discord email as an account-merge proof (Friends is Discord-id native).
+
+## SHOULD
+
+- Replay-ish protection: short JWT expiry; throttle `activity/exchange`.
+- Separate CSP for the Activity iframe (do not copy a random www CSP).
+
+## Related
+
+[docs/security/threat-model.md](../../docs/security/threat-model.md). Skill: `friends-security`.

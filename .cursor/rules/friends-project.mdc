@@ -1,0 +1,49 @@
+---
+description: Friends — product, monorepo, stack, and agent conventions
+alwaysApply: true
+---
+
+# Friends — project context
+
+## Product
+
+**Friends** is a Discord Activity party game inspired by Kumple (Buddies): questions, challenges, and “who is most likely” among people already in a Discord channel. No join code — the Activity `instanceId` is the room.
+
+Canonical product notes: [docs/product.md](../../docs/product.md). Setup: [docs/discord-activity-setup.md](../../docs/discord-activity-setup.md).
+
+**Do not** copy Kumple’s question bank, assets, or brand. **Do not** pull in PlayGrid library / sessions / store OAuth.
+
+## i18n (en + pl)
+
+Every new or changed user-facing string ships in **English and Polish**. No hardcoded UI copy in JSX. Details: [friends-i18n.mdc](./friends-i18n.mdc).
+
+## Monorepo
+
+- **pnpm** 9+ (`apps/*`, `packages/*`)
+- **Turborepo** (`pnpm dev`, `pnpm build`, `pnpm test`)
+
+| Package | Path | Role |
+|---------|------|------|
+| `@friends/api` | `apps/api` | NestJS REST + JWT after Activity exchange — **:3000** |
+| `@friends/activity` | `apps/activity` | Discord Embedded App (Vite + React) — **:3003** |
+| `@friends/db` | `packages/db` | Prisma / PostgreSQL |
+| `@friends/types` | `packages/types` | Shared DTOs |
+
+## Env
+
+Root **`.env.development`** (or `.env`) via `scripts/with-friends-env.mjs`. Required: `DATABASE_URL`, `JWT_SECRET`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`. Local Postgres: `pnpm db:up` (host **15433**).
+
+## Agent conventions
+
+- New API: Nest module + DTO + `userId` / membership authz. Identity from server-side Discord exchange only.
+- Schema changes: `packages/db/prisma/schema.prisma` + migration (`pnpm db:migrate`).
+- Commits: skill `friends-git-staging` — no `git add -A` without a plan; no push unless asked.
+- Tests: `testing.mdc` in the same PR as business logic.
+
+## Docs vs Cursor
+
+| Where | What |
+|-------|------|
+| `docs/` | Product, Discord ops, AppSec, testing |
+| `.cursor/rules/` | Short MUST/MUST NOT (this file + testing + security always on) |
+| `.cursor/skills/` | Multi-step workflows |

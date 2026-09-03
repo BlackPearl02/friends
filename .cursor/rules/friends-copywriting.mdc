@@ -1,0 +1,22 @@
+---
+description: Human party-game copy — not SaaS marketing
+globs: apps/activity/**/*
+alwaysApply: false
+---
+
+# Friends — copywriting
+
+Skill: [friends-copywriting](../skills/friends-copywriting/SKILL.md). Locale: [friends-i18n.mdc](./friends-i18n.mdc).
+
+Voice: **party host**, short, concrete. Not a growth landing page.
+
+## MUST
+
+- Sentence 1 answers. CTAs are verb + object (`Start the round`, `Vote`).
+- Facts from [docs/product.md](../../docs/product.md) — do not invent packs or monetization.
+- Ship en + pl together.
+
+## MUST NOT
+
+- “Unlock your journey”, “seamless experience”, Kumple brand claims.
+- Copy Kumple’s proprietary prompt wording.

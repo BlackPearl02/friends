@@ -1,0 +1,34 @@
+---
+description: Unit, integration, and Activity helper tests — required with new logic
+alwaysApply: true
+---
+
+# Friends — tests (agent)
+
+Strategy: [docs/testing-strategy.md](../../docs/testing-strategy.md). Skill: `.cursor/skills/friends-testing/SKILL.md`.
+
+## Rule
+
+**Business logic, security, or HTTP/UI contract changes ship a test in the same PR** unless the user explicitly skips tests.
+
+## 10-second table
+
+| Path | Action |
+|------|--------|
+| `apps/api/src/**` service / util | colocated `*.spec.ts` (Vitest) |
+| `apps/api` new endpoint / guard | supertest + TestingModule |
+| `apps/activity/src/**` helpers | colocated `*.test.ts` |
+| `packages/types` new DTO fields | update API/activity fixtures |
+| DTO-only, layout, generated | skip — note why |
+
+## Conventions
+
+- Test names in **English**. One `it` = one behavior.
+- **Zero** JWT / Discord tokens / OAuth `code` in assertions.
+- After adding tests, run the narrowest script (`pnpm --filter @friends/api test`).
+
+## Checklist
+
+1. Did the diff need a test per the table?
+2. Did you run it (or document why the runner could not)?
+3. Summary includes a **Test plan**.

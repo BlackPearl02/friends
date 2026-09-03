@@ -1,0 +1,26 @@
+---
+description: Friends DB AppSec — Prisma authz, overfetch, migrations
+globs: packages/db/**/*,**/schema.prisma,apps/api/src/prisma/**/*
+alwaysApply: false
+---
+
+# Friends — database AppSec
+
+Prisma skill: [friends-prisma-db](../skills/friends-prisma-db/SKILL.md).
+
+## MUST
+
+- Authz **before** row access — DB does not replace API authorization.
+- Prefer parameterized Prisma; raw SQL only with bound params.
+- Explicit `select` when a model could grow secrets later.
+- No destructive prod migrations without approval.
+
+## MUST NOT
+
+- Return whole graphs with `include` without a leakage review (votes before reveal).
+- Commit `DATABASE_URL` with passwords.
+
+## SHOULD
+
+- Unique `(roundId, voterId)` on Vote; unique `(roomId, userId)` on RoomPlayer.
+- Unique `discordInstanceId` on GameRoom.

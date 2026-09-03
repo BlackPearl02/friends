@@ -1,0 +1,19 @@
+---
+description: Code docs explain WHY, ownership, and constraints — not narration
+globs: apps/api/**,apps/activity/src/**,packages/**
+alwaysApply: false
+---
+
+# Code documentation
+
+Applies when editing **code** under the globs (not product copy in i18n catalogs alone).
+
+**If a competent developer can understand it from the code, do not document it. Document WHY, invariants, security, and Discord constraints.**
+
+- Code explains WHAT; comments explain WHY.
+- English only in the engineering codebase (comments, JSDoc, module READMEs, TODOs).
+- User-facing content: en + pl via [friends-i18n.mdc](./friends-i18n.mdc).
+- Do not duplicate Prisma / DTO / i18n as a second source of truth.
+- Update or delete stale comments in the same change.
+
+Module README = architecture map, not a file inventory. Known: `apps/api/README.md`, `apps/activity/README.md`, `packages/db/README.md`.

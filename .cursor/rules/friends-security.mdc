@@ -1,0 +1,29 @@
+---
+description: Friends AppSec baseline — authz, secrets, no security theater
+alwaysApply: true
+---
+
+# Friends — security baseline
+
+Priority: **SECURITY > confidentiality > authorization > integrity > availability > convenience**.
+
+Workflow: skill [friends-security](../skills/friends-security/SKILL.md). Hub: [docs/security/](../../docs/security/README.md).
+
+## MUST
+
+- Server-side **authn + authz** (room membership / host). JWT ≠ right to another room’s votes.
+- Validate all external input; minimize response DTO / Prisma `select`.
+- HIGH/CRITICAL fix → regression in the same PR when possible.
+- Stop + user confirmation before: prod DB, secret rotation, destructive migration, auth architecture change.
+
+## MUST NOT
+
+- Assume “we have a guard/DTO/rate limit → safe”.
+- Log or return: JWT, Discord access/refresh tokens, OAuth `code`, `Authorization`.
+- Trust the Activity client or Discord payload without server verification.
+- Ask for **values** of secrets (names only).
+- Attack production or invent security theater.
+
+## Scope
+
+`apps/api`, `apps/activity`, `packages/db`, `packages/types`.

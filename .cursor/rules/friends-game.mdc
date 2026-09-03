@@ -1,0 +1,22 @@
+---
+description: Party-game rules — categories, round kinds, Discord lobby
+globs: apps/api/src/game/**/*,apps/activity/src/**,packages/db/prisma/**
+alwaysApply: false
+---
+
+# Friends — game design
+
+Product: [docs/product.md](../../docs/product.md). Skill: [friends-game-design](../skills/friends-game-design/SKILL.md).
+
+## MUST
+
+- Room key = Discord Activity `instanceId` (unique). Host = first joiner unless transferred later.
+- Categories: `party` | `family` | `colleagues` | `spicy` only (until product says otherwise).
+- Round kinds: `most_likely` | `this_or_that` | `truth` | `challenge`.
+- Do not reveal `most_likely` / `truth` answers until the round status is `reveal` or `done`.
+- Original prompts only — never paste Kumple’s question bank.
+
+## SHOULD
+
+- One vote per player per round (DB unique).
+- Skip is always allowed on `challenge` / `truth` (no shame UX).

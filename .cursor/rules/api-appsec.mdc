@@ -1,0 +1,29 @@
+---
+description: Friends API AppSec — IDOR/BOLA, @Public, output DTO, rate limit
+globs: apps/api/**/*
+alwaysApply: false
+---
+
+# Friends — API AppSec
+
+Skill: [friends-security](../skills/friends-security/SKILL.md). Nest: [friends-api-nest](../skills/friends-api-nest/SKILL.md).
+
+## MUST
+
+- For every resource: **Authenticated + Authorized + in the room (or host) + validated input + minimized output**.
+- Every `:id` / UUID → “Can user A read/write user B’s vote or another instance’s room?” Authz **server-side**.
+- `@Public()` only with a product reason; `activity/exchange` is public and still abuse-sensitive.
+- Response DTO / `select` — **MUST NOT** return Discord tokens, JWT, or other players’ private answers except on reveal.
+- Prod errors: no stack / Prisma / SQL / secret names.
+
+## MUST NOT
+
+- Trust hidden UI or TypeScript types.
+- `Access-Control-Allow-Origin: *` with credentials.
+- Mass-assign body → Prisma `update`.
+
+## SHOULD
+
+- Rate limit exchange, join, vote.
+- Unique constraints + transactions on vote (one per round per voter).
+- IDOR regression test when authz changes.

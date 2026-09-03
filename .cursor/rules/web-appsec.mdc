@@ -1,0 +1,24 @@
+---
+description: Friends Activity frontend AppSec — XSS, untrusted client, Discord proxy
+globs: apps/activity/**/*
+alwaysApply: false
+---
+
+# Friends — Activity frontend AppSec
+
+## MUST
+
+- Treat all browser / SDK input as **attacker-controlled**.
+- Avoid `dangerouslySetInnerHTML`; sanitize user answers if ever rendered as HTML.
+- Secrets only on the server. `VITE_*` is public.
+- Identity and scores from API after JWT — not from patched participant payloads alone.
+
+## MUST NOT
+
+- Put the Friends JWT in a durable store without XSS review (memory is the default).
+- Redirect to an arbitrary URL from query params.
+
+## SHOULD
+
+- CSP compatible with Discord embed + SDK.
+- No PII in analytics beyond the agreed privacy scope.

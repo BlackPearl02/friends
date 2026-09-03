@@ -1,0 +1,19 @@
+---
+description: i18n — en + pl, no hardcoded UI copy
+globs: apps/activity/**/*
+alwaysApply: false
+---
+
+# Friends — i18n (en + pl)
+
+Every new or edited user-visible string goes through i18n in **both** `en` (default) and `pl`.
+
+| What | Where |
+|------|--------|
+| Catalogs | `apps/activity/src/i18n/messages/en.ts` and `pl.ts` |
+| Runtime | `t("dot.path")` from `apps/activity/src/i18n/index.ts` |
+| Locale | Discord `?locale=` first, else `navigator.language`; `pl` / `pl-*` → Polish |
+
+Same key paths and `{placeholders}` in both files. Native Polish rhythm — not a literal EN calque.
+
+Prompts in the database have their own `locale` column; UI chrome still uses the catalogs above.

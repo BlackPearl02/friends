@@ -1,0 +1,25 @@
+---
+description: Friends auth AppSec — JWT after Discord Activity exchange
+globs: apps/api/src/auth/**/*,apps/api/src/discord/**/*
+alwaysApply: false
+---
+
+# Friends — auth & session AppSec
+
+## MUST
+
+- JWT: pinned algorithm, strong `JWT_SECRET`, explicit expiry.
+- Subject = Friends `User.id` (UUID), not Discord snowflake as the only server key (keep `discordId` unique on User).
+- Activity exchange: Discord code → token → `/users/@me` → upsert user → mint JWT.
+
+## MUST NOT
+
+- Store Discord access tokens in the client beyond SDK `authenticate`.
+- Persist Discord access tokens in Postgres unless encrypted with a documented key (MVP: do not persist).
+- Log OAuth codes or JWTs.
+- Change auth model (e.g. cookie vs Bearer) without STOP + approval.
+
+## SHOULD
+
+- Rate limit exchange.
+- Tests: unknown code → 401; membership required for vote.

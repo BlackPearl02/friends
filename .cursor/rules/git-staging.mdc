@@ -1,0 +1,25 @@
+---
+description: Git commit staging — atomic conventional commits
+globs: commit-areas.json,scripts/**,drafts/git-commit-plan.json
+alwaysApply: false
+---
+
+# Friends — git staging
+
+**Workflow:** [friends-git-staging skill](../skills/friends-git-staging/SKILL.md).
+
+## Agent obligations
+
+1. On commit / clean-tree requests: read **friends-git-staging** first.
+2. Group by [commit-areas.json](../../commit-areas.json). Never `git add -A` without a reviewed plan.
+3. **Do not** `git push` unless the user explicitly asks in this session.
+
+## Message style
+
+**Subject:** `type(scope): summary` — English, imperative (`feat(activity):`, `fix(auth):`).
+
+**Body:** 3–6 sentences from `git diff` — prose, not a bullet dump.
+
+## Never commit
+
+`.env*`, credentials, `dist/`, `node_modules/`.
