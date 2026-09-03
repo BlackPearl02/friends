@@ -15,7 +15,7 @@
     "test": "echo \"no db unit tests\""
   },
   "dependencies": {
-    "@prisma/client": "^6.3.0"
+    "@prisma/client": "^7.10.0"
   },
   "devDependencies": {
     "@types/node": "catalog:",
