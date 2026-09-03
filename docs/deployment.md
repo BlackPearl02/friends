@@ -3,6 +3,8 @@
 **Stack:** Vercel (Activity + API) + Supabase (PostgreSQL).  
 **Dev stack:** Vite :3003 + Nest :3000 + Docker Postgres :15433.
 
+This repository is public. Treat git as source-only: no real secrets in commits, issues, or CI logs. `DISCORD_CLIENT_ID` / `VITE_DISCORD_CLIENT_ID` may appear in the Activity bundle; `DISCORD_CLIENT_SECRET`, `JWT_SECRET`, and database URLs must live only in Vercel, Supabase, and gitignored `.env.development` / `.env.production`. If a secret leaks, rotate it before the next deploy.
+
 ---
 
 ## 1. Supabase — hosted database (once)
