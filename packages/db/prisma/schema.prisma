@@ -1,0 +1,129 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum PromptKind {
+  most_likely
+  this_or_that
+  truth
+  challenge
+}
+
+enum PromptCategory {
+  party
+  family
+  colleagues
+  spicy
+}
+
+enum RoomStatus {
+  lobby
+  playing
+  finished
+}
+
+enum RoundStatus {
+  voting
+  reveal
+  done
+}
+
+model User {
+  id          String   @id @default(uuid())
+  discordId   String   @unique
+  displayName String
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  hostedRooms GameRoom[]    @relation("RoomHost")
+  players     RoomPlayer[]
+  votes       Vote[]
+}
+
+model GameRoom {
+  id                 String         @id @default(uuid())
+  discordInstanceId  String         @unique
+  discordChannelId   String?
+  discordGuildId     String?
+  hostUserId         String
+  host               User           @relation("RoomHost", fields: [hostUserId], references: [id])
+  status             RoomStatus     @default(lobby)
+  category           PromptCategory?
+  locale             String         @default("en")
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  players RoomPlayer[]
+  rounds  Round[]
+
+  @@index([hostUserId])
+}
+
+model RoomPlayer {
+  id        String   @id @default(uuid())
+  roomId    String
+  room      GameRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  score     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([roomId, userId])
+  @@index([userId])
+}
+
+model Prompt {
+  id        String         @id @default(uuid())
+  kind      PromptKind
+  category  PromptCategory
+  locale    String
+  body      String
+  optionA   String?
+  optionB   String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  rounds    Round[]
+
+  @@index([category, locale, kind])
+}
+
+model Round {
+  id        String      @id @default(uuid())
+  roomId    String
+  room      GameRoom    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  promptId  String
+  prompt    Prompt      @relation(fields: [promptId], references: [id])
+  index     Int
+  status    RoundStatus @default(voting)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  votes     Vote[]
+
+  @@unique([roomId, index])
+  @@index([promptId])
+}
+
+model Vote {
+  id           String   @id @default(uuid())
+  roundId      String
+  round        Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  voterId      String
+  voter        User     @relation(fields: [voterId], references: [id])
+  targetUserId String?
+  choice       String?
+  text         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([roundId, voterId])
+  @@index([voterId])
+}

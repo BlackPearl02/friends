@@ -1,0 +1,30 @@
+{
+  "name": "@friends/db",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "prisma generate && tsc",
+    "generate": "prisma generate",
+    "db:push": "node ../../scripts/with-friends-env.mjs -- prisma db push",
+    "db:migrate": "node ../../scripts/with-friends-env.mjs -- prisma migrate deploy",
+    "db:seed": "node ../../scripts/with-friends-env.mjs -- tsx prisma/seed.ts",
+    "dev": "echo \"db package has no dev server\"",
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "test": "echo \"no db unit tests\""
+  },
+  "dependencies": {
+    "@prisma/client": "^6.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "dotenv": "catalog:",
+    "prisma": "^6.3.0",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  }
+}
