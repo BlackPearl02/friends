@@ -1,0 +1,35 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "DATABASE_URL",
+    "DIRECT_URL",
+    "JWT_SECRET",
+    "DISCORD_CLIENT_ID",
+    "DISCORD_CLIENT_SECRET",
+    "DISCORD_ACTIVITY_REDIRECT_URI",
+    "API_PUBLIC_URL",
+    "ACTIVITY_ORIGIN",
+    "VITE_DISCORD_CLIENT_ID",
+    "VITE_FRIENDS_API_URL"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "dependsOn": ["^build"]
+    },
+    "generate": {
+      "cache": false
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "buckets": [
+    "apps/api",
+    "apps/activity",
+    "packages/db",
+    "packages/types",
+    "cursor",
+    "docs",
+    "root"
+  ],
+  "rules": [
+    { "prefix": "apps/api/", "bucket": "apps/api", "scope": "api", "label": "API" },
+    { "prefix": "apps/activity/", "bucket": "apps/activity", "scope": "activity", "label": "Discord Activity" },
+    { "prefix": "packages/db/", "bucket": "packages/db", "scope": "db", "label": "Prisma" },
+    { "prefix": "packages/types/", "bucket": "packages/types", "scope": "types", "label": "Shared types" },
+    { "prefix": ".cursor/", "bucket": "cursor", "scope": "cursor", "label": "Cursor rules/skills" },
+    { "prefix": "docs/", "bucket": "docs", "scope": "docs", "label": "Docs" }
+  ]
+}

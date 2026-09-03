@@ -1,0 +1,31 @@
+node_modules
+dist
+.next
+.turbo
+*.tsbuildinfo
+*.log
+.swc
+coverage
+.eslintcache
+
+# Secrets — never commit
+.env
+.env.development
+.env.production
+.env*.local
+secrets/
+
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea
+.vercel
+
+# Git commit plan drafts
+drafts/git-commit-plan.json
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
