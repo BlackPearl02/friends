@@ -20,7 +20,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "dotenv": "catalog:",
-    "prisma": "^6.3.0",
+    "prisma": "^7.10.0",
     "tsx": "catalog:",
     "typescript": "catalog:"
   },
