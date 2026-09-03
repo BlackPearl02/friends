@@ -1,0 +1,27 @@
+{
+  "name": "@friends/activity",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node ../../scripts/with-friends-env.mjs -- vite",
+    "build": "tsc --noEmit -p tsconfig.json && node ../../scripts/with-friends-env.mjs -- vite build",
+    "preview": "node ../../scripts/with-friends-env.mjs -- vite preview",
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@discord/embedded-app-sdk": "^2.4.1",
+    "@friends/types": "workspace:*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "catalog:",
+    "vite": "^6.0.7",
+    "vitest": "catalog:"
+  }
+}
