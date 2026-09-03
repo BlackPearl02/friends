@@ -1,0 +1,36 @@
+name: Bug report
+description: Report a functional bug without pasting secrets
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do **not** paste `.env` contents, JWT, Discord client secrets, OAuth codes, or database URLs.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Expected vs actual behavior. Redact tokens.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: Steps that do not require production credentials.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - activity
+        - api
+        - db
+        - discord-setup
+        - docs
+        - other
+    validations:
+      required: true
