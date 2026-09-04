@@ -19,7 +19,7 @@
 - Activity identity is minted only after server-side code exchange + `/users/@me`.
 - Room membership is scoped by authenticated user + server `instanceId` on the room, not client-supplied player lists as authz.
 - Votes are write-once per (round, voter). Host cannot forge another player’s vote.
-- Spicy prompts are a content pack, not a permission bypass.
+- Spicy-toned prompts are content, not a permission bypass.
 
 ## Out of primary scope
 

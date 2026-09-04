@@ -7,7 +7,7 @@
 | Nest module | `apps/api/src/<domain>/` (controller, service, dto, `*.spec.ts`) |
 | Prisma | `packages/db/prisma/schema.prisma` + `migrations/` |
 | Shared DTOs | `packages/types/src/` |
-| Product / Discord ops | `docs/` |
+| Product / Discord ops | `docs/` (incl. `product.md`, `strategy.md`, `roadmap.md`, `metrics.md`) |
 | Agent constraints | `.cursor/rules/` (short) and `.cursor/skills/` (workflows) |
 
 New user-facing strings: **en + pl** in the same change. English only in code comments and module READMEs.

@@ -8,7 +8,7 @@ friends/
   packages/
     db/           Prisma schema, migrations, seed
     types/        Shared request/response types
-  docs/           Product, Discord setup, AppSec, testing
+  docs/           Product, strategy, roadmap, metrics, Discord setup, AppSec, testing
   .cursor/        Rules + skills (PlayGrid-shaped)
   scripts/        with-friends-env.mjs
 ```
