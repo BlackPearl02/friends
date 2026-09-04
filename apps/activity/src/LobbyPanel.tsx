@@ -1,93 +1,85 @@
-import { useMemo, useState } from "react";
-import type { PromptCategory, PublicRoom } from "@friends/types";
+import { useState } from "react";
+import type { PublicRoom, RoomIntent } from "@friends/types";
 import { t } from "./i18n";
-import { btnGhostStyle, btnPrimaryStyle, cardStyle, colors } from "./theme";
-
-const PACKS: PromptCategory[] = ["party", "family", "colleagues", "spicy"];
+import { cardStyle, colors } from "./theme";
 
 export function LobbyPanel(props: {
   room: PublicRoom;
   currentUserId: string;
-  onStart: (category: PromptCategory) => Promise<void>;
+  onIntent: (intent: RoomIntent) => Promise<void>;
+  onInvite: () => Promise<void>;
 }) {
-  const isHost = props.room.hostUserId === props.currentUserId;
-  const [category, setCategory] = useState<PromptCategory>("party");
+  const me = props.room.players.find((p) => p.userId === props.currentUserId);
+  const continueCount = props.room.players.filter((p) => p.intent === "continue").length;
+  const total = props.room.players.length;
+  const iAmContinue = me?.intent === "continue";
   const [busy, setBusy] = useState(false);
-  const packLabel = useMemo(
-    () => ({
-      party: t("lobby.party"),
-      family: t("lobby.family"),
-      colleagues: t("lobby.colleagues"),
-      spicy: t("lobby.spicy"),
-    }),
-    [],
-  );
+  const [inviteHint, setInviteHint] = useState<string | null>(null);
 
   return (
     <section style={cardStyle}>
-      <p style={{ margin: 0, fontSize: "0.75rem", color: colors.muted, letterSpacing: "0.06em" }}>
-        {t("lobby.players").toUpperCase()}
-      </p>
-      <ul style={{ listStyle: "none", padding: 0, margin: "0.65rem 0 0" }}>
+      <p className="kicker">{t("lobby.players")}</p>
+      <ul className="player-list">
         {props.room.players.map((p) => (
-          <li
-            key={p.userId}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: "0.5rem",
-              padding: "0.35rem 0",
-              borderBottom: `1px solid ${colors.border}`,
-            }}
-          >
-            <span>
-              {p.displayName}
-              {p.userId === props.currentUserId ? ` · ${t("lobby.you")}` : ""}
-              {p.isHost ? ` · ${t("lobby.host")}` : ""}
+          <li key={p.userId} className="player-row">
+            <span className="player-row-main">
+              {p.avatarUrl ? (
+                <img className="player-avatar" src={p.avatarUrl} alt="" width={28} height={28} />
+              ) : (
+                <span className="player-avatar player-avatar-fallback" aria-hidden />
+              )}
+              <span>
+                {p.displayName}
+                {p.userId === props.currentUserId ? ` · ${t("lobby.you")}` : ""}
+              </span>
             </span>
-            <span style={{ color: colors.accent2 }}>{p.score}</span>
+            <span
+              style={{
+                color: p.intent === "continue" ? colors.accent2 : colors.muted,
+                fontWeight: 800,
+              }}
+            >
+              {p.intent === "continue" ? t("lobby.readyBadge") : t("lobby.waitingBadge")}
+            </span>
           </li>
         ))}
       </ul>
 
-      {isHost ? (
-        <>
-          <p style={{ margin: "1rem 0 0.5rem", fontSize: "0.85rem", color: colors.muted }}>
-            {t("lobby.pickPack")}
-          </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem" }}>
-            {PACKS.map((pack) => (
-              <button
-                key={pack}
-                type="button"
-                style={{
-                  ...btnGhostStyle,
-                  background: category === pack ? colors.surface2 : "transparent",
-                  borderColor: category === pack ? colors.accent : colors.border,
-                }}
-                onClick={() => setCategory(pack)}
-              >
-                {packLabel[pack]}
-              </button>
-            ))}
-          </div>
-          <div style={{ marginTop: "0.9rem" }}>
-            <button
-              type="button"
-              style={btnPrimaryStyle}
-              disabled={busy}
-              onClick={() => {
-                setBusy(true);
-                void props.onStart(category).finally(() => setBusy(false));
-              }}
-            >
-              {t("lobby.start")}
-            </button>
-          </div>
-        </>
-      ) : (
-        <p style={{ margin: "1rem 0 0", color: colors.muted }}>{t("lobby.waitingHost")}</p>
-      )}
+      <p className="hint">{t("lobby.sweetSpot")}</p>
+      <p className="hint">
+        {t("lobby.readyCount", { ready: String(continueCount), total: String(total) })}
+      </p>
+      {total < 2 && <p className="hint">{t("lobby.needPlayers")}</p>}
+
+      <div className="actions">
+        <button
+          type="button"
+          className={iAmContinue ? "btn btn-ghost is-selected" : "btn btn-primary"}
+          disabled={busy || total < 2}
+          onClick={() => {
+            setBusy(true);
+            void props.onIntent(iAmContinue ? "none" : "continue").finally(() => setBusy(false));
+          }}
+        >
+          {iAmContinue ? t("lobby.notReady") : t("lobby.ready")}
+        </button>
+        <button
+          type="button"
+          className="btn btn-ghost"
+          disabled={busy}
+          onClick={() => {
+            setBusy(true);
+            setInviteHint(null);
+            void props
+              .onInvite()
+              .catch(() => setInviteHint(t("lobby.invitePreview")))
+              .finally(() => setBusy(false));
+          }}
+        >
+          {t("lobby.invite")}
+        </button>
+      </div>
+      {inviteHint && <p className="hint">{inviteHint}</p>}
     </section>
   );
 }

@@ -1,95 +1,178 @@
-import { StrictMode, useEffect, useState } from "react";
+import { StrictMode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { DiscordSDK } from "@discord/embedded-app-sdk";
-import type { PromptCategory, PublicRoom } from "@friends/types";
-import { fetchRoom, joinRoom, revealRound, startMatch, voteRound } from "./api";
+import type { PublicRoom } from "@friends/types";
+import { fetchRoom, joinRoom, replayMatch, setRoomIntent, voteRound } from "./api";
 import { authenticateActivity } from "./auth";
-import { resolveActivityLocale, t } from "./i18n";
+import "./friends.css";
+import { FinishedPanel } from "./FinishedPanel";
+import { t } from "./i18n";
 import { LobbyPanel } from "./LobbyPanel";
+import { previewFinished, previewReveal, previewRound, previewRoom } from "./previewData";
 import { RoundPanel } from "./RoundPanel";
-import { cardStyle, colors, shellStyle } from "./theme";
+import { ROOM_POLL_MS } from "./roomSync";
+import { isShellLoading, shellBannerKind, type ShellPhase } from "./shellStatus";
+import { cardStyle } from "./theme";
 
 const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID?.trim() ?? "";
 
+type BootResult = {
+  sdk: DiscordSDK;
+  accessToken: string;
+  userId: string;
+  instanceId: string;
+  room: PublicRoom;
+};
+
+/** One bootstrap across React StrictMode's double effect invoke in dev. */
+let bootPromise: Promise<BootResult> | null = null;
+
+function bootstrapActivity(clientId: string): Promise<BootResult> {
+  if (!bootPromise) {
+    bootPromise = (async () => {
+      const sdk = new DiscordSDK(clientId);
+      await sdk.ready();
+      const auth = await authenticateActivity(sdk, clientId);
+      const instanceId = sdk.instanceId;
+      const room = await joinRoom(auth.accessToken, {
+        instanceId,
+        channelId: sdk.channelId,
+        guildId: sdk.guildId,
+      });
+      return {
+        sdk,
+        accessToken: auth.accessToken,
+        userId: auth.user.id,
+        instanceId,
+        room,
+      };
+    })().catch((err: unknown) => {
+      bootPromise = null;
+      throw err;
+    });
+  }
+  return bootPromise;
+}
+
+function BrandHeader() {
+  return (
+    <>
+      <div className="friends-brand">
+        <img className="friends-logo" src="/friends-logo.png" alt={t("shell.title")} width={56} height={56} />
+        <p className="friends-subtitle" style={{ margin: 0 }}>
+          {t("shell.subtitle")}
+        </p>
+      </div>
+      <img className="friends-cover" src="/friends-cover-art.png" alt="" />
+    </>
+  );
+}
+
+function initialPreviewRoom(preview: string | null): PublicRoom | null {
+  if (preview === "finished") return previewFinished;
+  if (preview === "reveal") return previewReveal;
+  if (preview === "round") return previewRound;
+  if (preview) return previewRoom;
+  return null;
+}
+
 function App() {
-  const [status, setStatus] = useState("boot");
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [instanceId, setInstanceId] = useState<string | null>(null);
-  const [room, setRoom] = useState<PublicRoom | null>(null);
-  const [lastCategory, setLastCategory] = useState<PromptCategory>("party");
+  const preview = import.meta.env.DEV
+    ? new URLSearchParams(window.location.search).get("preview")
+    : null;
+  const sdkRef = useRef<DiscordSDK | null>(null);
+  const [phase, setPhase] = useState<ShellPhase>(preview ? "ready" : "boot");
+  const [bootError, setBootError] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(preview ? "preview" : null);
+  const [userId, setUserId] = useState<string | null>(preview ? "you" : null);
+  const [instanceId, setInstanceId] = useState<string | null>(preview ? "preview" : null);
+  const [room, setRoom] = useState<PublicRoom | null>(initialPreviewRoom(preview));
 
   useEffect(() => {
+    if (preview) return;
     if (!clientId) {
-      setStatus("missing-client-id");
+      setPhase("missing-client-id");
       return;
     }
-    const sdk = new DiscordSDK(clientId);
-    void sdk
-      .ready()
-      .then(async () => {
-        setStatus("authorizing");
-        const auth = await authenticateActivity(sdk, clientId);
-        setAccessToken(auth.accessToken);
-        setUserId(auth.user.id);
-        const inst = sdk.instanceId;
-        setInstanceId(inst);
-        const joined = await joinRoom(auth.accessToken, {
-          instanceId: inst,
-          channelId: sdk.channelId,
-          guildId: sdk.guildId,
-        });
-        setRoom(joined);
-        setStatus("ready");
+
+    let cancelled = false;
+    setPhase("authorizing");
+
+    void bootstrapActivity(clientId)
+      .then((boot) => {
+        if (cancelled) return;
+        sdkRef.current = boot.sdk;
+        setAccessToken(boot.accessToken);
+        setUserId(boot.userId);
+        setInstanceId(boot.instanceId);
+        setRoom(boot.room);
+        setBootError(null);
+        setPhase("ready");
       })
       .catch((err: unknown) => {
-        setStatus(err instanceof Error ? err.message : t("shell.genericError"));
+        // StrictMode abandons the first effect; ignore that attempt's updates.
+        if (cancelled) return;
+        setBootError(err instanceof Error ? err.message : null);
+        setPhase("error");
       });
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [preview]);
 
   useEffect(() => {
-    if (status !== "ready" || !accessToken || !instanceId) return;
-    const id = window.setInterval(() => {
-      void fetchRoom(accessToken, instanceId)
-        .then(setRoom)
-        .catch(() => undefined);
-    }, 2500);
-    return () => window.clearInterval(id);
-  }, [status, accessToken, instanceId]);
+    if (preview) return;
+    if (phase !== "ready" || !accessToken || !instanceId) return;
+    let cancelled = false;
+    let inFlight = false;
 
-  const ready = status === "ready" && accessToken && userId && instanceId && room;
-  const loading = status === "boot" || status === "authorizing";
+    const tick = () => {
+      if (cancelled || inFlight) return;
+      inFlight = true;
+      void fetchRoom(accessToken, instanceId)
+        .then((next) => {
+          if (!cancelled) setRoom(next);
+        })
+        .catch(() => undefined)
+        .finally(() => {
+          inFlight = false;
+        });
+    };
+
+    tick();
+    const id = window.setInterval(tick, ROOM_POLL_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [phase, accessToken, instanceId, preview]);
+
+  const ready = phase === "ready" && accessToken && userId && instanceId && room;
+  const loading = isShellLoading(phase);
+  const banner = shellBannerKind(phase, bootError);
 
   return (
-    <main style={shellStyle}>
-      <style>{`
-        html, body, #root { margin: 0; min-height: 100%; height: 100%; background: ${colors.bg}; }
-        body { overflow-x: hidden; }
-        *, *::before, *::after { box-sizing: border-box; }
-      `}</style>
-      <div style={{ padding: "1.25rem 1.35rem 1.75rem", maxWidth: "40rem", margin: "0 auto" }}>
-        <p style={{ margin: 0, fontSize: "0.7rem", letterSpacing: "0.1em", color: colors.accent, fontWeight: 700 }}>
-          FRIENDS
-        </p>
-        <h1 style={{ fontSize: "1.45rem", margin: "0.3rem 0 0.4rem" }}>{t("shell.title")}</h1>
-        <p style={{ margin: 0, color: colors.muted, lineHeight: 1.45 }}>{t("shell.subtitle")}</p>
+    <main className="friends-shell">
+      <div className="friends-stage">
+        <BrandHeader />
 
         {!ready && (
           <section style={cardStyle} aria-live="polite">
-            <p style={{ margin: 0, fontWeight: 600 }}>
-              {status === "missing-client-id"
+            <p style={{ margin: 0, fontWeight: 700 }}>
+              {banner === "notConfigured"
                 ? t("shell.notConfigured")
-                : loading
-                  ? status === "boot"
+                : banner === "loading"
+                  ? phase === "boot"
                     ? t("shell.authBoot")
                     : t("shell.authAuthorizing")
-                  : status.includes("HTTP") || status.toLowerCase().includes("sign")
+                  : banner === "signInFailed"
                     ? t("shell.signInFailed")
                     : t("shell.genericError")}
             </p>
             {!loading && (
-              <p style={{ margin: "0.4rem 0 0", color: colors.muted, fontSize: "0.85rem" }}>
-                {status === "missing-client-id" ? t("shell.missingClientIdDev") : t("shell.signInFailedDetail")}
+              <p className="friends-subtitle">
+                {banner === "notConfigured" ? t("shell.missingClientIdDev") : t("shell.signInFailedDetail")}
               </p>
             )}
           </section>
@@ -99,25 +182,60 @@ function App() {
           <LobbyPanel
             room={room}
             currentUserId={userId}
-            onStart={async (category) => {
-              setLastCategory(category);
-              setRoom(await startMatch(accessToken, instanceId, category, resolveActivityLocale()));
+            onInvite={async () => {
+              if (preview) throw new Error("preview");
+              const sdk = sdkRef.current;
+              if (!sdk) throw new Error("no sdk");
+              await sdk.commands.openInviteDialog();
+            }}
+            onIntent={async (intent) => {
+              if (preview) {
+                setRoom({
+                  ...room,
+                  players: room.players.map((p) =>
+                    p.userId === userId ? { ...p, intent } : p,
+                  ),
+                });
+                return;
+              }
+              setRoom(await setRoomIntent(accessToken, instanceId, intent));
             }}
           />
         )}
 
-        {ready && room.round && (
+        {ready && room.status === "playing" && room.round && (
           <RoundPanel
             room={room}
             currentUserId={userId}
             onVote={async (body) => {
+              if (preview) return;
               setRoom(await voteRound(accessToken, { roundId: room.round!.id, ...body }));
             }}
-            onReveal={async () => {
-              setRoom(await revealRound(accessToken, instanceId));
+            onIntent={async (intent) => {
+              if (preview) {
+                setRoom({
+                  ...room,
+                  players: room.players.map((p) =>
+                    p.userId === userId ? { ...p, intent } : p,
+                  ),
+                });
+                return;
+              }
+              setRoom(await setRoomIntent(accessToken, instanceId, intent));
             }}
-            onNext={async () => {
-              setRoom(await startMatch(accessToken, instanceId, room.category ?? lastCategory, resolveActivityLocale()));
+          />
+        )}
+
+        {ready && room.status === "finished" && (
+          <FinishedPanel
+            room={room}
+            currentUserId={userId}
+            onReplay={async () => {
+              if (preview) {
+                setRoom(previewRoom);
+                return;
+              }
+              setRoom(await replayMatch(accessToken, instanceId));
             }}
           />
         )}

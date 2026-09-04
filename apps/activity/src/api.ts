@@ -1,4 +1,4 @@
-import { API_PATHS, type ActivityExchangeResponse, type PublicRoom, type PromptCategory, type RoundVoteRequest } from "@friends/types";
+import { API_PATHS, type ActivityExchangeResponse, type PublicRoom, type RoomIntent, type RoundVoteRequest } from "@friends/types";
 
 export type { ActivityExchangeResponse };
 
@@ -56,18 +56,17 @@ export async function fetchRoom(accessToken: string, instanceId: string): Promis
   return (await res.json()) as PublicRoom;
 }
 
-export async function startMatch(
+export async function setRoomIntent(
   accessToken: string,
   instanceId: string,
-  category: PromptCategory,
-  locale: "en" | "pl",
+  intent: RoomIntent,
 ): Promise<PublicRoom> {
   const res = await fetch(
-    `${activityUrl(API_PATHS.roomStart)}?instanceId=${encodeURIComponent(instanceId)}`,
+    `${activityUrl(API_PATHS.roomIntent)}?instanceId=${encodeURIComponent(instanceId)}`,
     {
       method: "POST",
       headers: authHeaders(accessToken),
-      body: JSON.stringify({ category, locale }),
+      body: JSON.stringify({ intent }),
     },
   );
   if (!res.ok) throw new Error(await parseError(res));
@@ -84,9 +83,9 @@ export async function voteRound(accessToken: string, body: RoundVoteRequest): Pr
   return (await res.json()) as PublicRoom;
 }
 
-export async function revealRound(accessToken: string, instanceId: string): Promise<PublicRoom> {
+export async function replayMatch(accessToken: string, instanceId: string): Promise<PublicRoom> {
   const res = await fetch(
-    `${activityUrl(API_PATHS.roundReveal)}?instanceId=${encodeURIComponent(instanceId)}`,
+    `${activityUrl(API_PATHS.roomReplay)}?instanceId=${encodeURIComponent(instanceId)}`,
     { method: "POST", headers: authHeaders(accessToken) },
   );
   if (!res.ok) throw new Error(await parseError(res));

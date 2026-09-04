@@ -1,47 +1,30 @@
 import type { CSSProperties } from "react";
 
+/** Discord-adjacent navy / blurple, magenta from the crew art. */
 export const colors = {
-  bg: "#140e12",
-  surface: "#21181c",
-  surface2: "#2c2227",
-  border: "rgba(255, 214, 180, 0.14)",
-  text: "#f6efe8",
-  muted: "#c4b4aa",
-  accent: "#ff8a5b",
-  accent2: "#ffd29b",
+  bg: "#1e1f22",
+  surface: "rgba(30, 31, 34, 0.94)",
+  surface2: "#2b2d31",
+  border: "rgba(255, 255, 255, 0.14)",
+  text: "#f2f3f5",
+  muted: "#b5bac1",
+  accent: "#eb459e",
+  accent2: "#5865f2",
+  cyan: "#5865f2",
 } as const;
 
 export const shellStyle: CSSProperties = {
   minHeight: "100%",
-  fontFamily: 'ui-rounded, "Segoe UI", system-ui, sans-serif',
-  background: `radial-gradient(1200px 600px at 10% -10%, #3a1f28 0%, ${colors.bg} 55%)`,
+  fontFamily: '"Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif',
   color: colors.text,
 };
 
 export const cardStyle: CSSProperties = {
-  marginTop: "1rem",
-  padding: "1rem 1.1rem",
+  marginTop: "0.85rem",
+  padding: "1rem 1rem 1.15rem",
   borderRadius: "1rem",
-  background: colors.surface,
+  background: "rgba(30, 31, 34, 0.94)",
   border: `1px solid ${colors.border}`,
-};
-
-export const btnPrimaryStyle: CSSProperties = {
-  border: 0,
-  borderRadius: "999px",
-  padding: "0.55rem 1rem",
-  fontWeight: 700,
-  cursor: "pointer",
-  background: colors.accent,
-  color: "#2a120c",
-};
-
-export const btnGhostStyle: CSSProperties = {
-  border: `1px solid ${colors.border}`,
-  borderRadius: "999px",
-  padding: "0.5rem 0.9rem",
-  fontWeight: 600,
-  cursor: "pointer",
-  background: "transparent",
+  boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
   color: colors.text,
 };

@@ -11,9 +11,9 @@ export function detectActivityLanguage(): string {
   return typeof navigator !== "undefined" ? navigator.language : "en";
 }
 
-export function resolveActivityLocale(lang = detectActivityLanguage()): ActivityLocale {
-  const base = lang.toLowerCase().split("-")[0] ?? "en";
-  return base === "pl" ? "pl" : "en";
+/** Phase 1 ships English UI and English prompts only. Discord `locale` is ignored. */
+export function resolveActivityLocale(_lang = detectActivityLanguage()): ActivityLocale {
+  return "en";
 }
 
 const catalogs: Record<ActivityLocale, ActivityMessages> = { en, pl };

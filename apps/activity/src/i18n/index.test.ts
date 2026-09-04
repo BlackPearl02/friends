@@ -2,13 +2,9 @@ import { describe, expect, it } from "vitest";
 import { resolveActivityLocale } from "./index";
 
 describe("resolveActivityLocale", () => {
-  it("maps pl and pl-PL to Polish", () => {
-    expect(resolveActivityLocale("pl")).toBe("pl");
-    expect(resolveActivityLocale("pl-PL")).toBe("pl");
-  });
-
-  it("falls back to English", () => {
+  it("stays English in phase 1 even when Discord locale is Polish", () => {
+    expect(resolveActivityLocale("pl")).toBe("en");
+    expect(resolveActivityLocale("pl-PL")).toBe("en");
     expect(resolveActivityLocale("en-US")).toBe("en");
-    expect(resolveActivityLocale("de")).toBe("en");
   });
 });

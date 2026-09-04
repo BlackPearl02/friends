@@ -1,0 +1,309 @@
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+  height: 100%;
+}
+
+html {
+  font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+  font-weight: 500;
+}
+
+body {
+  overflow-x: hidden;
+  background: #1e1f22;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.friends-shell {
+  min-height: 100%;
+  color: #f2f3f5;
+  background-color: #1e1f22;
+  background-image:
+    radial-gradient(ellipse 70% 80% at 50% 48%, rgba(30, 31, 34, 0.88) 0%, rgba(30, 31, 34, 0.55) 42%, rgba(30, 31, 34, 0.22) 70%, rgba(30, 31, 34, 0.08) 100%),
+    url("/friends-background.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.friends-stage {
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: clamp(0.75rem, 4vw, 1.5rem) clamp(0.85rem, 4vw, 1.4rem) 1.75rem;
+  position: relative;
+  z-index: 1;
+}
+
+.friends-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.friends-logo {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 1rem;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.55);
+}
+
+.friends-cover {
+  width: 100%;
+  max-height: 5.25rem;
+  object-fit: cover;
+  object-position: center 40%;
+  border-radius: 1rem;
+  margin: 0.65rem 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.friends-title {
+  font-size: 1.45rem;
+  margin: 0;
+  line-height: 1.15;
+  font-weight: 800;
+}
+
+.friends-subtitle {
+  margin: 0.35rem 0 0;
+  color: #b5bac1;
+  line-height: 1.45;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.pack-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+
+.player-row-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.player-avatar {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.player-avatar-fallback {
+  display: inline-block;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.reveal-block {
+  margin-top: 0.35rem;
+}
+
+.reveal-line {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #eb459e;
+}
+
+.reveal-winner {
+  margin: 0 0 0.35rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.reveal-context {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #b5bac1;
+}
+
+.reveal-tallies .player-row.is-winner {
+  background: rgba(88, 101, 242, 0.22);
+  border-radius: 0.65rem;
+  padding-left: 0.45rem;
+  padding-right: 0.45rem;
+  border-bottom-color: transparent;
+}
+
+.tally-count {
+  font-weight: 800;
+  color: #eb459e;
+  min-width: 1.5rem;
+  text-align: right;
+}
+
+.choice-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  min-height: 3.1rem;
+  padding: 0.7rem 1rem;
+  border-radius: 0.85rem;
+  border: 2px solid transparent;
+  font-weight: 700;
+  letter-spacing: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  color: #fff;
+  transition: transform 0.08s ease, filter 0.08s ease, box-shadow 0.08s ease;
+}
+
+.btn:focus-visible {
+  outline: 3px solid #5865f2;
+  outline-offset: 3px;
+}
+
+.btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #5865f2;
+  color: #fff;
+  box-shadow: 0 4px 0 #3c45a5;
+}
+
+.btn-primary:active:not(:disabled) {
+  box-shadow: 0 2px 0 #3c45a5;
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #f2f3f5;
+  box-shadow: none;
+}
+
+.btn-ghost.is-selected {
+  background: #5865f2;
+  border-color: #c4c9ff;
+  color: #fff;
+}
+
+.btn-choice {
+  justify-content: space-between;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(88, 101, 242, 0.45);
+  color: #f2f3f5;
+}
+
+.btn-choice .btn-choice-cta {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: #eb459e;
+}
+
+.btn-choice.is-selected {
+  background: #5865f2;
+  border-color: #eb459e;
+  color: #fff;
+}
+
+.btn-choice.is-selected .btn-choice-cta {
+  color: #fff;
+}
+
+.btn-primary.is-selected {
+  outline: 3px solid #eb459e;
+  outline-offset: 2px;
+}
+
+.field {
+  width: 100%;
+  min-height: 3.1rem;
+  margin: 0.35rem 0 0.7rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.85rem;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  background: #2b2d31;
+  color: #f2f3f5;
+}
+
+.field:focus {
+  outline: 3px solid #5865f2;
+  outline-offset: 2px;
+}
+
+.player-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.65rem 0 0;
+}
+
+.player-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.7rem 0.15rem;
+  min-height: 2.75rem;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.kicker {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: #b5bac1;
+  font-weight: 700;
+}
+
+.hint {
+  margin: 0.85rem 0 0.5rem;
+  font-size: 0.9rem;
+  color: #b5bac1;
+  font-weight: 600;
+}
+
+.actions {
+  margin-top: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
