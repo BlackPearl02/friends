@@ -35,6 +35,13 @@ enum RoundStatus {
   done
 }
 
+/// Lobby / post-reveal consensus — continue night vs wrap up to finale.
+enum RoomIntent {
+  none
+  continue
+  wrap_up
+}
+
 model User {
   id          String   @id @default(uuid())
   discordId   String   @unique
@@ -43,9 +50,10 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  hostedRooms GameRoom[]    @relation("RoomHost")
-  players     RoomPlayer[]
-  votes       Vote[]
+  hostedRooms   GameRoom[]    @relation("RoomHost")
+  players       RoomPlayer[]
+  votes         Vote[]        @relation("VoteVoter")
+  votesReceived Vote[]        @relation("VoteTarget")
 }
 
 model GameRoom {
@@ -58,6 +66,8 @@ model GameRoom {
   status             RoomStatus     @default(lobby)
   category           PromptCategory?
   locale             String         @default("en")
+  /// Identifies the current “night”; replay rotates this so prompt bank refreshes.
+  sessionKey         String         @default(cuid())
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
 
@@ -68,48 +78,52 @@ model GameRoom {
 }
 
 model RoomPlayer {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   roomId    String
-  room      GameRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  room      GameRoom   @relation(fields: [roomId], references: [id], onDelete: Cascade)
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  score     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  user      User       @relation(fields: [userId], references: [id])
+  score     Int        @default(0)
+  intent    RoomIntent @default(none)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   @@unique([roomId, userId])
   @@index([userId])
 }
 
 model Prompt {
-  id        String         @id @default(uuid())
+  id        String          @id @default(uuid())
   kind      PromptKind
-  category  PromptCategory
+  /// Legacy pack field — unused in MVP selection (most_likely + locale).
+  category  PromptCategory?
   locale    String
   body      String
   optionA   String?
   optionB   String?
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
   rounds    Round[]
 
-  @@index([category, locale, kind])
+  @@index([locale, kind])
 }
 
 model Round {
-  id        String      @id @default(uuid())
-  roomId    String
-  room      GameRoom    @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  promptId  String
-  prompt    Prompt      @relation(fields: [promptId], references: [id])
-  index     Int
-  status    RoundStatus @default(voting)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  votes     Vote[]
+  id         String      @id @default(uuid())
+  roomId     String
+  room       GameRoom    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  promptId   String
+  prompt     Prompt      @relation(fields: [promptId], references: [id])
+  sessionKey String
+  index      Int
+  status     RoundStatus @default(voting)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  votes      Vote[]
 
   @@unique([roomId, index])
   @@index([promptId])
+  @@index([roomId, sessionKey])
 }
 
 model Vote {
@@ -117,8 +131,9 @@ model Vote {
   roundId      String
   round        Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
   voterId      String
-  voter        User     @relation(fields: [voterId], references: [id])
+  voter        User     @relation("VoteVoter", fields: [voterId], references: [id])
   targetUserId String?
+  target       User?    @relation("VoteTarget", fields: [targetUserId], references: [id])
   choice       String?
   text         String?
   createdAt    DateTime @default(now())
@@ -126,4 +141,5 @@ model Vote {
 
   @@unique([roundId, voterId])
   @@index([voterId])
+  @@index([targetUserId])
 }
