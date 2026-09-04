@@ -2,7 +2,7 @@ import { Body, Controller, Get, Post, Query } from "@nestjs/common";
 import { Throttle } from "@nestjs/throttler";
 import type { User } from "@friends/db";
 import { CurrentUser } from "../auth/current-user.decorator";
-import { RoomJoinDto, RoomStartDto, RoundVoteDto } from "./dto/game.dto";
+import { RoomIntentDto, RoomJoinDto, RoundVoteDto } from "./dto/game.dto";
 import { GameService } from "./game.service";
 
 @Controller("game")
@@ -16,17 +16,20 @@ export class GameController {
   }
 
   @Get("rooms/current")
+  // Party poll (~750ms × up to 8 clients) often shares one Discord/CF egress IP.
+  @Throttle({ default: { limit: 800, ttl: 60_000 } })
   current(@CurrentUser() user: User, @Query("instanceId") instanceId: string) {
     return this.game.current(user, instanceId);
   }
 
-  @Post("rooms/start")
-  start(
+  @Post("rooms/intent")
+  @Throttle({ default: { limit: 180, ttl: 60_000 } })
+  intent(
     @CurrentUser() user: User,
     @Query("instanceId") instanceId: string,
-    @Body() dto: RoomStartDto,
+    @Body() dto: RoomIntentDto,
   ) {
-    return this.game.start(user, instanceId, dto.category, dto.locale ?? "en");
+    return this.game.setIntent(user, instanceId, dto.intent);
   }
 
   @Post("rounds/vote")
@@ -35,8 +38,8 @@ export class GameController {
     return this.game.vote(user, dto);
   }
 
-  @Post("rounds/reveal")
-  reveal(@CurrentUser() user: User, @Query("instanceId") instanceId: string) {
-    return this.game.reveal(user, instanceId);
+  @Post("rooms/replay")
+  replay(@CurrentUser() user: User, @Query("instanceId") instanceId: string) {
+    return this.game.replay(user, instanceId);
   }
 }

@@ -1,5 +1,4 @@
 import { IsIn, IsOptional, IsString, MinLength } from "class-validator";
-import type { PromptCategory } from "@friends/types";
 
 export class RoomJoinDto {
   @IsString()
@@ -15,13 +14,9 @@ export class RoomJoinDto {
   guildId?: string | null;
 }
 
-export class RoomStartDto {
-  @IsIn(["party", "family", "colleagues", "spicy"])
-  category!: PromptCategory;
-
-  @IsOptional()
-  @IsIn(["en", "pl"])
-  locale?: "en" | "pl";
+export class RoomIntentDto {
+  @IsIn(["none", "continue", "wrap_up"])
+  intent!: "none" | "continue" | "wrap_up";
 }
 
 export class RoundVoteDto {
