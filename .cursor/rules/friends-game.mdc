@@ -1,22 +1,28 @@
 ---
-description: Party-game rules — categories, round kinds, Discord lobby
+description: Party-game rules — viral most_likely loop, Discord lobby
 globs: apps/api/src/game/**/*,apps/activity/src/**,packages/db/prisma/**
 alwaysApply: false
 ---
 
 # Friends — game design
 
-Product: [docs/product.md](../../docs/product.md). Skill: [friends-game-design](../skills/friends-game-design/SKILL.md).
+Product: [docs/product.md](../../docs/product.md). Strategy: [docs/strategy.md](../../docs/strategy.md). Roadmap: [docs/roadmap.md](../../docs/roadmap.md). Skill: [friends-game-design](../skills/friends-game-design/SKILL.md).
 
 ## MUST
 
-- Room key = Discord Activity `instanceId` (unique). Host = first joiner unless transferred later.
-- Categories: `party` | `family` | `colleagues` | `spicy` only (until product says otherwise).
-- Round kinds: `most_likely` | `this_or_that` | `truth` | `challenge`.
-- Do not reveal `most_likely` / `truth` answers until the round status is `reveal` or `done`.
+- Room key = Discord Activity `instanceId` (unique). First joiner sets `hostUserId` for DB only — **no host powers** in the Activity.
+- **A-only MVP:** API serves **`most_likely` only** (unused prompt for room locale). No category picker / pack filter.
+- Do **not** add a second equal in-Activity mode (async quiz / “make your quiz” / daily) until [roadmap.md](../../docs/roadmap.md) Phase 5 unlock + product says so.
+- Schema may still list `this_or_that` | `truth` | `challenge` and legacy `PromptCategory` — not in the default start loop.
+- Do not reveal `most_likely` / `truth` answers or running scores to clients mid-session — public DTO masks them until `finished`.
+- Post-vote `reveal` is server state for scoring + Next/Wrap consensus; the viral climax is the **finale scoreboard**, not per-round tallies.
 - Original prompts only — never paste Kumple’s question bank.
+- Preserve round/vote history when adding end/replay — needed for future Friend Profile (B-lite).
 
 ## SHOULD
 
 - One vote per player per round (DB unique).
-- Skip is always allowed on `challenge` / `truth` (no shame UX).
+- Skip is always allowed on `challenge` / `truth` (no shame UX) when those kinds return.
+- Tempo is **consensus intents**: lobby Ready (`continue`), post-reveal **Next** vs **Wrap up**, **all-voted → reveal**. Finale scoreboard on wrap / empty bank; Play again rotates `sessionKey`.
+- Soft target ~8–12 rounds; UI may nudge wrap-up from round 8 — no hard stop.
+- Sweet spot copy: 3–8 players in the channel.

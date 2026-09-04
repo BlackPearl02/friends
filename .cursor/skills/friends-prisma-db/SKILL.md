@@ -28,7 +28,7 @@ description: >-
 1. Align names with existing schema; both sides of relations; `createdAt`/`updatedAt`.
 2. Edit `schema.prisma`; `pnpm db:migrate` from root (not `db:push` for prod-bound changes).
 3. Update Nest services; always scope by authenticated user / membership.
-4. Seed prompts in **en and pl** when adding kinds/categories.
+4. Seed prompts in **en and pl** when adding kinds (MVP: `most_likely` bank).
 5. Tests per `friends-testing`.
 
 ## Commands

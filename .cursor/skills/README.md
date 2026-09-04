@@ -14,7 +14,7 @@ Project-specific agent skills. Cursor discovers this folder automatically.
 
 | Skill | When to use |
 |-------|-------------|
-| [friends-game-design](./friends-game-design/SKILL.md) | Rounds, categories, scoring, Kumple mapping |
+| [friends-game-design](./friends-game-design/SKILL.md) | Viral most_likely loop (A); see docs/strategy + roadmap |
 | [friends-discord-activity](./friends-discord-activity/SKILL.md) | Embedded App SDK, tunnels, URL mappings, OAuth exchange |
 | [friends-api-nest](./friends-api-nest/SKILL.md) | Nest endpoints, DTOs, JWT, room authz |
 | [friends-prisma-db](./friends-prisma-db/SKILL.md) | Schema, migrations, seed |

@@ -9,9 +9,9 @@ alwaysApply: true
 
 **Friends** is a Discord Activity party game inspired by Kumple (Buddies): questions, challenges, and “who is most likely” among people already in a Discord channel. No join code — the Activity `instanceId` is the room.
 
-Canonical product notes: [docs/product.md](../../docs/product.md). Setup: [docs/discord-activity-setup.md](../../docs/discord-activity-setup.md).
+Canonical: [docs/product.md](../../docs/product.md), [docs/strategy.md](../../docs/strategy.md), [docs/roadmap.md](../../docs/roadmap.md). Setup: [docs/discord-activity-setup.md](../../docs/discord-activity-setup.md).
 
-**Do not** copy Kumple’s question bank, assets, or brand. **Do not** pull in PlayGrid library / sessions / store OAuth.
+**Do not** copy Kumple’s question bank, assets, or brand. **Do not** pull in PlayGrid library / sessions / store OAuth. **Do not** add a second equal async game mode until roadmap unlocks it.
 
 ## i18n (en + pl)
 
@@ -44,6 +44,6 @@ Root **`.env.development`** (or `.env`) via `scripts/with-friends-env.mjs`. Requ
 
 | Where | What |
 |-------|------|
-| `docs/` | Product, Discord ops, AppSec, testing |
+| `docs/` | Product, strategy, roadmap, metrics, Discord ops, AppSec, testing |
 | `.cursor/rules/` | Short MUST/MUST NOT (this file + testing + security always on) |
 | `.cursor/skills/` | Multi-step workflows |
