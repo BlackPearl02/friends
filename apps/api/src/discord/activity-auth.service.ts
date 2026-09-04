@@ -7,7 +7,7 @@
  */
 import { Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import type { ActivityExchangeResponse } from "@friends/types";
+import type { ActivityExchangeResponse } from "@friends/types" with { "resolution-mode": "import" };
 import { AuthService } from "../auth/auth.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { DiscordApiClient } from "./discord-api.client";

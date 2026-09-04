@@ -1,4 +1,4 @@
-import type { PromptKind } from "@friends/types";
+import type { PromptKind } from "@friends/types" with { "resolution-mode": "import" };
 
 export function scoreDelta(kind: PromptKind, vote: { targetUserId?: string | null; choice?: string | null; text?: string | null }): { userId: string; delta: number } | null {
   if (kind === "most_likely" && vote.targetUserId) {

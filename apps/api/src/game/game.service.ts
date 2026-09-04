@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import type { User } from "@friends/db";
-import type { PublicRoom, RoomIntent } from "@friends/types";
+import type { PublicRoom, RoomIntent } from "@friends/types" with { "resolution-mode": "import" };
 import { PrismaService } from "../prisma/prisma.service";
 import { clientVisibleRoundResults, clientVisibleScore } from "./public-room-mask";
 import { scoreDelta, scoreForVoter } from "./scoring";
