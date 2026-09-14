@@ -16,4 +16,4 @@ Applies when editing **code** under the globs (not product copy in i18n catalogs
 - Do not duplicate Prisma / DTO / i18n as a second source of truth.
 - Update or delete stale comments in the same change.
 
-Module README = architecture map, not a file inventory. Known: `apps/api/README.md`, `apps/activity/README.md`, `packages/db/README.md`.
+Module README = architecture map, not a file inventory. Known: `apps/api/README.md`, `apps/activity/README.md`, `apps/web/README.md`, `packages/db/README.md`.

@@ -25,6 +25,7 @@ Every new or changed user-facing string ships in **English and Polish**. No hard
 | Package | Path | Role |
 |---------|------|------|
 | `@friends/api` | `apps/api` | NestJS REST + JWT after Activity exchange — **:3000** |
+| `@friends/web` | `apps/web` | Marketing site (Next.js) — landing + legal — **:3001** |
 | `@friends/activity` | `apps/activity` | Discord Embedded App (Vite + React) — **:3003** |
 | `@friends/db` | `packages/db` | Prisma / PostgreSQL |
 | `@friends/types` | `packages/types` | Shared DTOs |

@@ -26,4 +26,4 @@ Workflow: skill [friends-security](../skills/friends-security/SKILL.md). Hub: [d
 
 ## Scope
 
-`apps/api`, `apps/activity`, `packages/db`, `packages/types`.
+`apps/api`, `apps/activity`, `apps/web`, `packages/db`, `packages/types`.
