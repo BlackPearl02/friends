@@ -20,8 +20,8 @@ description: >-
 2. Everyone marks **Ready** / `continue` (≥2) → auto start
 3. API serves an unused **`most_likely`** prompt for the **current session**
 4. Players vote (votes hidden); UI shows who voted
-5. All voted → auto **reveal** (scores applied server-side; clients see no tallies)
-6. **Next** (`continue`) → next round; **Wrap up** → finale scoreboard when all agree (≥1 reveal)
+5. All voted → auto **reveal** (tallies + winner/tie; scores applied when leaving reveal)
+6. Clear winner → **Next** / **Wrap up**; tie → **Vote again** / **Keep going**. **Wrap up** → finale scoreboard when all agree (≥1 reveal)
 7. Empty prompt bank → finale; **Play again** → new `sessionKey`, scores reset, history kept
 
 ## Constraints
