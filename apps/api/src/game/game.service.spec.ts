@@ -98,7 +98,7 @@ describe("GameService session finale", () => {
 
     await service.setIntent({ id: "b" } as never, "inst-long", "continue");
 
-    expect(beginRound).toHaveBeenCalledWith("room-1", "en");
+    expect(beginRound).toHaveBeenCalledWith("room-1");
   });
 
   it("finishes the session when all wrap up after reveal", async () => {
@@ -254,9 +254,9 @@ describe("GameService session finale", () => {
     const service = new GameService(prisma as never);
     (service as unknown as { finishSession: typeof finishSession }).finishSession = finishSession;
 
-    await (
-      service as unknown as { beginRound: (id: string, locale: "en" | "pl") => Promise<void> }
-    ).beginRound("room-1", "en");
+    await (service as unknown as { beginRound: (id: string) => Promise<void> }).beginRound(
+      "room-1",
+    );
 
     expect(finishSession).toHaveBeenCalledWith("room-1");
   });

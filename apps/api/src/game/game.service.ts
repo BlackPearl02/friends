@@ -88,9 +88,10 @@ export class GameService {
       players.length >= MIN_PLAYERS && players.every((p) => p.intent === "wrap_up");
 
     if (allContinue && room.status === "lobby") {
-      await this.beginRound(room.id, (room.locale as "en" | "pl") || "en");
+      // Prompt bank is EN-only in MVP; Activity UI chrome stays en+pl separately.
+      await this.beginRound(room.id);
     } else if (allContinue && room.status === "playing" && latest?.status === "reveal") {
-      await this.beginRound(room.id, (room.locale as "en" | "pl") || "en");
+      await this.beginRound(room.id);
     } else if (allWrapUp && room.status === "playing" && latest?.status === "reveal") {
       const revealedInSession = await this.prisma.round.count({
         where: {
@@ -172,7 +173,8 @@ export class GameService {
     return this.loadPublic(room.id);
   }
 
-  private async beginRound(roomId: string, locale: "en" | "pl") {
+  private async beginRound(roomId: string) {
+    const locale = "en" as const;
     const room = await this.prisma.gameRoom.findUniqueOrThrow({ where: { id: roomId } });
     const sessionRounds = await this.prisma.round.findMany({
       where: { roomId, sessionKey: room.sessionKey },
