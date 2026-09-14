@@ -27,12 +27,15 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
-    default: "Friends",
-    template: "%s | Friends",
+    default: "Squimbo",
+    template: "%s | Squimbo",
   },
-  applicationName: "Friends",
+  applicationName: "Squimbo",
+  verification: {
+    google: "5rh4CqxCVso6KJaH5_qF3sa0sKkG_3QrLCtqDxux-5A",
+  },
   openGraph: {
-    siteName: "Friends",
+    siteName: "Squimbo",
     type: "website",
     locale: "en_US",
   },
