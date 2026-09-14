@@ -9,6 +9,7 @@ Product name in Discord: **Friends**. Engineering package scope: `@friends/*`.
 | Package | Path | Role | Dev port |
 |---------|------|------|----------|
 | `@friends/api` | `apps/api` | NestJS — Activity OAuth exchange, rooms, rounds | **:3000** |
+| `@friends/web` | `apps/web` | Marketing site (Next.js) — landing + legal | **:3001** |
 | `@friends/activity` | `apps/activity` | Discord Embedded App (Vite + React) | **:3003** |
 | `@friends/db` | `packages/db` | Prisma + PostgreSQL |
 | `@friends/types` | `packages/types` | Shared DTOs |

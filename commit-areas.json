@@ -2,6 +2,7 @@
   "buckets": [
     "apps/api",
     "apps/activity",
+    "apps/web",
     "packages/db",
     "packages/types",
     "cursor",
@@ -11,6 +12,7 @@
   "rules": [
     { "prefix": "apps/api/", "bucket": "apps/api", "scope": "api", "label": "API" },
     { "prefix": "apps/activity/", "bucket": "apps/activity", "scope": "activity", "label": "Discord Activity" },
+    { "prefix": "apps/web/", "bucket": "apps/web", "scope": "web", "label": "Marketing web" },
     { "prefix": "packages/db/", "bucket": "packages/db", "scope": "db", "label": "Prisma" },
     { "prefix": "packages/types/", "bucket": "packages/types", "scope": "types", "label": "Shared types" },
     { "prefix": ".cursor/", "bucket": "cursor", "scope": "cursor", "label": "Cursor rules/skills" },

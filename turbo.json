@@ -10,12 +10,15 @@
     "API_PUBLIC_URL",
     "ACTIVITY_ORIGIN",
     "VITE_DISCORD_CLIENT_ID",
-    "VITE_FRIENDS_API_URL"
+    "VITE_FRIENDS_API_URL",
+    "NEXT_PUBLIC_DISCORD_CLIENT_ID",
+    "NEXT_PUBLIC_SUPPORT_EMAIL",
+    "NEXT_PUBLIC_SITE_URL"
   ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
     "dev": {
       "dependsOn": ["^build"],
