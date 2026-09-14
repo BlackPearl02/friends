@@ -1,6 +1,21 @@
-import { API_PATHS, type ActivityExchangeResponse, type PublicRoom, type RoomIntent, type RoundVoteRequest } from "@friends/types";
+import {
+  API_PATHS,
+  ROOM_IN_PROGRESS_CODE,
+  type ActivityExchangeResponse,
+  type PublicRoom,
+  type RoomIntent,
+  type RoundVoteRequest,
+} from "@friends/types";
 
 export type { ActivityExchangeResponse };
+
+export class RoomInProgressError extends Error {
+  readonly code = ROOM_IN_PROGRESS_CODE;
+  constructor() {
+    super(ROOM_IN_PROGRESS_CODE);
+    this.name = "RoomInProgressError";
+  }
+}
 
 export function getActivityApiBaseUrl(): string {
   return import.meta.env.VITE_FRIENDS_API_URL?.trim().replace(/\/+$/, "") ?? "";
@@ -15,6 +30,10 @@ export function activityUrl(path: string): string {
 async function parseError(res: Response): Promise<string> {
   const text = await res.text();
   return `HTTP ${res.status}${text ? `: ${text.slice(0, 180)}` : ""}`;
+}
+
+function isRoomInProgressBody(text: string): boolean {
+  return text.includes(ROOM_IN_PROGRESS_CODE);
 }
 
 export async function exchangeActivityCode(body: { code: string }): Promise<ActivityExchangeResponse> {
@@ -43,8 +62,26 @@ export async function joinRoom(
     headers: authHeaders(accessToken),
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(await parseError(res));
+  if (!res.ok) {
+    const text = await res.text();
+    if (res.status === 409 && isRoomInProgressBody(text)) {
+      throw new RoomInProgressError();
+    }
+    throw new Error(`HTTP ${res.status}${text ? `: ${text.slice(0, 180)}` : ""}`);
+  }
   return (await res.json()) as PublicRoom;
+}
+
+/** Fire-and-forget — uses keepalive so it can run during page unload. */
+export function leaveRoom(accessToken: string, instanceId: string): void {
+  void fetch(
+    `${activityUrl(API_PATHS.roomLeave)}?instanceId=${encodeURIComponent(instanceId)}`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+      keepalive: true,
+    },
+  ).catch(() => undefined);
 }
 
 export async function fetchRoom(accessToken: string, instanceId: string): Promise<PublicRoom> {

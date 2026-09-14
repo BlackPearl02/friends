@@ -42,7 +42,7 @@ export const previewRound: PublicRoom = {
   },
 };
 
-/** Post-vote consensus for local `?preview=reveal` (tallies stay sealed). */
+/** Post-vote reveal with a clear winner for local `?preview=reveal`. */
 export const previewReveal: PublicRoom = {
   ...previewRound,
   sessionRoundCount: 8,
@@ -59,11 +59,32 @@ export const previewReveal: PublicRoom = {
       optionA: null,
       optionB: null,
     },
+    results: {
+      tallies: { you: 1, p2: 2, p3: 0 },
+    },
   },
   players: [
     { userId: "you", displayName: "Alex", avatarUrl: null, score: 0, intent: "none", hasVoted: false },
     { userId: "p2", displayName: "Sam", avatarUrl: null, score: 0, intent: "continue", hasVoted: false },
     { userId: "p3", displayName: "Jordan", avatarUrl: null, score: 0, intent: "wrap_up", hasVoted: false },
+  ],
+};
+
+/** Tied reveal for local `?preview=tie` — revote or keep going. */
+export const previewTie: PublicRoom = {
+  ...previewReveal,
+  sessionRoundCount: 3,
+  round: {
+    ...previewReveal.round!,
+    index: 2,
+    results: {
+      tallies: { you: 1, p2: 1, p3: 1 },
+    },
+  },
+  players: [
+    { userId: "you", displayName: "Alex", avatarUrl: null, score: 0, intent: "none", hasVoted: false },
+    { userId: "p2", displayName: "Sam", avatarUrl: null, score: 0, intent: "revote", hasVoted: false },
+    { userId: "p3", displayName: "Jordan", avatarUrl: null, score: 0, intent: "continue", hasVoted: false },
   ],
 };
 

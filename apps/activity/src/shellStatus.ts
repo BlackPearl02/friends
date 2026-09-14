@@ -2,6 +2,7 @@
 export type ShellPhase =
   | "boot"
   | "authorizing"
+  | "waiting-in-progress"
   | "ready"
   | "missing-client-id"
   | "error";
@@ -13,8 +14,9 @@ export function isShellLoading(phase: ShellPhase): boolean {
 export function shellBannerKind(
   phase: ShellPhase,
   errorMessage: string | null,
-): "notConfigured" | "loading" | "signInFailed" | "genericError" {
+): "notConfigured" | "loading" | "waitingInProgress" | "signInFailed" | "genericError" {
   if (phase === "missing-client-id") return "notConfigured";
+  if (phase === "waiting-in-progress") return "waitingInProgress";
   if (isShellLoading(phase)) return "loading";
   if (phase !== "error") return "genericError";
   const msg = (errorMessage ?? "").toLowerCase();

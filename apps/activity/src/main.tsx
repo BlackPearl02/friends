@@ -2,18 +2,28 @@ import { StrictMode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { DiscordSDK } from "@discord/embedded-app-sdk";
 import type { PublicRoom } from "@friends/types";
-import { fetchRoom, joinRoom, replayMatch, setRoomIntent, voteRound } from "./api";
+import {
+  fetchRoom,
+  joinRoom,
+  leaveRoom,
+  replayMatch,
+  RoomInProgressError,
+  setRoomIntent,
+  voteRound,
+} from "./api";
 import { authenticateActivity } from "./auth";
 import "./friends.css";
 import { FinishedPanel } from "./FinishedPanel";
 import { t } from "./i18n";
 import { LobbyPanel } from "./LobbyPanel";
-import { previewFinished, previewReveal, previewRound, previewRoom } from "./previewData";
+import { previewFinished, previewReveal, previewRound, previewRoom, previewTie } from "./previewData";
 import { RoundPanel } from "./RoundPanel";
+import { subscribeDiscordParticipants } from "./discordParticipants";
 import { ROOM_POLL_MS } from "./roomSync";
 import { isShellLoading, shellBannerKind, type ShellPhase } from "./shellStatus";
 
 const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID?.trim() ?? "";
+const JOIN_RETRY_MS = 2_000;
 
 type BootResult = {
   sdk: DiscordSDK;
@@ -23,28 +33,47 @@ type BootResult = {
   room: PublicRoom;
 };
 
+type AuthSession = {
+  sdk: DiscordSDK;
+  accessToken: string;
+  userId: string;
+  instanceId: string;
+};
+
 /** One bootstrap across React StrictMode's double effect invoke in dev. */
 let bootPromise: Promise<BootResult> | null = null;
+let authSessionPromise: Promise<AuthSession> | null = null;
 
-function bootstrapActivity(clientId: string): Promise<BootResult> {
-  if (!bootPromise) {
-    bootPromise = (async () => {
+function authenticateSession(clientId: string): Promise<AuthSession> {
+  if (!authSessionPromise) {
+    authSessionPromise = (async () => {
       const sdk = new DiscordSDK(clientId);
       await sdk.ready();
       const auth = await authenticateActivity(sdk, clientId);
-      const instanceId = sdk.instanceId;
-      const room = await joinRoom(auth.accessToken, {
-        instanceId,
-        channelId: sdk.channelId,
-        guildId: sdk.guildId,
-      });
       return {
         sdk,
         accessToken: auth.accessToken,
         userId: auth.user.id,
-        instanceId,
-        room,
+        instanceId: sdk.instanceId,
       };
+    })().catch((err: unknown) => {
+      authSessionPromise = null;
+      throw err;
+    });
+  }
+  return authSessionPromise;
+}
+
+function bootstrapActivity(clientId: string): Promise<BootResult> {
+  if (!bootPromise) {
+    bootPromise = (async () => {
+      const session = await authenticateSession(clientId);
+      const room = await joinRoom(session.accessToken, {
+        instanceId: session.instanceId,
+        channelId: session.sdk.channelId,
+        guildId: session.sdk.guildId,
+      });
+      return { ...session, room };
     })().catch((err: unknown) => {
       bootPromise = null;
       throw err;
@@ -69,6 +98,7 @@ function BrandHeader() {
 
 function initialPreviewRoom(preview: string | null): PublicRoom | null {
   if (preview === "finished") return previewFinished;
+  if (preview === "tie") return previewTie;
   if (preview === "reveal") return previewReveal;
   if (preview === "round") return previewRound;
   if (preview) return previewRoom;
@@ -86,6 +116,9 @@ function App() {
   const [userId, setUserId] = useState<string | null>(preview ? "you" : null);
   const [instanceId, setInstanceId] = useState<string | null>(preview ? "preview" : null);
   const [room, setRoom] = useState<PublicRoom | null>(initialPreviewRoom(preview));
+  const [discordParticipantCount, setDiscordParticipantCount] = useState<number | null>(
+    preview ? 2 : null,
+  );
 
   useEffect(() => {
     if (preview) return;
@@ -111,6 +144,18 @@ function App() {
       .catch((err: unknown) => {
         // StrictMode abandons the first effect; ignore that attempt's updates.
         if (cancelled) return;
+        if (err instanceof RoomInProgressError) {
+          void authenticateSession(clientId).then((session) => {
+            if (cancelled) return;
+            sdkRef.current = session.sdk;
+            setAccessToken(session.accessToken);
+            setUserId(session.userId);
+            setInstanceId(session.instanceId);
+            setBootError(null);
+            setPhase("waiting-in-progress");
+          });
+          return;
+        }
         setBootError(err instanceof Error ? err.message : null);
         setPhase("error");
       });
@@ -119,6 +164,46 @@ function App() {
       cancelled = true;
     };
   }, [preview]);
+
+  useEffect(() => {
+    if (preview) return;
+    if (phase !== "waiting-in-progress" || !accessToken || !instanceId) return;
+    let cancelled = false;
+
+    const tryJoin = () => {
+      const sdk = sdkRef.current;
+      void joinRoom(accessToken, {
+        instanceId,
+        channelId: sdk?.channelId,
+        guildId: sdk?.guildId,
+      })
+        .then((next) => {
+          if (cancelled) return;
+          bootPromise = Promise.resolve({
+            sdk: sdk!,
+            accessToken,
+            userId: userId!,
+            instanceId,
+            room: next,
+          });
+          setRoom(next);
+          setPhase("ready");
+        })
+        .catch((err: unknown) => {
+          if (cancelled) return;
+          if (err instanceof RoomInProgressError) return;
+          setBootError(err instanceof Error ? err.message : null);
+          setPhase("error");
+        });
+    };
+
+    tryJoin();
+    const id = window.setInterval(tryJoin, JOIN_RETRY_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [phase, accessToken, instanceId, userId, preview]);
 
   useEffect(() => {
     if (preview) return;
@@ -147,6 +232,31 @@ function App() {
     };
   }, [phase, accessToken, instanceId, preview]);
 
+  useEffect(() => {
+    if (preview) return;
+    if (!accessToken || !instanceId) return;
+    if (phase !== "ready" && phase !== "waiting-in-progress") return;
+
+    // pagehide only — effect cleanup must not leave (React StrictMode remount).
+    const notifyLeave = () => {
+      leaveRoom(accessToken, instanceId);
+    };
+    window.addEventListener("pagehide", notifyLeave);
+    return () => {
+      window.removeEventListener("pagehide", notifyLeave);
+    };
+  }, [phase, accessToken, instanceId, preview]);
+
+  useEffect(() => {
+    if (preview) return;
+    if (phase !== "ready" && phase !== "waiting-in-progress") return;
+    const sdk = sdkRef.current;
+    if (!sdk) return;
+    return subscribeDiscordParticipants(sdk, (count) => {
+      setDiscordParticipantCount(count);
+    });
+  }, [phase, preview]);
+
   const ready = phase === "ready" && accessToken && userId && instanceId && room;
   const loading = isShellLoading(phase);
   const banner = shellBannerKind(phase, bootError);
@@ -161,17 +271,23 @@ function App() {
             <p style={{ margin: 0, fontWeight: 700 }}>
               {banner === "notConfigured"
                 ? t("shell.notConfigured")
-                : banner === "loading"
-                  ? phase === "boot"
-                    ? t("shell.authBoot")
-                    : t("shell.authAuthorizing")
-                  : banner === "signInFailed"
-                    ? t("shell.signInFailed")
-                    : t("shell.genericError")}
+                : banner === "waitingInProgress"
+                  ? t("shell.waitingInProgress")
+                  : banner === "loading"
+                    ? phase === "boot"
+                      ? t("shell.authBoot")
+                      : t("shell.authAuthorizing")
+                    : banner === "signInFailed"
+                      ? t("shell.signInFailed")
+                      : t("shell.genericError")}
             </p>
             {!loading && (
               <p className="friends-subtitle">
-                {banner === "notConfigured" ? t("shell.missingClientIdDev") : t("shell.signInFailedDetail")}
+                {banner === "notConfigured"
+                  ? t("shell.missingClientIdDev")
+                  : banner === "waitingInProgress"
+                    ? t("shell.waitingInProgressDetail")
+                    : t("shell.signInFailedDetail")}
               </p>
             )}
           </section>
@@ -181,6 +297,7 @@ function App() {
           <LobbyPanel
             room={room}
             currentUserId={userId}
+            discordParticipantCount={discordParticipantCount}
             onInvite={async () => {
               if (preview) throw new Error("preview");
               const sdk = sdkRef.current;

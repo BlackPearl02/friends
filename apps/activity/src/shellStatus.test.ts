@@ -5,6 +5,7 @@ describe("isShellLoading", () => {
   it("is true only for boot and authorizing", () => {
     expect(isShellLoading("boot")).toBe(true);
     expect(isShellLoading("authorizing")).toBe(true);
+    expect(isShellLoading("waiting-in-progress")).toBe(false);
     expect(isShellLoading("ready")).toBe(false);
     expect(isShellLoading("error")).toBe(false);
     expect(isShellLoading("missing-client-id")).toBe(false);
@@ -19,6 +20,10 @@ describe("shellBannerKind", () => {
   it("maps loading phases before treating as error", () => {
     expect(shellBannerKind("boot", null)).toBe("loading");
     expect(shellBannerKind("authorizing", null)).toBe("loading");
+  });
+
+  it("maps mid-session wait separately from errors", () => {
+    expect(shellBannerKind("waiting-in-progress", null)).toBe("waitingInProgress");
   });
 
   it("does not treat ready as an error banner", () => {

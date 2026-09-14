@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { PublicRoom, RoomIntent } from "@friends/types";
 import { t } from "./i18n";
+import { isRevealTie, leadersFromTallies } from "./roundReveal";
 import { colors } from "./theme";
 
 /** Soft-nudge “wrap up?” from the 8th revealed round onward. */
@@ -9,6 +10,7 @@ const SOFT_WRAP_FROM_SESSION_ROUND = 8;
 function intentBadge(intent: RoomIntent): { label: string; color: string } {
   if (intent === "continue") return { label: t("round.continueBadge"), color: colors.accent2 };
   if (intent === "wrap_up") return { label: t("round.wrapBadge"), color: colors.accent };
+  if (intent === "revote") return { label: t("round.revoteBadge"), color: colors.accent };
   return { label: t("round.waitingBadge"), color: colors.muted };
 }
 
@@ -22,13 +24,22 @@ export function RoundPanel(props: {
   const me = props.room.players.find((p) => p.userId === props.currentUserId);
   const [busy, setBusy] = useState(false);
   const [picked, setPicked] = useState<string | null>(null);
+  useEffect(() => {
+    setPicked(null);
+  }, [round?.id]);
   if (!round) return null;
 
   const revealed = round.status !== "voting";
   const playerCount = props.room.players.length;
   const continueCount = props.room.players.filter((p) => p.intent === "continue").length;
   const wrapCount = props.room.players.filter((p) => p.intent === "wrap_up").length;
+  const revoteCount = props.room.players.filter((p) => p.intent === "revote").length;
   const softWrap = props.room.sessionRoundCount >= SOFT_WRAP_FROM_SESSION_ROUND;
+  const tallies = round.results?.tallies;
+  const leaders = tallies ? leadersFromTallies(tallies) : { userIds: [] as string[], votes: 0 };
+  const tied = isRevealTie(tallies);
+  const leaderPlayers = props.room.players.filter((p) => leaders.userIds.includes(p.userId));
+  const leaderNames = leaderPlayers.map((p) => p.displayName).join(", ");
 
   return (
     <section className="friends-card">
@@ -91,10 +102,48 @@ export function RoundPanel(props: {
 
       {revealed && (
         <div className="reveal-block">
-          <p className="reveal-line">{t("round.votesLocked")}</p>
-          <p className="hint">{t("round.scoresAtEnd")}</p>
+          {leaderPlayers.length > 0 ? (
+            <>
+              <p className="reveal-winner">
+                {tied
+                  ? t("round.revealTie", { names: leaderNames })
+                  : t("round.revealWinner", { name: leaderNames })}
+              </p>
+              <p className="reveal-context">
+                {t("round.revealVotes", {
+                  votes: String(leaders.votes),
+                  total: String(round.voteCount),
+                })}
+              </p>
+              <ul className="player-list reveal-tallies">
+                {[...props.room.players]
+                  .sort((a, b) => (tallies?.[b.userId] ?? 0) - (tallies?.[a.userId] ?? 0))
+                  .map((p) => {
+                    const count = tallies?.[p.userId] ?? 0;
+                    const isLeader = leaders.userIds.includes(p.userId);
+                    return (
+                      <li key={p.userId} className={isLeader ? "player-row is-winner" : "player-row"}>
+                        <span className="player-row-main">
+                          {p.avatarUrl ? (
+                            <img className="player-avatar" src={p.avatarUrl} alt="" width={28} height={28} />
+                          ) : (
+                            <span className="player-avatar player-avatar-fallback" aria-hidden />
+                          )}
+                          <span className="player-name">{p.displayName}</span>
+                        </span>
+                        <span className="tally-count">{count}</span>
+                      </li>
+                    );
+                  })}
+              </ul>
+            </>
+          ) : (
+            <p className="reveal-line">{t("round.votesLocked")}</p>
+          )}
 
-          {softWrap && <p className="hint">{t("round.softWrapHint")}</p>}
+          {tied && <p className="hint">{t("round.tieHint")}</p>}
+          {!tied && <p className="hint">{t("round.scoresAtEnd")}</p>}
+          {softWrap && !tied && <p className="hint">{t("round.softWrapHint")}</p>}
 
           <ul className="player-list" style={{ marginTop: "0.85rem" }}>
             {props.room.players.map((p) => {
@@ -112,16 +161,53 @@ export function RoundPanel(props: {
             })}
           </ul>
           <p className="hint">
-            {t("round.intentCount", {
-              continue: String(continueCount),
-              wrap: String(wrapCount),
-              total: String(playerCount),
-            })}
+            {tied
+              ? t("round.tieIntentCount", {
+                  continue: String(continueCount),
+                  revote: String(revoteCount),
+                  total: String(playerCount),
+                })
+              : t("round.intentCount", {
+                  continue: String(continueCount),
+                  wrap: String(wrapCount),
+                  total: String(playerCount),
+                })}
           </p>
         </div>
       )}
 
-      {revealed && (
+      {revealed && tied && (
+        <div className="actions">
+          <button
+            type="button"
+            className={me?.intent === "revote" ? "btn btn-primary is-selected" : "btn btn-primary"}
+            disabled={busy}
+            onClick={() => {
+              setBusy(true);
+              void props
+                .onIntent(me?.intent === "revote" ? "none" : "revote")
+                .finally(() => setBusy(false));
+            }}
+          >
+            {t("round.revote")}
+          </button>
+          <button
+            type="button"
+            className={me?.intent === "continue" ? "btn btn-ghost is-selected" : "btn btn-ghost"}
+            disabled={busy}
+            onClick={() => {
+              setBusy(true);
+              void props
+                .onIntent(me?.intent === "continue" ? "none" : "continue")
+                .finally(() => setBusy(false));
+            }}
+          >
+            {t("round.continueTied")}
+          </button>
+        </div>
+      )}
+
+      {revealed && !tied && (
         <div className="actions">
           <button
             type="button"

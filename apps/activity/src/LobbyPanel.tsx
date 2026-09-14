@@ -1,17 +1,24 @@
 import { useState } from "react";
 import type { PublicRoom, RoomIntent } from "@friends/types";
 import { t } from "./i18n";
+import { lobbyWaitingForDiscordJoin } from "./lobbyHints";
 import { colors } from "./theme";
 
 export function LobbyPanel(props: {
   room: PublicRoom;
   currentUserId: string;
+  /** Discord Activity instance participants — may exceed Squimbo room until they finish auth. */
+  discordParticipantCount?: number | null;
   onIntent: (intent: RoomIntent) => Promise<void>;
   onInvite: () => Promise<void>;
 }) {
   const me = props.room.players.find((p) => p.userId === props.currentUserId);
   const continueCount = props.room.players.filter((p) => p.intent === "continue").length;
   const total = props.room.players.length;
+  const waitingDiscord = lobbyWaitingForDiscordJoin(
+    total,
+    props.discordParticipantCount ?? null,
+  );
   const iAmContinue = me?.intent === "continue";
   const [busy, setBusy] = useState(false);
   const [inviteHint, setInviteHint] = useState<string | null>(null);
@@ -49,7 +56,8 @@ export function LobbyPanel(props: {
       <p className="hint">
         {t("lobby.readyCount", { ready: String(continueCount), total: String(total) })}
       </p>
-      {total < 2 && <p className="hint">{t("lobby.needPlayers")}</p>}
+      {waitingDiscord && <p className="hint">{t("lobby.waitingDiscordJoin")}</p>}
+      {!waitingDiscord && total < 2 && <p className="hint">{t("lobby.needPlayers")}</p>}
 
       <div className="actions">
         <button
