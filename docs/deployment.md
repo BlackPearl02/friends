@@ -1,4 +1,6 @@
-# Deployment — Friends
+# Deployment — Squimbo
+
+Engineering packages remain `@friends/*`. Product / Discord name: **Squimbo**. Marketing: **squimbo.app**.
 
 **Stack:** Vercel (Activity + API + Web) + Supabase (PostgreSQL).  
 **Dev stack:** Vite :3003 + Nest :3000 + Next :3001 + Docker Postgres :15433.
@@ -87,7 +89,25 @@ Note the deployed URL, e.g. `https://friends-api.vercel.app`.
 |---|---|
 | `NEXT_PUBLIC_DISCORD_CLIENT_ID` | Discord Client ID (Application Directory CTA) |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | Support inbox shown on Support / Privacy / Terms |
-| `NEXT_PUBLIC_SITE_URL` | Canonical origin, no trailing slash (e.g. `https://friends-web.vercel.app`) — used for metadata, sitemap, Open Graph, and `llms.txt` |
+| `NEXT_PUBLIC_SITE_URL` | Canonical origin, no trailing slash (e.g. `https://squimbo.app`) — used for metadata, sitemap, Open Graph, and `llms.txt` |
+| `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | PostHog project token (`phc_…`) for the Squimbo / Friends marketing project (EU cloud) |
+| `NEXT_PUBLIC_POSTHOG_HOST` | `https://eu.i.posthog.com` |
+
+Also enable **Vercel Web Analytics** on the `friends-web` project (Dashboard → Analytics, or run interactively: `vercel project web-analytics enable friends-web --scope blackpearls-projects-c2dca206`). The app already mounts `@vercel/analytics`.
+
+### PostHog (recommended)
+
+Provision a dedicated PostHog org/project via Vercel Marketplace (creates env vars automatically):
+
+```bash
+# Once (interactive): accept marketplace terms
+# https://vercel.com/blackpearls-projects-c2dca206/~/integrations/accept-terms/posthog?source=cli
+
+vercel link --yes --scope blackpearls-projects-c2dca206 --project friends-web --cwd apps/web
+vercel --scope blackpearls-projects-c2dca206 --cwd apps/web integration add posthog -m data_region=EU --plan posthog-usage-based --name squimbo-web
+```
+
+Do **not** reuse the PlayGrid PostHog project for Squimbo marketing traffic.
 
 ### Deploy command
 ```bash
@@ -144,4 +164,6 @@ For Discord iframe testing locally you still need a temporary tunnel (see [disco
 | `VITE_FRIENDS_API_URL` | *(empty)* | — | *(empty)* | — |
 | `NEXT_PUBLIC_DISCORD_CLIENT_ID` | falls back to Discord client id | — | — | Vercel env |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | optional | — | — | Vercel env |
-| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3001` (or unset) | — | — | Vercel Web URL |
+| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3001` (or unset) | — | — | `https://squimbo.app` |
+| `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | optional (empty = no init) | — | — | Vercel env |
+| `NEXT_PUBLIC_POSTHOG_HOST` | `https://eu.i.posthog.com` | — | — | `https://eu.i.posthog.com` |

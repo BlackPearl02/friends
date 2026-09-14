@@ -1,19 +1,19 @@
 export const en = {
   meta: {
-    siteName: "Friends",
-    landingTitle: "Friends, a Discord party game",
+    siteName: "Squimbo",
+    landingTitle: "Squimbo, a Discord party game",
     landingDescription:
       "Who knows the group best? Vote in the dark inside Discord. No join code.",
     privacyTitle: "Privacy Policy",
     privacyDescription:
-      "How Friends handles Discord identity, room data, and votes when you play the Activity or visit this site.",
+      "How Squimbo handles Discord identity, room data, and votes when you play the Activity or visit this site.",
     termsTitle: "Terms of Use",
     termsDescription:
-      "Terms for using Friends, the Discord Activity party game: eligibility, conduct, and availability.",
+      "Terms for using Squimbo, the Discord Activity party game: eligibility, conduct, and availability.",
     supportTitle: "Support",
     supportDescription:
-      "Get help with Friends on Discord. Troubleshooting tips and how to contact support.",
-    ogImageAlt: "Friends — Discord party game cover art",
+      "Get help with Squimbo on Discord. Troubleshooting tips and how to contact support.",
+    ogImageAlt: "Squimbo — Discord party game cover art",
   },
   nav: {
     home: "Home",
@@ -22,13 +22,13 @@ export const en = {
     support: "Support",
   },
   landing: {
-    brand: "Friends",
+    brand: "Squimbo",
     label: "Discord Activity",
     headline: "Who knows the group best?",
     subhead:
       "A party game for Discord. Open the Activity, vote in the dark, then face the finale.",
     entityBlurb:
-      "Friends is a Discord Activity party game for groups already in a voice channel. There is no join code: whoever opens the Activity is in. Players vote on “who is most likely” rounds with sealed tallies, then see scores only at the finale. It feels best with about 3 to 8 people.",
+      "Squimbo is a Discord Activity party game for groups already in a voice channel. There is no join code: whoever opens the Activity is in. Players vote on “who is most likely” rounds with sealed tallies, then see scores only at the finale. It feels best with about 3 to 8 people.",
     cta: "Play on Discord",
     ctaFallback: "Open Discord",
     ctaSecondary: "See how it works",
@@ -49,7 +49,7 @@ export const en = {
     howLead: "Three beats. Everyone plays. No host privileges.",
     step1Title: "Start in the channel",
     step1Body:
-      "Open Friends in voice. Whoever joins is in. No join code, no extra apps.",
+      "Open Squimbo in voice. Whoever joins is in. No join code, no extra apps.",
     step2Title: "Vote sealed",
     step2Body:
       "Each round asks who is most likely. Everyone picks someone else. Votes stay hidden until the last person locks in.",
@@ -58,7 +58,7 @@ export const en = {
       "Keep going or wrap when the night feels done. The scoreboard waits for the finale, then play again.",
     fitTitle: "Built for the channel you already opened",
     fitBody:
-      "Friends is a Discord Activity, not a separate app and not a lobby with codes. Your display names and avatars come with you. Best with about 3 to 8 people in voice.",
+      "Squimbo is a Discord Activity, not a separate app and not a lobby with codes. Your display names and avatars come with you. Best with about 3 to 8 people in voice.",
     fitPoint1: "No join code",
     fitPoint2: "Same controls for everyone",
     fitPoint3: "Scores only at the finale",
@@ -71,21 +71,21 @@ export const en = {
     spec4Label: "Scores",
     spec4Value: "Finale only",
     faqTitle: "FAQ",
-    faq1Q: "What is Friends?",
+    faq1Q: "What is Squimbo?",
     faq1A:
-      "Friends is a party game that runs as a Discord Activity. Your group opens it in a voice channel, votes on most likely rounds, and sees scores when you wrap the night.",
+      "Squimbo is a party game that runs as a Discord Activity. Your group opens it in a voice channel, votes on most likely rounds, and sees scores when you wrap the night.",
     faq2Q: "How many players do I need?",
     faq2A:
-      "Friends needs at least two players to start. It feels best with about 3 to 8 people already in the channel.",
+      "Squimbo needs at least two players to start. It feels best with about 3 to 8 people already in the channel.",
     faq3Q: "Do I need a join code?",
     faq3A:
-      "No. Friends does not use a join code. Everyone who opens the Activity in that channel is in the same room.",
+      "No. Squimbo does not use a join code. Everyone who opens the Activity in that channel is in the same room.",
     faq4Q: "Is it a separate app?",
     faq4A:
-      "No. Friends launches inside Discord on desktop and mobile. There is no extra install for the game itself.",
-    closeBrand: "Friends",
+      "No. Squimbo launches inside Discord on desktop and mobile. There is no extra install for the game itself.",
+    closeBrand: "Squimbo",
     closeTitle: "Ready when the crew is.",
-    closeBody: "Launch Friends from a Discord voice channel and start the first round.",
+    closeBody: "Launch Squimbo from a Discord voice channel and start the first round.",
     closeCta: "Play on Discord",
   },
   footer: {
@@ -97,7 +97,7 @@ export const en = {
   support: {
     title: "Support",
     intro:
-      "Friends runs inside Discord. Most hiccups clear up when you reopen the Activity in the same channel.",
+      "Squimbo runs inside Discord. Most hiccups clear up when you reopen the Activity in the same channel.",
     howTitle: "Try this first",
     how1: "Leave the Activity and open it again in the same voice channel.",
     how2: "Wait until Discord has finished loading and you are connected to voice.",
@@ -110,25 +110,25 @@ export const en = {
   },
   privacy: {
     title: "Privacy Policy",
-    updated: "Last updated: 13 September 2026",
+    updated: "Last updated: 14 September 2026",
     s1Title: "Who we are",
     s1Body:
-      "Friends is a Discord Activity party game. This policy describes what we process when you play the Activity or visit this website.",
+      "Squimbo is a Discord Activity party game. This policy describes what we process when you play the Activity or visit this website.",
     s2Title: "What we collect",
     s2Body:
-      "When you play, we receive Discord identity data needed to run the game (such as Discord user id and display name via Discord OAuth and the Embedded App flow). We store room membership, votes, scores, and session state tied to the Activity instance. This website does not require an account.",
+      "When you play, we receive Discord identity data needed to run the game (such as Discord user id and display name via Discord OAuth and the Embedded App flow). We store room membership, votes, scores, and session state tied to the Activity instance. This website does not require an account. On this website we use privacy-friendly analytics (page views, basic device and referrer data, and optional session replay) via PostHog and Vercel Analytics to understand how the marketing pages are used.",
     s3Title: "How we use data",
     s3Body:
-      "We use this data to sign you into Friends, run rounds in your channel, keep session scores, and operate the service. We do not sell personal data.",
+      "We use this data to sign you into Squimbo, run rounds in your channel, keep session scores, operate the service, and improve the website and product. We do not sell personal data.",
     s4Title: "Sharing",
     s4Body:
-      "Identity comes from Discord. We do not share your game data with advertisers. Hosting providers process data only to run Friends under our instructions.",
+      "Identity comes from Discord. We do not share your game data with advertisers. Hosting and analytics providers (including Vercel and PostHog EU) process data only to run Squimbo under our instructions.",
     s5Title: "Retention",
     s5Body:
       "Room and vote history may be kept to improve the product (for example future profiles). You can stop using the Activity at any time. Contact us for a deletion request.",
     s6Title: "Security",
     s6Body:
-      "Game APIs require a short-lived Friends session token minted after Discord verifies your identity. This website does not hold Discord access tokens.",
+      "Game APIs require a short-lived Squimbo session token minted after Discord verifies your identity. This website does not hold Discord access tokens.",
     s7Title: "Contact",
     s7Body: "Privacy questions: {email}.",
     s7Missing: "Privacy questions: see the contact options on the Support page.",
@@ -137,24 +137,41 @@ export const en = {
   },
   terms: {
     title: "Terms of Use",
-    updated: "Last updated: 13 September 2026",
+    updated: "Last updated: 14 September 2026",
     s1Title: "The service",
     s1Body:
-      "Friends is a party game that runs as a Discord Activity. By using Friends you agree to these terms and to Discord's terms for Activities.",
+      "Squimbo is a party game that runs as a Discord Activity. By using Squimbo you agree to these terms and to Discord's terms for Activities.",
     s2Title: "Eligibility",
     s2Body:
-      "You must be allowed to use Discord and join the channel where Friends is launched. Follow Discord's Community Guidelines. No harassment, hate, or illegal content.",
+      "You must be allowed to use Discord and join the channel where Squimbo is launched. Follow Discord's Community Guidelines. No harassment, hate, or illegal content.",
     s3Title: "Your conduct",
     s3Body:
       "Play fair. Do not abuse the Activity, disrupt other rooms, scrape prompts at scale, or reverse-engineer the service for harm.",
     s4Title: "Availability",
     s4Body:
-      "Friends is provided as-is. Sessions may end, prompts may change, and features may evolve. We are not liable for lost scores, downtime, or Discord outages.",
+      "Squimbo is provided as-is. Sessions may end, prompts may change, and features may evolve. We are not liable for lost scores, downtime, or Discord outages.",
     s5Title: "Intellectual property",
     s5Body:
-      "Friends branding, original prompts, and software belong to their owners. Do not copy them outside permitted Discord use. Friends is not affiliated with third-party mobile party games.",
+      "Squimbo branding, original prompts, and software belong to their owners. Do not copy them outside permitted Discord use. Squimbo is not affiliated with third-party mobile party games.",
     s6Title: "Contact",
     s6Body: "Questions about these terms: {email}.",
     s6Missing: "Questions about these terms: see the Support page.",
+  },
+  errors: {
+    notFound: {
+      code: "404",
+      title: "This page left the channel.",
+      body: "Head home or open Squimbo in Discord.",
+      home: "Home",
+      playCta: "Play on Discord",
+    },
+    unexpected: {
+      code: "Error",
+      title: "Something broke mid-round.",
+      body: "Try again, or bounce back home.",
+      retry: "Try again",
+      home: "Home",
+      playCta: "Play on Discord",
+    },
   },
 } as const;

@@ -3,13 +3,15 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "node ../../scripts/with-friends-env.mjs -- next dev --port 3001",
+    "dev": "node ../../scripts/with-friends-env.mjs -- next dev --port 3012",
     "build": "node ../../scripts/with-friends-env.mjs -- next build",
     "start": "node ../../scripts/with-friends-env.mjs -- next start --port 3001",
     "lint": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "next": "^15.2.0",
+    "@vercel/analytics": "^2.0.1",
+    "next": "^15.5.25",
+    "posthog-js": "^1.433.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

@@ -1,10 +1,10 @@
-# Friends — metrics
+# Squimbo — metrics
 
 Related: [strategy.md](./strategy.md) · [roadmap.md](./roadmap.md) · [product.md](./product.md)
 
-Friends is a **group** product. Optimize groups and sessions, not solo DAU vanity.
+Squimbo is a **group** product. Optimize groups and sessions, not solo DAU vanity.
 
-Instrumentation (PostHog, etc.) comes later. This doc defines **what** to measure once events exist.
+Marketing site (`apps/web`) ships PostHog client init + Vercel Analytics. Activity/game event instrumentation still comes later. This doc defines **what** to measure once game events exist.
 
 ## North star
 

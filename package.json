@@ -18,5 +18,12 @@
     "turbo": "^2.4.0",
     "typescript": "catalog:"
   },
-  "packageManager": "pnpm@9.15.0"
+  "packageManager": "pnpm@9.15.0",
+  "pnpm": {
+    "overrides": {
+      "postcss": ">=8.5.23",
+      "multer": ">=2.3.0",
+      "deepmerge-ts": ">=8.0.0"
+    }
+  }
 }
