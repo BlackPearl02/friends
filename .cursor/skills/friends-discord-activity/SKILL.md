@@ -1,12 +1,12 @@
 ---
 name: friends-discord-activity
 description: >-
-  Discord Embedded App for Friends — SDK ready/authorize/authenticate, URL
+  Discord Embedded App for Squimbo — SDK ready/authorize/authenticate, URL
   mappings, HTTPS tunnels, token exchange, participants. Use when working on
   apps/activity, Activity OAuth, discordsays.com, or local Activity dev.
 ---
 
-# Friends Discord Activity
+# Squimbo Discord Activity
 
 ## Read first
 
@@ -18,7 +18,7 @@ description: >-
 
 1. `DiscordSDK(clientId)` → `ready()`
 2. `authorize` (`identify`, `guilds`, `rpc.activities.write`) → `code`
-3. `POST /api/discord/activity/exchange` `{ code }` → Friends JWT + `discordAccessToken`
+3. `POST /api/discord/activity/exchange` `{ code }` → Squimbo session JWT + `discordAccessToken`
 4. `sdk.commands.authenticate({ access_token })`
 5. Join room with **server** `instanceId` from SDK (`discordSdk.instanceId`) — send it as a claim to join, API still binds the authenticated user
 

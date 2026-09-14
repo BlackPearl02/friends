@@ -1,13 +1,13 @@
 ---
 name: friends-security
 description: >-
-  Friends application security — AppSec audit, threat model, IDOR/BOLA, Discord
+  Squimbo application security — AppSec audit, threat model, IDOR/BOLA, Discord
   Activity OAuth, JWT, Prisma leakage, remediation with tests. Use when the user
   asks for security audit, AppSec, IDOR, ATO, Discord exchange security, or
   secret rotation procedure.
 ---
 
-# Friends security engineering
+# Squimbo security engineering
 
 Act as **Principal Application Security Engineer**. Golden rule: ask how you would break it (steal votes, impersonate a player, mint a JWT, replay an OAuth code) — then prove whether it works.
 

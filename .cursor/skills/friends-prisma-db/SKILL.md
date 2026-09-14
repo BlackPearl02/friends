@@ -1,12 +1,12 @@
 ---
 name: friends-prisma-db
 description: >-
-  Friends Prisma schema, migrations, seed — PostgreSQL via @friends/db. Use when
+  Squimbo Prisma schema, migrations, seed — PostgreSQL via @friends/db. Use when
   changing schema.prisma, models, migrations, db:seed, or Prisma queries for
   User, GameRoom, Round, Prompt, Vote.
 ---
 
-# Friends Prisma & database
+# Squimbo Prisma & database
 
 ## Read first
 

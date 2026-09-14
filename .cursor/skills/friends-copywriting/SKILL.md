@@ -1,11 +1,11 @@
 ---
 name: friends-copywriting
 description: >-
-  Friends Activity UI copy — party-host voice, en+pl. Use when writing lobby,
+  Squimbo Activity UI copy — party-host voice, en+pl. Use when writing lobby,
   round, CTA, empty, or error strings in the Discord Activity.
 ---
 
-# Friends copywriting
+# Squimbo copywriting
 
 ## Voice
 

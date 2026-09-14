@@ -1,10 +1,10 @@
 ---
-description: Friends Activity frontend AppSec — XSS, untrusted client, Discord proxy
+description: Squimbo Activity frontend AppSec — XSS, untrusted client, Discord proxy
 globs: apps/activity/**/*
 alwaysApply: false
 ---
 
-# Friends — Activity frontend AppSec
+# Squimbo — Activity frontend AppSec
 
 ## MUST
 
@@ -15,7 +15,7 @@ alwaysApply: false
 
 ## MUST NOT
 
-- Put the Friends JWT in a durable store without XSS review (memory is the default).
+- Put the Squimbo session JWT in a durable store without XSS review (memory is the default).
 - Redirect to an arbitrary URL from query params.
 
 ## SHOULD

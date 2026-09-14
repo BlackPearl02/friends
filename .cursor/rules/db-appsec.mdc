@@ -1,10 +1,10 @@
 ---
-description: Friends DB AppSec — Prisma authz, overfetch, migrations
+description: Squimbo DB AppSec — Prisma authz, overfetch, migrations
 globs: packages/db/**/*,**/schema.prisma,apps/api/src/prisma/**/*
 alwaysApply: false
 ---
 
-# Friends — database AppSec
+# Squimbo — database AppSec
 
 Prisma skill: [friends-prisma-db](../skills/friends-prisma-db/SKILL.md).
 

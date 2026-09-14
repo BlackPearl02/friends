@@ -4,7 +4,7 @@ globs: commit-areas.json,scripts/**,drafts/git-commit-plan.json
 alwaysApply: false
 ---
 
-# Friends — git staging
+# Squimbo — git staging
 
 **Workflow:** [friends-git-staging skill](../skills/friends-git-staging/SKILL.md).
 

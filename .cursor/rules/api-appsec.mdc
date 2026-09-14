@@ -1,10 +1,10 @@
 ---
-description: Friends API AppSec — IDOR/BOLA, @Public, output DTO, rate limit
+description: Squimbo API AppSec — IDOR/BOLA, @Public, output DTO, rate limit
 globs: apps/api/**/*
 alwaysApply: false
 ---
 
-# Friends — API AppSec
+# Squimbo — API AppSec
 
 Skill: [friends-security](../skills/friends-security/SKILL.md). Nest: [friends-api-nest](../skills/friends-api-nest/SKILL.md).
 

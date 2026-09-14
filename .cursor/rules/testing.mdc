@@ -3,7 +3,7 @@ description: Unit, integration, and Activity helper tests — required with new 
 alwaysApply: true
 ---
 
-# Friends — tests (agent)
+# Squimbo — tests (agent)
 
 Strategy: [docs/testing-strategy.md](../../docs/testing-strategy.md). Skill: `.cursor/skills/friends-testing/SKILL.md`.
 

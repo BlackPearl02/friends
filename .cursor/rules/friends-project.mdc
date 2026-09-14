@@ -1,15 +1,15 @@
 ---
-description: Friends — product, monorepo, stack, and agent conventions
+description: Squimbo — product, monorepo, stack, and agent conventions
 alwaysApply: true
 ---
 
-# Friends — project context
+# Squimbo — project context
 
 ## Product
 
-**Friends** is a Discord Activity party game inspired by Kumple (Buddies): questions, challenges, and “who is most likely” among people already in a Discord channel. No join code — the Activity `instanceId` is the room.
+**Squimbo** is a Discord Activity party game inspired by Kumple (Buddies): questions, challenges, and “who is most likely” among people already in a Discord channel. No join code — the Activity `instanceId` is the room. Marketing site: **squimbo.app**. Engineering packages remain `@friends/*` until a later rename.
 
-Canonical: [docs/product.md](../../docs/product.md), [docs/strategy.md](../../docs/strategy.md), [docs/roadmap.md](../../docs/roadmap.md). Setup: [docs/discord-activity-setup.md](../../docs/discord-activity-setup.md).
+Canonical: [docs/product.md](../../docs/product.md), [docs/strategy.md](../../docs/strategy.md), [docs/roadmap.md](../../docs/roadmap.md). Setup: [docs/discord-activity-setup.md](../../docs/discord-activity-setup.md). Launch: [docs/squimbo-launch-checklist.md](../../docs/squimbo-launch-checklist.md).
 
 **Do not** copy Kumple’s question bank, assets, or brand. **Do not** pull in PlayGrid library / sessions / store OAuth. **Do not** add a second equal async game mode until roadmap unlocks it.
 

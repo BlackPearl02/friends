@@ -1,12 +1,12 @@
 ---
 name: friends-api-nest
 description: >-
-  Friends NestJS API — modules, JWT guards, DTOs, Prisma, REST. Use when adding
+  Squimbo NestJS API — modules, JWT guards, DTOs, Prisma, REST. Use when adding
   apps/api routes, controllers, services, guards, class-validator DTOs, or
   @Public() exceptions.
 ---
 
-# Friends API (NestJS)
+# Squimbo API (NestJS)
 
 ## When this skill applies
 

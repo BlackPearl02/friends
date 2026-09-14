@@ -6,7 +6,7 @@ description: >-
   clean git queue, stage changes, posprzątaj gita.
 ---
 
-# Friends git staging
+# Squimbo git staging
 
 ## When this skill applies
 

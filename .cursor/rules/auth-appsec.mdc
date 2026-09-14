@@ -1,15 +1,15 @@
 ---
-description: Friends auth AppSec — JWT after Discord Activity exchange
+description: Squimbo auth AppSec — JWT after Discord Activity exchange
 globs: apps/api/src/auth/**/*,apps/api/src/discord/**/*
 alwaysApply: false
 ---
 
-# Friends — auth & session AppSec
+# Squimbo — auth & session AppSec
 
 ## MUST
 
 - JWT: pinned algorithm, strong `JWT_SECRET`, explicit expiry.
-- Subject = Friends `User.id` (UUID), not Discord snowflake as the only server key (keep `discordId` unique on User).
+- Subject = Squimbo `User.id` (UUID), not Discord snowflake as the only server key (keep `discordId` unique on User).
 - Activity exchange: Discord code → token → `/users/@me` → upsert user → mint JWT.
 
 ## MUST NOT

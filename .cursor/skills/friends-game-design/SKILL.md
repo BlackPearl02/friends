@@ -1,11 +1,11 @@
 ---
 name: friends-game-design
 description: >-
-  Friends party-game design — viral most_likely loop, reveal, scoring.
+  Squimbo party-game design — viral most_likely loop, reveal, scoring.
   Use when adding prompts, rounds, lobby flow, or changing how votes work.
 ---
 
-# Friends game design
+# Squimbo game design
 
 ## Read first
 

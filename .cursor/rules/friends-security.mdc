@@ -1,9 +1,9 @@
 ---
-description: Friends AppSec baseline — authz, secrets, no security theater
+description: Squimbo AppSec baseline — authz, secrets, no security theater
 alwaysApply: true
 ---
 
-# Friends — security baseline
+# Squimbo — security baseline
 
 Priority: **SECURITY > confidentiality > authorization > integrity > availability > convenience**.
 

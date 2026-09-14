@@ -4,7 +4,7 @@ globs: apps/api/src/game/**/*,apps/activity/src/**,packages/db/prisma/**
 alwaysApply: false
 ---
 
-# Friends — game design
+# Squimbo — game design
 
 Product: [docs/product.md](../../docs/product.md). Strategy: [docs/strategy.md](../../docs/strategy.md). Roadmap: [docs/roadmap.md](../../docs/roadmap.md). Skill: [friends-game-design](../skills/friends-game-design/SKILL.md).
 

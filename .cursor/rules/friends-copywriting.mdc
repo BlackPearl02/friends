@@ -4,7 +4,7 @@ globs: apps/activity/**/*
 alwaysApply: false
 ---
 
-# Friends — copywriting
+# Squimbo — copywriting
 
 Skill: [friends-copywriting](../skills/friends-copywriting/SKILL.md). Locale: [friends-i18n.mdc](./friends-i18n.mdc).
 

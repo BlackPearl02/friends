@@ -1,10 +1,10 @@
 ---
-description: Friends Discord AppSec — OAuth, Activity exchange, instance rooms
+description: Squimbo Discord AppSec — OAuth, Activity exchange, instance rooms
 globs: apps/api/src/discord/**/*,apps/activity/**/*
 alwaysApply: false
 ---
 
-# Friends — Discord / Activity AppSec
+# Squimbo — Discord / Activity AppSec
 
 ## MUST
 
@@ -17,7 +17,7 @@ alwaysApply: false
 
 - Log Discord access tokens or authorization codes.
 - Process a second exchange of the same code as success.
-- Treat Discord email as an account-merge proof (Friends is Discord-id native).
+- Treat Discord email as an account-merge proof (Squimbo is Discord-id native).
 
 ## SHOULD
 

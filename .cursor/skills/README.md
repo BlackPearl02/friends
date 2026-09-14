@@ -1,4 +1,4 @@
-# Friends Cursor skills
+# Squimbo Cursor skills
 
 Project-specific agent skills. Cursor discovers this folder automatically.
 

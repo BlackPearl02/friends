@@ -4,7 +4,7 @@ globs: apps/activity/**/*
 alwaysApply: false
 ---
 
-# Friends — i18n (en + pl)
+# Squimbo — i18n (en + pl)
 
 Every new or edited user-visible string goes through i18n in **both** `en` (default) and `pl`.
 

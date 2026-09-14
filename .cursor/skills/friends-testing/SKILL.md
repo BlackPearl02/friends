@@ -1,11 +1,11 @@
 ---
 name: friends-testing
 description: >-
-  Friends test strategy — Vitest unit, API integration with supertest. Use when
+  Squimbo test strategy — Vitest unit, API integration with supertest. Use when
   adding features, fixing bugs, or when the user asks for tests, regresja, or CI.
 ---
 
-# Friends testing
+# Squimbo testing
 
 ## When this skill applies
 
