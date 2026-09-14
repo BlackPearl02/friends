@@ -1,4 +1,4 @@
-# Friends — strategy
+# Squimbo — strategy
 
 Pitch: **You're already together. Find out who knows the group best.**
 
@@ -13,14 +13,14 @@ Related: [product.md](./product.md) · [roadmap.md](./roadmap.md) · [metrics.md
 
 We do **not** ship A and B as equal modes. Premature “Play together / Make your quiz / Daily / Who knows me…” kills a clear reason to open the app.
 
-**A uses a moment Discord already has:** friends on voice, someone says “let’s do something for 10 minutes.” Friends competes with *what do we do now*, not with every other game catalog.
+**A uses a moment Discord already has:** friends on voice, someone says “let’s do something for 10 minutes.” Squimbo competes with *what do we do now*, not with every other game catalog.
 
 **B answers a different job:** “We’re not all here, but I want to see who knows me.” That job is real (validated by apps like *How Well Do You Know Me?*), but it is a **growth engine**, not the Discord-native core.
 
 ## Target shape
 
 ```text
-                         FRIENDS
+                         SQUIMBO
                             │
               ┌─────────────┴─────────────┐
               │                           │
@@ -80,7 +80,7 @@ Do **not** invent a second game loop in the Activity. Do **not** throw away roun
 - AI-generated prompt floods before a hand-tuned bank proves 10–15 minutes of fun
 - Monetization screens, IAP packs of questions
 - Native mobile app; Discord bot as primary surface
-- Full web `friends.gg` quiz **before** share/invite signal from A
+- Full web `squimbo.app` quiz **before** share/invite signal from A
 
 Monetization later (if ever): sell identity / history / customization / server status — not “€2.99 for 100 questions.”
 
@@ -95,6 +95,6 @@ Monetization later (if ever): sell identity / history / customization / server s
 
 Biggest risk is **one session and never again**, not “solo can’t play.”
 
-Cold start of a group (“how do we get the first session?”) is solved with invite/share around **A**, not by turning Friends into Wordle.
+Cold start of a group (“how do we get the first session?”) is solved with invite/share around **A**, not by turning Squimbo into Wordle.
 
 See [metrics.md](./metrics.md) for north-star and B-unlock signal.

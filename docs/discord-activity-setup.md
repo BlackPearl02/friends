@@ -1,4 +1,6 @@
-# Discord Activity setup (Friends)
+# Discord Activity setup (Squimbo)
+
+Product name in Discord: **Squimbo**. Monorepo packages: `@friends/*`.
 
 Discord rejects bare `localhost` mappings. Local play needs a public HTTPS tunnel (cloudflared or ngrok) for both the Activity UI and the API.
 
@@ -40,4 +42,4 @@ Inside the Discord iframe, `VITE_FRIENDS_API_URL` should stay **empty** so the c
 
 ## Identity rule
 
-Token exchange happens **server-side**. Never trust `userId` / `guildId` / `instanceId` from the Activity client as authorization. The JWT subject is the Friends `User.id` provisioned after Discord `/users/@me`.
+Token exchange happens **server-side**. Never trust `userId` / `guildId` / `instanceId` from the Activity client as authorization. The JWT subject is the Squimbo `User.id` (DB) provisioned after Discord `/users/@me`.

@@ -1,4 +1,4 @@
-# Friends — roadmap
+# Squimbo — roadmap
 
 Related: [strategy.md](./strategy.md) · [product.md](./product.md) · [metrics.md](./metrics.md)
 
@@ -99,7 +99,7 @@ Strategy lock: **A = product. B = growth layer later.** Do not ship equal A+B mo
 
 **Unlock condition (B-signal):** roughly **≥20–30%** of completed sessions produce invite/share outside the players already in the room — or clear manual demand (people copying results / asking for absent friends). See [metrics.md](./metrics.md).
 
-**Surface:** Web-friendly share (`friends.gg/…` style) → Discord remains home for sync A.
+**Surface:** Web-friendly share (`squimbo.app/…` style) → Discord remains home for sync A.
 
 **Do not start Phase 5** because async is fashionable. Start it because A already creates shareable social proof.
 

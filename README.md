@@ -1,8 +1,8 @@
-# Friends
+# Squimbo
 
 Discord Activity — party game inspired by [Kumple](https://play.google.com/store/apps/details?id=com.kumple) (Buddies). Play in a Discord voice or text channel: questions, challenges, and “who is most likely” rounds without a join code.
 
-Product name in Discord: **Friends**. Engineering package scope: `@friends/*`.
+Product name in Discord: **Squimbo**. Marketing site: **squimbo.app**. Engineering package scope: `@friends/*` (rename deferred).
 
 ## Stack (mirrors PlayGrid)
 
@@ -35,7 +35,7 @@ Discord rejects bare `localhost` Activity URL mappings. Tunnel Activity (`:3003`
 
 ## Product
 
-See [docs/product.md](./docs/product.md) for the Kumple → Friends mapping (categories, round types, Discord-native lobby).
+See [docs/product.md](./docs/product.md) for the Kumple → Squimbo mapping (categories, round types, Discord-native lobby). Launch checklist (domain + Discord): [docs/squimbo-launch-checklist.md](./docs/squimbo-launch-checklist.md).
 
 ## Agent conventions
 

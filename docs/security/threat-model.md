@@ -1,9 +1,9 @@
-# Threat model (Friends)
+# Threat model (Squimbo)
 
 ## Assets
 
 - Discord OAuth authorization codes and access tokens
-- Friends JWT (maps to `User.id`)
+- Squimbo session JWT (maps to `User.id`)
 - Game room state (votes, answers, scores) for an Activity instance
 - Prompt catalog (not secret, but must not leak other rooms’ votes)
 

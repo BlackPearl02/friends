@@ -1,4 +1,4 @@
-# Secure coding (Friends)
+# Secure coding (Squimbo)
 
 - Validate all external input (`class-validator` DTOs).
 - Authorize every room/round/vote by `userId` + room membership (or host role).

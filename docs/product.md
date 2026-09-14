@@ -1,8 +1,8 @@
-# Friends — product (Kumple → Discord Activity)
+# Squimbo — product (Kumple → Discord Activity)
 
 **Pitch:** You're already together. Find out who knows the group best.
 
-**Friends** is a Discord Activity party game. The mobile reference is **Kumple** (`com.kumple`, Buddies Games Inc.): questions and “who knows you best” energy among friends.
+**Squimbo** is a Discord Activity party game. The mobile reference is **Kumple** (`com.kumple`, Buddies Games Inc.): questions and “who knows you best” energy among friends.
 
 This is **not** a clone of Kumple’s catalog, UI, or brand. Same *job*: a fast party night in a group, using Discord identity instead of a join code.
 
@@ -19,9 +19,9 @@ This is **not** a clone of Kumple’s catalog, UI, or brand. Same *job*: a fast 
 - Points for completed challenges and received votes; reveal / roast energy.
 - Custom questions; many languages; optional drinking-game framing.
 
-## What Friends does on Discord
+## What Squimbo does on Discord
 
-| Kumple | Friends |
+| Kumple | Squimbo |
 |--------|---------|
 | Join code | Discord Activity instance — everyone who opens the Activity in the channel is in |
 | Typed player names | Discord display names + avatars from Embedded App SDK |
@@ -65,3 +65,8 @@ North-star thinking: **groups completing sessions**, not solo DAU — see [metri
 ## Tone
 
 Party host, not SaaS. Short prompts, readable on a TV / Discord overlay. Roast-friendly but not harassment or PII fishing. User-facing copy ships in **en + pl**.
+
+## Brand vs engineering
+
+- **Product / Discord name:** Squimbo · marketing site: [squimbo.app](https://squimbo.app)
+- **Monorepo packages:** still `@friends/*` until a later rename

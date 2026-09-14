@@ -1,4 +1,4 @@
-# AppSec hub (Friends)
+# AppSec hub (Squimbo)
 
 - Threat model: [threat-model.md](./threat-model.md)
 - Secure coding: [secure-coding.md](./secure-coding.md)
