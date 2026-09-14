@@ -2,10 +2,14 @@ export const API_PATHS = {
   activityExchange: "/discord/activity/exchange",
   roomJoin: "/game/rooms/join",
   roomGet: "/game/rooms/current",
+  roomLeave: "/game/rooms/leave",
   roomIntent: "/game/rooms/intent",
   roomReplay: "/game/rooms/replay",
   roundVote: "/game/rounds/vote",
 } as const;
+
+/** Nest ConflictException body when join is refused mid-session. */
+export const ROOM_IN_PROGRESS_CODE = "ROOM_IN_PROGRESS" as const;
 
 export type PromptKind = "most_likely" | "this_or_that" | "truth" | "challenge";
 /** Legacy pack labels — unused in MVP start/selection. */
@@ -13,7 +17,7 @@ export type PromptCategory = "party" | "family" | "colleagues" | "spicy";
 export type RoomStatus = "lobby" | "playing" | "finished";
 export type RoundStatus = "voting" | "reveal" | "done";
 export type VoteChoice = "a" | "b" | "complete" | "skip";
-export type RoomIntent = "none" | "continue" | "wrap_up";
+export type RoomIntent = "none" | "continue" | "wrap_up" | "revote";
 
 export type ActivityExchangeRequest = {
   code: string;
