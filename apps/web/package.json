@@ -13,7 +13,7 @@
     "next": "^15.5.25",
     "posthog-js": "^1.433.2",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.3.0"
   },
   "devDependencies": {
     "@types/node": "catalog:",

@@ -14,7 +14,7 @@
     "@discord/embedded-app-sdk": "^2.4.1",
     "@friends/types": "workspace:*",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.3.0"
   },
   "devDependencies": {
     "@types/react": "catalog:",
