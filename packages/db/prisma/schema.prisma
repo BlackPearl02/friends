@@ -35,11 +35,12 @@ enum RoundStatus {
   done
 }
 
-/// Lobby / post-reveal consensus — continue night vs wrap up to finale.
+/// Lobby / post-reveal consensus — continue, wrap up, or revote a tied round.
 enum RoomIntent {
   none
   continue
   wrap_up
+  revote
 }
 
 model User {
@@ -86,11 +87,14 @@ model RoomPlayer {
   user      User       @relation(fields: [userId], references: [id])
   score     Int        @default(0)
   intent    RoomIntent @default(none)
+  /// Heartbeat from Activity poll/mutations — stale rows are pruned so leavers leave the roster.
+  lastSeenAt DateTime  @default(now())
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
   @@unique([roomId, userId])
   @@index([userId])
+  @@index([roomId, lastSeenAt])
 }
 
 model Prompt {
