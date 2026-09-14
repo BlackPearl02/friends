@@ -3,7 +3,7 @@ import type { Locale } from "@/i18n/locales";
 import { getSiteUrl } from "./site-url";
 
 const OG_IMAGE = "/friends-cover-art.png";
-const SITE_NAME = "Friends";
+const SITE_NAME = "Squimbo";
 
 type BuildPageMetadataArgs = {
   locale: Locale;
@@ -13,7 +13,7 @@ type BuildPageMetadataArgs = {
   description: string;
   ogImageAlt?: string;
   ogType?: "website" | "article";
-  /** When true, skip "%s | Friends" template (landing already includes the brand). */
+  /** When true, skip "%s | Squimbo" template (landing already includes the brand). */
   absoluteTitle?: boolean;
 };
 
@@ -22,7 +22,7 @@ export function buildPageMetadata({
   path,
   title,
   description,
-  ogImageAlt = "Friends — Discord party game cover art",
+  ogImageAlt = "Squimbo — Discord party game cover art",
   ogType = "website",
   absoluteTitle = false,
 }: BuildPageMetadataArgs): Metadata {

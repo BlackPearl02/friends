@@ -1,6 +1,6 @@
 # @friends/web
 
-Public marketing site for Friends: landing, privacy, terms, and support (English).
+Public marketing site for Squimbo: landing, privacy, terms, and support (English). Canonical production origin: `https://squimbo.app`.
 
 **Local:** `pnpm --filter @friends/web dev` → http://localhost:3001
 
