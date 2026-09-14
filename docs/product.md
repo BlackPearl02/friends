@@ -37,8 +37,8 @@ Designed around one shared beat: **vote in the dark → dramatic reveal**. Sweet
 1. Lobby: player list + **Ready** (intent `continue`). When everyone is ready and ≥2 players → start (no category).
 2. API serves an unused English `most_likely` prompt for the current session. Prompt bank is **EN-only in MVP**; Activity UI chrome stays en+pl.
 3. Everyone votes for another player; votes stay hidden while `voting`. UI shows who has voted.
-4. When **all** players have voted → auto advance to post-vote consensus (votes stay sealed; no mid-session tallies or running scores).
-5. After each round: **Next round** or **Wrap up** (consensus). All Next → another unused prompt. All Wrap up (after ≥1 reveal) → **finale scoreboard** (only place scores appear). From ~round 8 the UI nudges wrap-up. Empty prompt bank also finishes the night.
+4. When **all** players have voted → **reveal**: question stays up, show who got the most votes (tallies + avatars). Running session scores stay hidden until the finale.
+5. Clear winner → **Next round** or **Wrap up** (consensus). Tie → show tied players; **Vote again** or **Keep going** (consensus). Revote voids that ballot (kept in history) and reopens the same prompt. Keep going / Next applies scores then continues. All Wrap up (after ≥1 reveal) → **finale scoreboard**. From ~round 8 the UI nudges wrap-up. Empty prompt bank also finishes the night.
 6. Finale → any player **Play again** (new `sessionKey`, scores reset; round/vote history kept for future profiles).
 
 | Kind | In MVP? | Player action | Scoring |
