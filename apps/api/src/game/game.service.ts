@@ -1,16 +1,23 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import type { User } from "@friends/db";
-import type { PublicRoom, RoomIntent } from "@friends/types" with { "resolution-mode": "import" };
+import {
+  ROOM_IN_PROGRESS_CODE,
+  type PublicRoom,
+  type RoomIntent,
+} from "@friends/types" with { "resolution-mode": "import" };
 import { PrismaService } from "../prisma/prisma.service";
+import { pickRandomOffset } from "./pick-random";
+import { PRESENCE_STALE_MS } from "./presence";
 import { clientVisibleRoundResults, clientVisibleScore } from "./public-room-mask";
+import { isRoundTie, tallyVotes } from "./round-results";
 import { scoreDelta, scoreForVoter } from "./scoring";
-
 
 const MIN_PLAYERS = 2;
 
@@ -36,10 +43,30 @@ export class GameService {
           },
         });
 
+    await this.pruneStalePlayers(room.id);
+
+    if (room.status === "playing") {
+      const member = await this.prisma.roomPlayer.findUnique({
+        where: { roomId_userId: { roomId: room.id, userId: user.id } },
+      });
+      if (!member) {
+        const playerCount = await this.prisma.roomPlayer.count({ where: { roomId: room.id } });
+        if (playerCount > 0) {
+          throw new ConflictException(ROOM_IN_PROGRESS_CODE);
+        }
+        // Everyone left mid-session — reclaim so a new party can lobby again.
+        await this.prisma.gameRoom.update({
+          where: { id: room.id },
+          data: { status: "lobby", sessionKey: randomUUID() },
+        });
+      }
+    }
+
+    const now = new Date();
     await this.prisma.roomPlayer.upsert({
       where: { roomId_userId: { roomId: room.id, userId: user.id } },
-      create: { roomId: room.id, userId: user.id },
-      update: {},
+      create: { roomId: room.id, userId: user.id, lastSeenAt: now },
+      update: { lastSeenAt: now },
     });
 
     return this.loadPublic(room.id);
@@ -47,11 +74,25 @@ export class GameService {
 
   async current(user: User, instanceId: string): Promise<PublicRoom> {
     const room = await this.requireMemberRoom(user.id, instanceId);
+    await this.touchPresence(room.id, user.id);
+    await this.pruneStalePlayers(room.id);
     return this.loadPublic(room.id);
   }
 
+  /** Best-effort Activity close — idempotent if already gone. */
+  async leave(user: User, instanceId: string): Promise<{ ok: true }> {
+    const room = await this.prisma.gameRoom.findUnique({
+      where: { discordInstanceId: instanceId },
+    });
+    if (!room) return { ok: true };
+    await this.prisma.roomPlayer.deleteMany({
+      where: { roomId: room.id, userId: user.id },
+    });
+    return { ok: true };
+  }
+
   async setIntent(user: User, instanceId: string, intent: RoomIntent): Promise<PublicRoom> {
-    if (intent !== "none" && intent !== "continue" && intent !== "wrap_up") {
+    if (intent !== "none" && intent !== "continue" && intent !== "wrap_up" && intent !== "revote") {
       throw new BadRequestException("Invalid intent");
     }
 
@@ -59,7 +100,11 @@ export class GameService {
       where: { discordInstanceId: instanceId },
       include: {
         players: true,
-        rounds: { orderBy: { index: "desc" }, take: 1 },
+        rounds: {
+          orderBy: { index: "desc" },
+          take: 1,
+          include: { votes: true },
+        },
       },
     });
     if (!room) throw new NotFoundException("Room not found");
@@ -72,25 +117,37 @@ export class GameService {
     if (room.status === "finished") {
       throw new BadRequestException("Session is finished");
     }
-    if (room.status === "lobby" && intent === "wrap_up") {
-      throw new BadRequestException("Cannot wrap up from lobby");
+    if (room.status === "lobby" && (intent === "wrap_up" || intent === "revote")) {
+      throw new BadRequestException("Cannot wrap up or revote from lobby");
+    }
+    if (intent === "revote") {
+      if (room.status !== "playing" || latest?.status !== "reveal") {
+        throw new BadRequestException("Revote is only available after a tied reveal");
+      }
+      if (!isRoundTie(tallyVotes(latest.votes))) {
+        throw new BadRequestException("Revote is only available when the round is tied");
+      }
     }
 
     await this.prisma.roomPlayer.update({
       where: { roomId_userId: { roomId: room.id, userId: user.id } },
-      data: { intent },
+      data: { intent, lastSeenAt: new Date() },
     });
+    await this.pruneStalePlayers(room.id);
 
     const players = await this.prisma.roomPlayer.findMany({ where: { roomId: room.id } });
     const allContinue =
       players.length >= MIN_PLAYERS && players.every((p) => p.intent === "continue");
     const allWrapUp =
       players.length >= MIN_PLAYERS && players.every((p) => p.intent === "wrap_up");
+    const allRevote =
+      players.length >= MIN_PLAYERS && players.every((p) => p.intent === "revote");
 
     if (allContinue && room.status === "lobby") {
       // Prompt bank is EN-only in MVP; Activity UI chrome stays en+pl separately.
       await this.beginRound(room.id);
     } else if (allContinue && room.status === "playing" && latest?.status === "reveal") {
+      await this.settleRevealRound(room.id);
       await this.beginRound(room.id);
     } else if (allWrapUp && room.status === "playing" && latest?.status === "reveal") {
       const revealedInSession = await this.prisma.round.count({
@@ -103,7 +160,10 @@ export class GameService {
       if (revealedInSession < 1) {
         throw new BadRequestException("Need at least one reveal before wrapping up");
       }
+      await this.settleRevealRound(room.id);
       await this.finishSession(room.id);
+    } else if (allRevote && room.status === "playing" && latest?.status === "reveal") {
+      await this.reopenTiedRound(room.id);
     }
 
     return this.loadPublic(room.id);
@@ -142,6 +202,8 @@ export class GameService {
         text: input.text?.slice(0, 280) ?? null,
       },
     });
+    await this.touchPresence(round.roomId, user.id);
+    await this.pruneStalePlayers(round.roomId);
 
     const [playerCount, voteCount] = await Promise.all([
       this.prisma.roomPlayer.count({ where: { roomId: round.roomId } }),
@@ -186,13 +248,20 @@ export class GameService {
       orderBy: { index: "desc" },
       take: 1,
     });
+    // Random unused most_likely — fixed id order made every night feel identical.
+    const unusedWhere = {
+      kind: "most_likely" as const,
+      locale,
+      id: { notIn: sessionRounds.map((r) => r.promptId) },
+    };
+    const remaining = await this.prisma.prompt.count({ where: unusedWhere });
+    if (remaining === 0) {
+      await this.finishSession(roomId);
+      return;
+    }
     const prompt = await this.prisma.prompt.findFirst({
-      where: {
-        kind: "most_likely",
-        locale,
-        id: { notIn: sessionRounds.map((r) => r.promptId) },
-      },
-      orderBy: { id: "asc" },
+      where: unusedWhere,
+      skip: pickRandomOffset(remaining),
     });
     if (!prompt) {
       await this.finishSession(roomId);
@@ -234,10 +303,10 @@ export class GameService {
     ]);
   }
 
+  /** Lock votes for display — scores land when the party leaves reveal. */
   private async revealRound(roomId: string) {
     const round = await this.prisma.round.findFirst({
       where: { roomId, status: "voting" },
-      include: { prompt: true, votes: true },
       orderBy: { index: "desc" },
     });
     if (!round) throw new NotFoundException("Nothing to reveal");
@@ -247,6 +316,29 @@ export class GameService {
         where: { id: round.id, status: "voting" },
       });
       if (!stillVoting) return;
+
+      await tx.round.update({ where: { id: round.id }, data: { status: "reveal" } });
+      await tx.roomPlayer.updateMany({
+        where: { roomId },
+        data: { intent: "none" },
+      });
+    });
+  }
+
+  /** Apply +1s once, then mark the round settled so revote cannot double-score. */
+  private async settleRevealRound(roomId: string) {
+    const round = await this.prisma.round.findFirst({
+      where: { roomId, status: "reveal" },
+      include: { prompt: true, votes: true },
+      orderBy: { index: "desc" },
+    });
+    if (!round) return;
+
+    await this.prisma.$transaction(async (tx) => {
+      const stillReveal = await tx.round.findFirst({
+        where: { id: round.id, status: "reveal" },
+      });
+      if (!stillReveal) return;
 
       for (const vote of round.votes) {
         const target = scoreDelta(round.prompt.kind, vote);
@@ -264,11 +356,54 @@ export class GameService {
           });
         }
       }
-      await tx.round.update({ where: { id: round.id }, data: { status: "reveal" } });
-      await tx.roomPlayer.updateMany({
+      await tx.round.update({ where: { id: round.id }, data: { status: "done" } });
+    });
+  }
+
+  /** Keep the tied ballot for history; open a fresh voting round on the same prompt. */
+  private async reopenTiedRound(roomId: string) {
+    const round = await this.prisma.round.findFirst({
+      where: { roomId, status: "reveal" },
+      include: { votes: true },
+      orderBy: { index: "desc" },
+    });
+    if (!round) throw new NotFoundException("Nothing to revote");
+    if (!isRoundTie(tallyVotes(round.votes))) {
+      throw new BadRequestException("Revote is only available when the round is tied");
+    }
+
+    await this.prisma.$transaction([
+      // Done without settleRevealRound — no points for a voided tie ballot.
+      this.prisma.round.update({ where: { id: round.id }, data: { status: "done" } }),
+      this.prisma.round.create({
+        data: {
+          roomId,
+          promptId: round.promptId,
+          sessionKey: round.sessionKey,
+          index: round.index + 1,
+          status: "voting",
+        },
+      }),
+      this.prisma.roomPlayer.updateMany({
         where: { roomId },
         data: { intent: "none" },
-      });
+      }),
+    ]);
+  }
+
+  private async pruneStalePlayers(roomId: string) {
+    await this.prisma.roomPlayer.deleteMany({
+      where: {
+        roomId,
+        lastSeenAt: { lt: new Date(Date.now() - PRESENCE_STALE_MS) },
+      },
+    });
+  }
+
+  private async touchPresence(roomId: string, userId: string) {
+    await this.prisma.roomPlayer.updateMany({
+      where: { roomId, userId },
+      data: { lastSeenAt: new Date() },
     });
   }
 
@@ -301,8 +436,7 @@ export class GameService {
       },
     });
     const round = room.rounds[0] ?? null;
-    const showResults =
-      clientVisibleRoundResults() && round != null && round.status !== "voting";
+    const showResults = clientVisibleRoundResults(round?.status);
     const voting = round != null && round.status === "voting";
     const voterIds = voting ? new Set(round.votes.map((v) => v.voterId)) : null;
     const sessionRoundCount = await this.prisma.round.count({
@@ -344,12 +478,7 @@ export class GameService {
             voteCount: round.votes.length,
             results: showResults
               ? {
-                  tallies: round.votes.reduce<Record<string, number>>((acc, v) => {
-                    const key = v.targetUserId ?? v.choice ?? v.voterId;
-                    if (!key) return acc;
-                    acc[key] = (acc[key] ?? 0) + 1;
-                    return acc;
-                  }, {}),
+                  tallies: tallyVotes(round.votes),
                   answers: round.votes
                     .filter((v) => v.text)
                     .map((v) => ({ userId: v.voterId, text: v.text as string })),

@@ -15,8 +15,8 @@ export class RoomJoinDto {
 }
 
 export class RoomIntentDto {
-  @IsIn(["none", "continue", "wrap_up"])
-  intent!: "none" | "continue" | "wrap_up";
+  @IsIn(["none", "continue", "wrap_up", "revote"])
+  intent!: "none" | "continue" | "wrap_up" | "revote";
 }
 
 export class RoundVoteDto {

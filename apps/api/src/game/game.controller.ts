@@ -22,6 +22,12 @@ export class GameController {
     return this.game.current(user, instanceId);
   }
 
+  @Post("rooms/leave")
+  @Throttle({ default: { limit: 60, ttl: 60_000 } })
+  leave(@CurrentUser() user: User, @Query("instanceId") instanceId: string) {
+    return this.game.leave(user, instanceId);
+  }
+
   @Post("rooms/intent")
   @Throttle({ default: { limit: 180, ttl: 60_000 } })
   intent(

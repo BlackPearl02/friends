@@ -10,7 +10,10 @@ describe("clientVisibleScore", () => {
 });
 
 describe("clientVisibleRoundResults", () => {
-  it("never exposes mid-session tallies on the public room", () => {
-    expect(clientVisibleRoundResults()).toBe(false);
+  it("exposes tallies only after votes lock", () => {
+    expect(clientVisibleRoundResults("voting")).toBe(false);
+    expect(clientVisibleRoundResults("reveal")).toBe(true);
+    expect(clientVisibleRoundResults("done")).toBe(true);
+    expect(clientVisibleRoundResults(undefined)).toBe(false);
   });
 });
