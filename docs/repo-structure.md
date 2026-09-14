@@ -5,6 +5,7 @@ friends/
   apps/
     activity/     Discord Embedded App (Vite + React) — :3003
     api/          NestJS REST — :3000
+    web/          Marketing site (Next.js) — :3001
   packages/
     db/           Prisma schema, migrations, seed
     types/        Shared request/response types

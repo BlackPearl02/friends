@@ -14,6 +14,19 @@ Discord rejects bare `localhost` mappings. Local play needs a public HTTPS tunne
    - `https://<CLIENT_ID>.discordsays.com`
 5. OAuth scopes used by the Activity: `identify`, `guilds`, `rpc.activities.write`.
 
+## Application information URLs
+
+After the marketing site is deployed (`apps/web`), set these in **Developer Portal → General Information** (and Support if separate):
+
+| Field | Example |
+|---|---|
+| Website | `https://friends-web.vercel.app/en` |
+| Privacy Policy | `https://friends-web.vercel.app/en/privacy` |
+| Terms of Service | `https://friends-web.vercel.app/en/terms` |
+| Support / contact | `https://friends-web.vercel.app/en/support` |
+
+Marketing site copy is English only (`/en/...`). See [deployment.md](./deployment.md).
+
 ## Env
 
 Root `.env.development`:

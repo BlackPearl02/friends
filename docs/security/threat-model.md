@@ -23,4 +23,4 @@
 
 ## Out of primary scope
 
-PlayGrid desktop, store OAuth, marketing www. Friends is Activity + API + DB only.
+PlayGrid desktop, store OAuth. The public marketing site (`apps/web`) is static landing + legal/support pages only — no auth, no game API, no secrets.
