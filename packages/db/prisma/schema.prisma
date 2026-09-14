@@ -65,6 +65,7 @@ model GameRoom {
   host               User           @relation("RoomHost", fields: [hostUserId], references: [id])
   status             RoomStatus     @default(lobby)
   category           PromptCategory?
+  /// MVP prompt bank is EN-only; UI chrome locale is separate from this field.
   locale             String         @default("en")
   /// Identifies the current “night”; replay rotates this so prompt bank refreshes.
   sessionKey         String         @default(cuid())
@@ -105,6 +106,7 @@ model Prompt {
   updatedAt DateTime        @updatedAt
   rounds    Round[]
 
+  @@unique([locale, kind, body])
   @@index([locale, kind])
 }
 
