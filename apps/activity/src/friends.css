@@ -33,7 +33,7 @@ input {
   background-color: #1e1f22;
   background-image:
     radial-gradient(ellipse 70% 80% at 50% 48%, rgba(30, 31, 34, 0.88) 0%, rgba(30, 31, 34, 0.55) 42%, rgba(30, 31, 34, 0.22) 70%, rgba(30, 31, 34, 0.08) 100%),
-    url("/friends-background.png");
+    url("/squimbo-background.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

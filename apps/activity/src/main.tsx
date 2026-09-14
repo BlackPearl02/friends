@@ -58,12 +58,12 @@ function BrandHeader() {
   return (
     <>
       <div className="friends-brand">
-        <img className="friends-logo" src="/friends-logo.png" alt={t("shell.title")} width={56} height={56} />
+        <img className="friends-logo" src="/squimbo-logo.png" alt={t("shell.title")} width={56} height={56} />
         <p className="friends-subtitle" style={{ margin: 0 }}>
           {t("shell.subtitle")}
         </p>
       </div>
-      <img className="friends-cover" src="/friends-cover-art.png" alt="" />
+      <img className="friends-cover" src="/squimbo-cover-art.png" alt="" />
     </>
   );
 }

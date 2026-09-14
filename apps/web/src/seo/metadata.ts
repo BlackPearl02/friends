@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { Locale } from "@/i18n/locales";
 import { getSiteUrl } from "./site-url";
 
-const OG_IMAGE = "/friends-cover-art.png";
+const OG_IMAGE = "/squimbo-cover-art.png";
 const SITE_NAME = "Squimbo";
 
 type BuildPageMetadataArgs = {
@@ -51,8 +51,8 @@ export function buildPageMetadata({
       images: [
         {
           url: OG_IMAGE,
-          width: 1200,
-          height: 675,
+          width: 1152,
+          height: 864,
           alt: ogImageAlt,
         },
       ],

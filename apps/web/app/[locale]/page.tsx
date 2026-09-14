@@ -50,7 +50,7 @@ function buildLandingJsonLd(locale: Locale, playUrl: string | null) {
         "@id": `${pageUrl}#organization`,
         name: messages.meta.siteName,
         url: pageUrl,
-        logo: `${siteUrl}/friends-logo.png`,
+        logo: `${siteUrl}/squimbo-logo.png`,
       },
       {
         "@type": "SoftwareApplication",
@@ -119,9 +119,9 @@ export default async function LandingPage({ params }: Props) {
       <section id="hero" className="hero" aria-label={messages.landing.brand}>
         <div className="hero__stage" aria-hidden>
           <picture>
-            <source media="(min-width: 768px)" srcSet="/friends-background.png" />
+            <source media="(min-width: 768px)" srcSet="/squimbo-background.png" />
             <img
-              src="/friends-background-mobile.png"
+              src="/squimbo-background-mobile.png"
               alt=""
               width={1080}
               height={1920}
@@ -207,10 +207,10 @@ export default async function LandingPage({ params }: Props) {
         </div>
         <div className="fit__media">
           <img
-            src="/friends-cover-art.png"
+            src="/squimbo-cover-art.png"
             alt={messages.meta.ogImageAlt}
-            width={1200}
-            height={675}
+            width={1152}
+            height={864}
           />
         </div>
       </section>
