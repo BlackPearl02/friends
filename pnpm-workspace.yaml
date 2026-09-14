@@ -8,5 +8,5 @@ catalog:
   tsx: ^4.19.2
   vitest: ^4.1.11
   dotenv: ^16.4.5
-  "@types/react": ^19.0.0
+  "@types/react": ^19.3.0
   "@types/react-dom": ^19.0.0
