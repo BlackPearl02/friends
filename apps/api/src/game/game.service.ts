@@ -7,15 +7,12 @@ import {
 } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import type { User } from "@friends/db";
-import {
-  ROOM_IN_PROGRESS_CODE,
-  type PublicRoom,
-  type RoomIntent,
-} from "@friends/types" with { "resolution-mode": "import" };
+import type { PublicRoom, RoomIntent } from "@friends/types" with { "resolution-mode": "import" };
 import { PrismaService } from "../prisma/prisma.service";
 import { pickRandomOffset } from "./pick-random";
 import { PRESENCE_STALE_MS } from "./presence";
 import { clientVisibleRoundResults, clientVisibleScore } from "./public-room-mask";
+import { ROOM_IN_PROGRESS_CODE } from "./room-codes";
 import { isRoundTie, tallyVotes } from "./round-results";
 import { scoreDelta, scoreForVoter } from "./scoring";
 

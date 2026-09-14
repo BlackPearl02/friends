@@ -1,8 +1,8 @@
 import { BadRequestException, ConflictException, ForbiddenException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ROOM_IN_PROGRESS_CODE } from "@friends/types";
 import { GameService } from "./game.service";
 import { PRESENCE_STALE_MS } from "./presence";
+import { ROOM_IN_PROGRESS_CODE } from "./room-codes";
 
 describe("GameService authz", () => {
   const prisma = {
