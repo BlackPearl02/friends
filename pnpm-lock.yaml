@@ -197,8 +197,8 @@ importers:
   packages/db:
     dependencies:
       '@prisma/client':
-        specifier: ^6.3.0
-        version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+        specifier: ^7.10.0
+        version: 7.10.0(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -1147,12 +1147,15 @@ packages:
   '@posthog/types@1.412.0':
     resolution: {integrity: sha512-EP+lSTnEmftW/slhGXsuGcYAygO4oho3hjWqObP+GeceZ+6qcwK9qZwVRqJjsiZAl0xLPy5s0U0SZqGKayFyeQ==}
 
-  '@prisma/client@6.19.3':
-    resolution: {integrity: sha512-mKq3jQFhjvko5LTJFHGilsuQs+W+T3Gm451NzuTDGQxwCzwXHYnIu2zGkRoW+Exq3Rob7yp2MfzSrdIiZVhrBg==}
-    engines: {node: '>=18.18'}
+  '@prisma/client-runtime-utils@7.10.0':
+    resolution: {integrity: sha512-cnCy7lUV8/CctgKVEmqAbSLAmwqJdE/qAlqTBk/0NDk59zEb2cZ0M0M0E4vVPnqbSEYudRroQDvOWfUZH6RIfw==}
+
+  '@prisma/client@7.10.0':
+    resolution: {integrity: sha512-Ubw/QS9JGIBSBUsyxAUQuK/Jcu0Tsva7le7QbLd91Kix9yJvYDdj5QkwgEbbZniH80dd+sziQcALPc+HnvQC8Q==}
+    engines: {node: ^20.19 || ^22.12 || >=24.0}
     peerDependencies:
       prisma: '*'
-      typescript: '>=5.1.0'
+      typescript: '>=5.4.0'
     peerDependenciesMeta:
       prisma:
         optional: true
@@ -3883,7 +3886,11 @@ snapshots:
 
   '@posthog/types@1.412.0': {}
 
-  '@prisma/client@6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)':
+  '@prisma/client-runtime-utils@7.10.0': {}
+
+  '@prisma/client@7.10.0(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)':
+    dependencies:
+      '@prisma/client-runtime-utils': 7.10.0
     optionalDependencies:
       prisma: 6.19.3(typescript@5.9.3)
       typescript: 5.9.3
