@@ -4,7 +4,17 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 5
+    ignore:
+      # Keep majors intentional — Nest 12 / Prisma 7 need a planned upgrade.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
