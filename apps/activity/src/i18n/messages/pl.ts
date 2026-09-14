@@ -2,7 +2,7 @@ import type { ActivityMessages } from "./en";
 
 export const pl: ActivityMessages = {
   shell: {
-    title: "Friends",
+    title: "Squimbo",
     subtitle: "Gra imprezowa dla osób, które już są na tym kanale Discord.",
     authBoot: "Otwieranie Discorda…",
     authAuthorizing: "Logowanie…",
@@ -10,7 +10,7 @@ export const pl: ActivityMessages = {
     missingClientIdDev: "Ustaw VITE_DISCORD_CLIENT_ID w .env.development.",
     signInFailed: "Logowanie nie wyszło.",
     signInFailedDetail: "Zamknij Activity i otwórz je jeszcze raz z kanału.",
-    genericError: "Coś padło. Otwórz Friends ponownie.",
+    genericError: "Coś padło. Otwórz Squimbo ponownie.",
   },
   lobby: {
     players: "W pokoju",

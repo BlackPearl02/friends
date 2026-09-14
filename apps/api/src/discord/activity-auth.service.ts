@@ -1,5 +1,5 @@
 /**
- * Discord Activity OAuth exchange — maps Discord user to a Friends JWT.
+ * Discord Activity OAuth exchange — maps Discord user to a Squimbo session JWT.
  *
  * Tries redirect shapes Discord accepts for Embedded App codes
  * (omit → https://127.0.0.1 → https://{clientId}.discordsays.com) unless

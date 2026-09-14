@@ -1,6 +1,6 @@
 # `@friends/api`
 
-NestJS REST for the Friends Discord Activity.
+NestJS REST for the Squimbo Discord Activity.
 
 | Area | Path |
 |------|------|

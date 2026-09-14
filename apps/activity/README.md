@@ -1,6 +1,6 @@
 # Discord Activity (`@friends/activity`)
 
-Vite + React Embedded App on **:3003**. Party game lobby and rounds for Friends.
+Vite + React Embedded App on **:3003**. Party game lobby and rounds for Squimbo.
 
 ## Does not own
 

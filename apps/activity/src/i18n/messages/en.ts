@@ -1,6 +1,6 @@
 export const en = {
   shell: {
-    title: "Friends",
+    title: "Squimbo",
     subtitle: "A party game for whoever is already in this Discord channel.",
     authBoot: "Opening Discord…",
     authAuthorizing: "Signing you in…",
@@ -8,7 +8,7 @@ export const en = {
     missingClientIdDev: "Set VITE_DISCORD_CLIENT_ID in .env.development.",
     signInFailed: "Sign-in failed.",
     signInFailedDetail: "Close the Activity and open it again from the channel.",
-    genericError: "Something broke. Try opening Friends again.",
+    genericError: "Something broke. Try opening Squimbo again.",
   },
   lobby: {
     players: "In the room",
