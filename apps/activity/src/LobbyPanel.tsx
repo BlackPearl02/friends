@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { PublicRoom, RoomIntent } from "@friends/types";
 import { t } from "./i18n";
-import { cardStyle, colors } from "./theme";
+import { colors } from "./theme";
 
 export function LobbyPanel(props: {
   room: PublicRoom;
@@ -17,7 +17,7 @@ export function LobbyPanel(props: {
   const [inviteHint, setInviteHint] = useState<string | null>(null);
 
   return (
-    <section style={cardStyle}>
+    <section className="friends-card">
       <p className="kicker">{t("lobby.players")}</p>
       <ul className="player-list">
         {props.room.players.map((p) => (
@@ -28,15 +28,15 @@ export function LobbyPanel(props: {
               ) : (
                 <span className="player-avatar player-avatar-fallback" aria-hidden />
               )}
-              <span>
+              <span className="player-name">
                 {p.displayName}
                 {p.userId === props.currentUserId ? ` · ${t("lobby.you")}` : ""}
               </span>
             </span>
             <span
+              className="player-badge"
               style={{
                 color: p.intent === "continue" ? colors.accent2 : colors.muted,
-                fontWeight: 800,
               }}
             >
               {p.intent === "continue" ? t("lobby.readyBadge") : t("lobby.waitingBadge")}

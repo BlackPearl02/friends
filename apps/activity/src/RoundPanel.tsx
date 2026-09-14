@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { PublicRoom, RoomIntent } from "@friends/types";
 import { t } from "./i18n";
-import { cardStyle, colors } from "./theme";
+import { colors } from "./theme";
 
 /** Soft-nudge “wrap up?” from the 8th revealed round onward. */
 const SOFT_WRAP_FROM_SESSION_ROUND = 8;
@@ -31,17 +31,13 @@ export function RoundPanel(props: {
   const softWrap = props.room.sessionRoundCount >= SOFT_WRAP_FROM_SESSION_ROUND;
 
   return (
-    <section style={cardStyle}>
+    <section className="friends-card">
       <p className="kicker">{t("round.kinds.most_likely")}</p>
-      <h2 className="friends-title" style={{ margin: "0.45rem 0 0.85rem", fontSize: "1.2rem", lineHeight: 1.3 }}>
-        {round.prompt.body}
-      </h2>
+      <h2 className="friends-title friends-prompt">{round.prompt.body}</h2>
 
       {!revealed && (
         <div className="choice-stack">
-          <p className="hint" style={{ marginTop: 0 }}>
-            {t("round.pickPlayer")}
-          </p>
+          <p className="hint hint-tight">{t("round.pickPlayer")}</p>
           {props.room.players
             .filter((p) => p.userId !== props.currentUserId)
             .map((p) => (
@@ -62,7 +58,7 @@ export function RoundPanel(props: {
                   ) : (
                     <span className="player-avatar player-avatar-fallback" aria-hidden />
                   )}
-                  <span>{p.displayName}</span>
+                  <span className="player-name">{p.displayName}</span>
                 </span>
                 <span className="btn-choice-cta">{t("round.vote")}</span>
               </button>
@@ -72,9 +68,12 @@ export function RoundPanel(props: {
             {props.room.players.map((p) => (
               <li key={p.userId} className="player-row">
                 <span className="player-row-main">
-                  <span>{p.displayName}</span>
+                  <span className="player-name">{p.displayName}</span>
                 </span>
-                <span style={{ color: p.hasVoted ? colors.accent2 : colors.muted, fontWeight: 800 }}>
+                <span
+                  className="player-badge"
+                  style={{ color: p.hasVoted ? colors.accent2 : colors.muted }}
+                >
                   {p.hasVoted ? t("round.votedBadge") : t("round.waitingVoteBadge")}
                 </span>
               </li>
@@ -103,9 +102,11 @@ export function RoundPanel(props: {
               return (
                 <li key={p.userId} className="player-row">
                   <span className="player-row-main">
-                    <span>{p.displayName}</span>
+                    <span className="player-name">{p.displayName}</span>
                   </span>
-                  <span style={{ color: badge.color, fontWeight: 800 }}>{badge.label}</span>
+                  <span className="player-badge" style={{ color: badge.color }}>
+                    {badge.label}
+                  </span>
                 </li>
               );
             })}

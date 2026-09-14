@@ -12,7 +12,6 @@ import { previewFinished, previewReveal, previewRound, previewRoom } from "./pre
 import { RoundPanel } from "./RoundPanel";
 import { ROOM_POLL_MS } from "./roomSync";
 import { isShellLoading, shellBannerKind, type ShellPhase } from "./shellStatus";
-import { cardStyle } from "./theme";
 
 const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID?.trim() ?? "";
 
@@ -158,7 +157,7 @@ function App() {
         <BrandHeader />
 
         {!ready && (
-          <section style={cardStyle} aria-live="polite">
+          <section className="friends-card" aria-live="polite">
             <p style={{ margin: 0, fontWeight: 700 }}>
               {banner === "notConfigured"
                 ? t("shell.notConfigured")

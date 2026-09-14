@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { PublicRoom } from "@friends/types";
 import { t } from "./i18n";
-import { cardStyle, colors } from "./theme";
+import { colors } from "./theme";
 
 export function FinishedPanel(props: {
   room: PublicRoom;
@@ -17,10 +17,10 @@ export function FinishedPanel(props: {
     ranked.filter((p) => p.score === champion.score).length > 1;
 
   return (
-    <section style={cardStyle}>
+    <section className="friends-card">
       <p className="kicker">{t("finished.title")}</p>
       {champion && champion.score > 0 && (
-        <p className="reveal-winner" style={{ marginTop: "0.35rem" }}>
+        <p className="reveal-winner">
           {tied
             ? t("finished.tie", {
                 names: ranked
@@ -31,9 +31,7 @@ export function FinishedPanel(props: {
             : t("finished.champion", { name: champion.displayName })}
         </p>
       )}
-      <h2 className="friends-title" style={{ margin: "0.45rem 0 0.85rem", fontSize: "1.2rem" }}>
-        {t("finished.scoreboard")}
-      </h2>
+      <h2 className="friends-title friends-prompt">{t("finished.scoreboard")}</h2>
       <ul className="player-list">
         {ranked.map((p, i) => (
           <li key={p.userId} className={i === 0 && p.score > 0 ? "player-row is-winner" : "player-row"}>
@@ -43,12 +41,14 @@ export function FinishedPanel(props: {
               ) : (
                 <span className="player-avatar player-avatar-fallback" aria-hidden />
               )}
-              <span>
+              <span className="player-name">
                 {p.displayName}
                 {p.userId === props.currentUserId ? ` · ${t("lobby.you")}` : ""}
               </span>
             </span>
-            <span style={{ color: colors.accent2, fontWeight: 800 }}>{p.score}</span>
+            <span className="player-badge" style={{ color: colors.accent2 }}>
+              {p.score}
+            </span>
           </li>
         ))}
       </ul>
