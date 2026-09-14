@@ -35,7 +35,7 @@ This is **not** a clone of Kumple’s catalog, UI, or brand. Same *job*: a fast 
 Designed around one shared beat: **vote in the dark → dramatic reveal**. Sweet spot **3–8** players. No host privileges — everyone shares the same controls. Soft target **~8–12 rounds** per night.
 
 1. Lobby: player list + **Ready** (intent `continue`). When everyone is ready and ≥2 players → start (no category).
-2. API serves an unused `most_likely` prompt for the **current session** locale (`en` / `pl`).
+2. API serves an unused English `most_likely` prompt for the current session. Prompt bank is **EN-only in MVP**; Activity UI chrome stays en+pl.
 3. Everyone votes for another player; votes stay hidden while `voting`. UI shows who has voted.
 4. When **all** players have voted → auto advance to post-vote consensus (votes stay sealed; no mid-session tallies or running scores).
 5. After each round: **Next round** or **Wrap up** (consensus). All Next → another unused prompt. All Wrap up (after ≥1 reveal) → **finale scoreboard** (only place scores appear). From ~round 8 the UI nudges wrap-up. Empty prompt bank also finishes the night.

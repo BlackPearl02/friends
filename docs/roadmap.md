@@ -41,7 +41,7 @@ Strategy lock: **A = product. B = growth layer later.** Do not ship equal A+B mo
 - Stronger reveal climax (winner + context line; tallies + avatars)
 - Host **Invite** via Discord Embedded App SDK (`openInviteDialog`)
 - Host **End session** → scoreboard; **Play again** → lobby + score reset, round/vote history kept
-- Larger hand-authored `most_likely` bank (~45 unique × en/pl); `--force` seed locally only
+- Larger hand-authored English `most_likely` bank (~44 unique); PL bank later; `--force` seed locally only
 - Data foundation: `Vote.target` → `User` + index
 - Lobby copy: sweet spot 3–8 players
 
