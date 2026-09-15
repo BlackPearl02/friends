@@ -9,6 +9,24 @@ This repository is public. Treat git as source-only: no real secrets in commits,
 
 ---
 
+## Branches & environments
+
+| Layer | Git | Config source | Database |
+|---|---|---|---|
+| Local staging | `dev` (or any local branch) | Root `.env.development` via `scripts/with-friends-env.mjs` | Docker Postgres `:15433` (`pnpm db:up`) |
+| Vercel Preview | `dev` + PR branches | Vercel env scope **Preview** | Same Supabase as Production (no second project) — smoke URLs only, not a data sandbox |
+| Vercel Production | `main` | Vercel env scope **Production** (values from local `.env.production`) | Supabase prod |
+
+**Production Branch** on `friends-api`, `friends-web`, and `friends-activity` is `main`. Push to `main` → Production deploy; push to `dev` / open a PR → Preview deploy.
+
+Vercel never reads `.env.development` / `.env.production` from git (those files stay gitignored). Sync secrets with the Vercel dashboard or `vercel env add` / `vercel env ls` per project (`apps/api`, `apps/web`, `apps/activity`).
+
+**Important:** Preview cannot reach local Docker. Isolated staging data lives only on your machine. Without a separate hosted staging DB, Preview API shares Production Supabase — treat Preview as build/URL smoke, not a safe place for destructive data experiments. Discord URL Mappings stay pointed at Production Activity/API URLs.
+
+Typical flow: feature branch → PR into `dev` (Preview) → merge `dev` → `main` (Production).
+
+---
+
 ## 1. Supabase — hosted database (once)
 
 1. Create a new project at [supabase.com](https://supabase.com).
@@ -35,6 +53,8 @@ This repository is public. Treat git as source-only: no real secrets in commits,
 
 ### Environment variables (Vercel dashboard → Settings → Environment Variables)
 
+Set separately for **Production** and **Preview** (same Client ID is fine).
+
 | Variable | Value |
 |---|---|
 | `VITE_DISCORD_CLIENT_ID` | Discord Client ID |
@@ -57,11 +77,13 @@ Note the deployed URL, e.g. `https://friends-activity.vercel.app`.
 
 ### Environment variables (Vercel dashboard → Settings → Environment Variables)
 
+Add each variable twice: once for **Production**, once for **Preview**. Preview may reuse Production Supabase / Discord secrets until a hosted staging DB exists. Do **not** attach local Docker URLs to Preview.
+
 | Variable | Value |
 |---|---|
 | `DATABASE_URL` | Supabase Transaction pooler URL (with `?pgbouncer=true`) |
 | `DIRECT_URL` | Supabase Direct URL |
-| `JWT_SECRET` | Same secret as `.env.development` (or new prod secret) |
+| `JWT_SECRET` | Prod secret from `.env.production` (prefer distinct from local `.env.development`) |
 | `DISCORD_CLIENT_ID` | Discord Client ID |
 | `DISCORD_CLIENT_SECRET` | Discord Client Secret |
 | `DISCORD_ACTIVITY_REDIRECT_URI` | *(leave empty — handler tries `.discordsays.com` automatically)* |
@@ -85,13 +107,13 @@ Note the deployed URL, e.g. `https://friends-api.vercel.app`.
 
 ### Environment variables (Vercel dashboard → Settings → Environment Variables)
 
-| Variable | Value |
-|---|---|
-| `NEXT_PUBLIC_DISCORD_CLIENT_ID` | Discord Client ID (Application Directory CTA) |
-| `NEXT_PUBLIC_SUPPORT_EMAIL` | Support inbox shown on Support / Privacy / Terms |
-| `NEXT_PUBLIC_SITE_URL` | Canonical origin, no trailing slash (e.g. `https://squimbo.app`) — used for metadata, sitemap, Open Graph, and `llms.txt` |
-| `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | PostHog project token (`phc_…`) for the Squimbo / Friends marketing project (EU cloud) |
-| `NEXT_PUBLIC_POSTHOG_HOST` | `https://eu.i.posthog.com` |
+| Variable | Production | Preview |
+|---|---|---|
+| `NEXT_PUBLIC_DISCORD_CLIENT_ID` | Discord Client ID (Application Directory CTA) | Same |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | Support inbox shown on Support / Privacy / Terms | Same (optional) |
+| `NEXT_PUBLIC_SITE_URL` | Canonical origin, no trailing slash (`https://squimbo.app`) — metadata, sitemap, Open Graph, `llms.txt` | Omit (Preview should not claim the canonical marketing origin) |
+| `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | PostHog project token (`phc_…`) for the Squimbo / Friends marketing project (EU cloud) | Same |
+| `NEXT_PUBLIC_POSTHOG_HOST` | `https://eu.i.posthog.com` | Same |
 
 Also enable **Vercel Web Analytics** on the `friends-web` project (Dashboard → Analytics, or run interactively: `vercel project web-analytics enable friends-web --scope blackpearls-projects-c2dca206`). The app already mounts `@vercel/analytics`.
 
@@ -151,19 +173,19 @@ For Discord iframe testing locally you still need a temporary tunnel (see [disco
 
 ## Quick reference — env per environment
 
-| Variable | Local dev | Vercel API | Vercel Activity | Vercel Web |
+| Variable | Local (`.env.development`) | Vercel API Production / Preview | Vercel Activity | Vercel Web |
 |---|---|---|---|---|
-| `DATABASE_URL` | Docker :15433 | Supabase pooler | — | — |
-| `DIRECT_URL` | Docker :15433 | Supabase direct | — | — |
-| `JWT_SECRET` | `.env.development` | Vercel env | — | — |
-| `DISCORD_CLIENT_ID` | `.env.development` | Vercel env | — | — |
-| `DISCORD_CLIENT_SECRET` | `.env.development` | Vercel env | — | — |
-| `API_PUBLIC_URL` | `http://localhost:3000` | Vercel URL | — | — |
-| `ACTIVITY_ORIGIN` | `http://localhost:3003` | Activity Vercel URL | — | — |
-| `VITE_DISCORD_CLIENT_ID` | `.env.development` | — | Vercel env | — |
+| `DATABASE_URL` | Docker :15433 | Supabase pooler (shared on Preview) | — | — |
+| `DIRECT_URL` | Docker :15433 | Supabase direct (shared on Preview) | — | — |
+| `JWT_SECRET` | local secret | Vercel Production + Preview scopes | — | — |
+| `DISCORD_CLIENT_ID` | local / Discord app | Vercel Production + Preview | — | — |
+| `DISCORD_CLIENT_SECRET` | local | Vercel Production + Preview | — | — |
+| `API_PUBLIC_URL` | `http://localhost:3000` | Production API URL (Preview may reuse) | — | — |
+| `ACTIVITY_ORIGIN` | `http://localhost:3003` | Production Activity URL (Preview may reuse) | — | — |
+| `VITE_DISCORD_CLIENT_ID` | local | — | Production + Preview | — |
 | `VITE_FRIENDS_API_URL` | *(empty)* | — | *(empty)* | — |
-| `NEXT_PUBLIC_DISCORD_CLIENT_ID` | falls back to Discord client id | — | — | Vercel env |
-| `NEXT_PUBLIC_SUPPORT_EMAIL` | optional | — | — | Vercel env |
-| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3001` (or unset) | — | — | `https://squimbo.app` |
-| `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | optional (empty = no init) | — | — | Vercel env |
-| `NEXT_PUBLIC_POSTHOG_HOST` | `https://eu.i.posthog.com` | — | — | `https://eu.i.posthog.com` |
+| `NEXT_PUBLIC_DISCORD_CLIENT_ID` | falls back to Discord client id | — | — | Production + Preview |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | optional | — | — | Production + Preview |
+| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3001` (or unset) | — | — | Production only (`https://squimbo.app`) |
+| `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | optional (empty = no init) | — | — | Production + Preview |
+| `NEXT_PUBLIC_POSTHOG_HOST` | `https://eu.i.posthog.com` | — | — | Production + Preview |

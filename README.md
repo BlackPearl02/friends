@@ -27,7 +27,11 @@ pnpm db:seed
 pnpm dev
 ```
 
-Discord rejects bare `localhost` Activity URL mappings. Tunnel Activity (`:3003`) and API (`:3000`) over HTTPS, then map `/` → Activity and `/api` → API in the Developer Portal. Details: [docs/discord-activity-setup.md](./docs/discord-activity-setup.md). Production: [docs/deployment.md](./docs/deployment.md) (Vercel + Supabase). Secrets never belong in git — only in local gitignored env files and the Vercel/Supabase dashboards. `DISCORD_CLIENT_ID` is public; `DISCORD_CLIENT_SECRET` and `JWT_SECRET` are not. Rotate them if they leak.
+Discord rejects bare `localhost` Activity URL mappings. Tunnel Activity (`:3003`) and API (`:3000`) over HTTPS, then map `/` → Activity and `/api` → API in the Developer Portal. Details: [docs/discord-activity-setup.md](./docs/discord-activity-setup.md). Production: [docs/deployment.md](./docs/deployment.md) (Vercel + Supabase).
+
+**Branches:** `main` → Vercel Production (`.env.production` / Production env scope). `dev` → local `.env.development` + Docker; pushes/PRs deploy as Vercel Preview. See [Branches & environments](./docs/deployment.md#branches--environments).
+
+Secrets never belong in git — only in local gitignored env files and the Vercel/Supabase dashboards. `DISCORD_CLIENT_ID` is public; `DISCORD_CLIENT_SECRET` and `JWT_SECRET` are not. Rotate them if they leak.
 
 ## License
 
