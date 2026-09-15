@@ -97,7 +97,7 @@ export const en = {
   },
   cookies: {
     title: "Cookies and analytics",
-    body: "We use optional analytics (PostHog and Vercel Analytics) on this marketing site to understand traffic. They load only if you accept. Essential site cookies are not used for ads.",
+    body: "We use optional analytics on this marketing site to understand traffic. They load only if you accept. Essential site cookies are not used for ads.",
     privacyLink: "Privacy Policy",
     accept: "Accept",
     reject: "Reject",
