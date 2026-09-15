@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
+import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getMessages } from "@/i18n";
@@ -25,6 +26,7 @@ export default async function LocaleLayout({ children, params }: Props) {
       <SiteHeader locale={locale} messages={messages} />
       <main className="site-main">{children}</main>
       <SiteFooter locale={locale} messages={messages} />
+      <CookieConsentBanner locale={locale} messages={messages.cookies} />
     </div>
   );
 }

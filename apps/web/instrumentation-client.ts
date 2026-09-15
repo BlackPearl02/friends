@@ -1,11 +1,6 @@
-import posthog from "posthog-js";
-
-const token = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
-const host = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://eu.i.posthog.com";
-
-if (token) {
-  posthog.init(token, {
-    api_host: host,
-    defaults: "2026-05-30",
-  });
-}
+/**
+ * PostHog is initialized only after cookie consent
+ * (`ConsentedAnalytics` + `enablePosthogAnalytics`).
+ * This file stays so Next does not auto-load analytics on boot.
+ */
+export {};

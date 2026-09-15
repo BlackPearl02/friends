@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Analytics } from "@vercel/analytics/next";
 import { Bricolage_Grotesque, Outfit } from "next/font/google";
+import { ConsentedAnalytics } from "@/components/ConsentedAnalytics";
 import { getSiteUrl } from "@/seo/site-url";
 import "./globals.css";
 
@@ -47,7 +47,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" className={`${display.variable} ${body.variable}`}>
       <body>
         {children}
-        <Analytics />
+        <ConsentedAnalytics />
       </body>
     </html>
   );
