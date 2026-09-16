@@ -27,6 +27,7 @@ import {
 } from "./discordPresence";
 import { applyLocalIntent, applyLocalVote } from "./roomOptimistic";
 import { mergePublicRoom, shouldApplyPollResult } from "./roomApply";
+import { subscribeRoomInvalidation } from "./roomRealtime";
 import { ROOM_POLL_MS } from "./roomSync";
 import { isShellLoading, shellBannerKind, type ShellPhase } from "./shellStatus";
 
@@ -252,9 +253,13 @@ function App() {
 
     tick();
     const id = window.setInterval(tick, ROOM_POLL_MS);
+    const unsubscribeRealtime = subscribeRoomInvalidation(instanceId, () => {
+      tick();
+    });
     return () => {
       cancelled = true;
       window.clearInterval(id);
+      unsubscribeRealtime();
     };
   }, [phase, accessToken, instanceId, preview]);
 
