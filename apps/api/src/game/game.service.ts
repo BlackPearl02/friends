@@ -14,7 +14,7 @@ import { PRESENCE_STALE_MS } from "./presence";
 import { clientVisibleRoundResults, clientVisibleScore } from "./public-room-mask";
 import { ROOM_IN_PROGRESS_CODE } from "./room-codes";
 import { isRoundTie, tallyVotes } from "./round-results";
-import { scoreDelta, scoreForVoter } from "./scoring";
+import { aggregateScoreIncrements } from "./scoring";
 
 const MIN_PLAYERS = 2;
 
@@ -235,16 +235,18 @@ export class GameService {
   private async beginRound(roomId: string) {
     const locale = "en" as const;
     const room = await this.prisma.gameRoom.findUniqueOrThrow({ where: { id: roomId } });
-    const sessionRounds = await this.prisma.round.findMany({
-      where: { roomId, sessionKey: room.sessionKey },
-      select: { promptId: true },
-    });
-    const allRounds = await this.prisma.round.findMany({
-      where: { roomId },
-      select: { index: true },
-      orderBy: { index: "desc" },
-      take: 1,
-    });
+    const [sessionRounds, allRounds] = await Promise.all([
+      this.prisma.round.findMany({
+        where: { roomId, sessionKey: room.sessionKey },
+        select: { promptId: true },
+      }),
+      this.prisma.round.findMany({
+        where: { roomId },
+        select: { index: true },
+        orderBy: { index: "desc" },
+        take: 1,
+      }),
+    ]);
     // Random unused most_likely — fixed id order made every night feel identical.
     const unusedWhere = {
       kind: "most_likely" as const,
@@ -337,22 +339,15 @@ export class GameService {
       });
       if (!stillReveal) return;
 
-      for (const vote of round.votes) {
-        const target = scoreDelta(round.prompt.kind, vote);
-        if (target) {
-          await tx.roomPlayer.update({
-            where: { roomId_userId: { roomId, userId: target.userId } },
-            data: { score: { increment: target.delta } },
-          });
-        }
-        const voterPts = scoreForVoter(round.prompt.kind, vote);
-        if (voterPts) {
-          await tx.roomPlayer.update({
-            where: { roomId_userId: { roomId, userId: vote.voterId } },
-            data: { score: { increment: voterPts } },
-          });
-        }
-      }
+      const increments = aggregateScoreIncrements(round.prompt.kind, round.votes);
+      await Promise.all(
+        [...increments.entries()].map(([userId, delta]) =>
+          tx.roomPlayer.update({
+            where: { roomId_userId: { roomId, userId } },
+            data: { score: { increment: delta } },
+          }),
+        ),
+      );
       await tx.round.update({ where: { id: round.id }, data: { status: "done" } });
     });
   }

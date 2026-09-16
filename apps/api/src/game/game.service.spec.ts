@@ -184,6 +184,45 @@ describe("GameService session finale", () => {
     expect(beginRound).toHaveBeenCalledWith("room-1");
   });
 
+  it("does not settle or begin a round when only some players continue after reveal", async () => {
+    const beginRound = vi.fn().mockResolvedValue(undefined);
+    const settleRevealRound = vi.fn().mockResolvedValue(undefined);
+    const loadPublic = vi.fn().mockResolvedValue({ id: "room-1", status: "playing" });
+    const prisma = {
+      gameRoom: {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "room-1",
+          status: "playing",
+          locale: "en",
+          sessionKey: "sess",
+          players: [],
+          rounds: [{ id: "r1", status: "reveal", votes: [{ targetUserId: "a" }] }],
+        }),
+      },
+      roomPlayer: {
+        findUnique: vi.fn().mockResolvedValue({ roomId: "room-1", userId: "a" }),
+        update: vi.fn().mockResolvedValue({}),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        findMany: vi.fn().mockResolvedValue([
+          { userId: "a", intent: "continue" },
+          { userId: "b", intent: "none" },
+        ]),
+      },
+    };
+    const service = new GameService(prisma as never);
+    (service as unknown as { beginRound: typeof beginRound }).beginRound = beginRound;
+    (service as unknown as { settleRevealRound: typeof settleRevealRound }).settleRevealRound =
+      settleRevealRound;
+    (service as unknown as { loadPublic: typeof loadPublic }).loadPublic = loadPublic;
+
+    await service.setIntent({ id: "a" } as never, "inst-long", "continue");
+
+    expect(settleRevealRound).not.toHaveBeenCalled();
+    expect(beginRound).not.toHaveBeenCalled();
+    expect(loadPublic).toHaveBeenCalledWith("room-1");
+  });
+
   it("reopens a tied reveal when all choose revote", async () => {
     const reopenTiedRound = vi.fn().mockResolvedValue(undefined);
     const loadPublic = vi.fn().mockResolvedValue({ id: "room-1" });
