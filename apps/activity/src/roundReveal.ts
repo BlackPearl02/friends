@@ -23,9 +23,9 @@ export function isRevealTie(tallies: Record<string, number> | undefined): boolea
  */
 export function msUntilReveal(
   revealedAt: string | null | undefined,
-  serverTime: string,
+  serverTime: string | null | undefined,
 ): number {
-  if (!revealedAt) return 0;
+  if (!revealedAt || !serverTime) return 0;
   const revealMs = Date.parse(revealedAt);
   const serverMs = Date.parse(serverTime);
   if (Number.isNaN(revealMs) || Number.isNaN(serverMs)) return 0;
@@ -35,7 +35,7 @@ export function msUntilReveal(
 /** True when round is past voting and the reveal hold has elapsed. */
 export function shouldShowReveal(
   round: { status: string; revealedAt?: string | null } | null | undefined,
-  serverTime: string,
+  serverTime: string | null | undefined,
 ): boolean {
   if (!round || round.status === "voting") return false;
   return msUntilReveal(round.revealedAt, serverTime) === 0;
