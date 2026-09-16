@@ -17,7 +17,7 @@ jobs:
           for i in 1 2 3; do
             code=$(curl -sS -o /tmp/health.json -w "%{http_code}" \
               --max-time 25 \
-              "https://friends-api.vercel.app/health" || true)
+              "https://friends-api-five.vercel.app/health" || true)
             if [ "$code" = "200" ]; then
               cat /tmp/health.json
               exit 0
