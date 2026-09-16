@@ -67,6 +67,24 @@ export const en = {
     tie: "Tie night: {names}",
     playAgain: "Play again",
   },
+  presence: {
+    largeText: "Squimbo",
+    waitingDetails: "Match in progress",
+    waitingState: "Waiting for the lobby",
+    waitingSmall: "Waiting",
+    lobbyDetails: "In the lobby",
+    lobbyState: "{count} in the room",
+    lobbySmall: "Lobby",
+    votingDetails: "Most likely",
+    votingState: "Round {round}",
+    votingSmall: "Voting",
+    revealDetails: "Reveal",
+    revealState: "Round {round}",
+    revealSmall: "Reveal",
+    finishedDetails: "Night over",
+    finishedState: "Final scores",
+    finishedSmall: "Finale",
+  },
 };
 
 export type ActivityMessages = typeof en;

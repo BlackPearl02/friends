@@ -2,7 +2,7 @@ import type { DiscordSDK } from "@discord/embedded-app-sdk";
 import { exchangeActivityCode, type ActivityExchangeResponse } from "./api";
 
 /** Scopes required for Squimbo — keep minimal; unused RPC scopes block some joins. */
-export const ACTIVITY_OAUTH_SCOPES = ["identify", "guilds"] as const;
+export const ACTIVITY_OAUTH_SCOPES = ["identify", "guilds", "rpc.activities.write"] as const;
 
 type AuthorizeArgs = {
   client_id: string;

@@ -19,6 +19,12 @@ import { LobbyPanel } from "./LobbyPanel";
 import { previewFinished, previewReveal, previewRound, previewRoom, previewTie } from "./previewData";
 import { RoundPanel } from "./RoundPanel";
 import { subscribeDiscordParticipants } from "./discordParticipants";
+import {
+  buildRichPresenceActivity,
+  presenceRoundNumber,
+  resolvePresencePhase,
+  syncDiscordPresence,
+} from "./discordPresence";
 import { applyLocalIntent, applyLocalVote } from "./roomOptimistic";
 import { ROOM_POLL_MS } from "./roomSync";
 import { isShellLoading, shellBannerKind, type ShellPhase } from "./shellStatus";
@@ -125,6 +131,10 @@ function App() {
   roomRef.current = room;
   /** Skip poll overwrites while a mutation's optimistic patch is in flight. */
   const mutationsInFlight = useRef(0);
+  /** Unix seconds — stable across presence updates until sessionKey changes. */
+  const presenceStartedAtSec = useRef<number | null>(null);
+  const presenceSessionKey = useRef<string | null>(null);
+  const presenceFingerprint = useRef<string | null>(null);
 
   useEffect(() => {
     if (preview) return;
@@ -262,6 +272,38 @@ function App() {
       setDiscordParticipantCount(count);
     });
   }, [phase, preview]);
+
+  useEffect(() => {
+    if (preview) return;
+    if (phase !== "ready" && phase !== "waiting-in-progress") return;
+    const sdk = sdkRef.current;
+    if (!sdk || !instanceId) return;
+
+    const presencePhase = resolvePresencePhase(phase, room);
+    if (!presencePhase) return;
+
+    const sessionKey = room?.sessionKey ?? `waiting:${instanceId}`;
+    if (presenceSessionKey.current !== sessionKey) {
+      presenceSessionKey.current = sessionKey;
+      presenceStartedAtSec.current = Math.floor(Date.now() / 1000);
+      presenceFingerprint.current = null;
+    }
+    const startTimestampSec = presenceStartedAtSec.current ?? Math.floor(Date.now() / 1000);
+
+    const playerCount =
+      room?.players.length ??
+      (discordParticipantCount != null && discordParticipantCount > 0 ? discordParticipantCount : 1);
+
+    const activity = buildRichPresenceActivity({
+      phase: presencePhase,
+      playerCount,
+      partyId: instanceId,
+      startTimestampSec,
+      roundNumber: presenceRoundNumber(room),
+    });
+
+    void syncDiscordPresence(sdk, activity, presenceFingerprint);
+  }, [phase, room, instanceId, discordParticipantCount, preview]);
 
   const ready = phase === "ready" && accessToken && userId && instanceId && room;
   const loading = isShellLoading(phase);
