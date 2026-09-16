@@ -22,7 +22,7 @@ export function buildPageMetadata({
   path,
   title,
   description,
-  ogImageAlt = "Squimbo — Discord party game cover art",
+  ogImageAlt = "Squimbo: Discord party game cover art",
   ogType = "website",
   absoluteTitle = false,
 }: BuildPageMetadataArgs): Metadata {
@@ -34,6 +34,13 @@ export function buildPageMetadata({
   return {
     title: absoluteTitle ? { absolute: title } : title,
     description,
+    keywords: [
+      "Squimbo",
+      "Discord party game",
+      "Discord Activity",
+      "most likely",
+      "no join code",
+    ],
     alternates: {
       canonical: canonicalPath,
     },

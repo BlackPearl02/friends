@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/JsonLd";
 import { PromptMarquee } from "@/components/PromptMarquee";
@@ -56,7 +57,7 @@ function buildLandingJsonLd(locale: Locale, playUrl: string | null) {
         "@type": "SoftwareApplication",
         name: messages.meta.siteName,
         applicationCategory: "GameApplication",
-        operatingSystem: "Web",
+        operatingSystem: "Discord",
         description: messages.meta.landingDescription,
         url: pageUrl,
         offers: {
@@ -94,6 +95,16 @@ function buildLandingJsonLd(locale: Locale, playUrl: string | null) {
             name: L.faq4Q,
             acceptedAnswer: { "@type": "Answer", text: L.faq4A },
           },
+          {
+            "@type": "Question",
+            name: L.faq5Q,
+            acceptedAnswer: { "@type": "Answer", text: L.faq5A },
+          },
+          {
+            "@type": "Question",
+            name: L.faq6Q,
+            acceptedAnswer: { "@type": "Answer", text: L.faq6A },
+          },
         ],
       },
     ],
@@ -129,7 +140,6 @@ export default async function LandingPage({ params }: Props) {
           </picture>
         </div>
         <div className="hero__copy">
-          <p className="hero__label">{messages.landing.label}</p>
           <h1 className="hero__brand">{messages.landing.brand}</h1>
           <p className="hero__headline">{messages.landing.headline}</p>
           <p className="hero__subhead">{messages.landing.subhead}</p>
@@ -146,6 +156,15 @@ export default async function LandingPage({ params }: Props) {
 
       <section className="entity" aria-label={messages.landing.brand}>
         <p className="entity__blurb">{messages.landing.entityBlurb}</p>
+        <p className="entity__more">
+          <Link href={`/${raw}/discord-party-game`}>
+            {messages.landing.learnDiscordPartyGame}
+          </Link>
+          {" · "}
+          <Link href={`/${raw}/discord-activity`}>
+            {messages.landing.learnDiscordActivity}
+          </Link>
+        </p>
       </section>
 
       <section className="moment reveal" aria-labelledby="moment-title">
@@ -154,6 +173,11 @@ export default async function LandingPage({ params }: Props) {
             {messages.landing.momentTitle}
           </h2>
           <p className="moment__body">{messages.landing.momentBody}</p>
+          <p className="moment__more">
+            <Link href={`/${raw}/most-likely`}>
+              {messages.landing.learnMostLikely}
+            </Link>
+          </p>
         </div>
         <PromptMarquee prompts={messages.landing.prompts} />
       </section>
@@ -189,12 +213,16 @@ export default async function LandingPage({ params }: Props) {
               <p>{messages.landing.step3Body}</p>
             </li>
           </ol>
+          <p className="how__more">
+            <Link href={`/${raw}/how-to-play`}>
+              {messages.landing.learnHowToPlay}
+            </Link>
+          </p>
         </div>
       </section>
 
       <section className="fit reveal" aria-labelledby="fit-title">
         <div className="fit__copy">
-          <p className="fit__eyebrow">{messages.landing.label}</p>
           <h2 id="fit-title" className="fit__title">
             {messages.landing.fitTitle}
           </h2>
@@ -204,6 +232,11 @@ export default async function LandingPage({ params }: Props) {
             <li>{messages.landing.fitPoint2}</li>
             <li>{messages.landing.fitPoint3}</li>
           </ul>
+          <p className="fit__more">
+            <Link href={`/${raw}/no-join-code`}>
+              {messages.landing.learnNoJoinCode}
+            </Link>
+          </p>
         </div>
         <div className="fit__media">
           <img
@@ -213,27 +246,6 @@ export default async function LandingPage({ params }: Props) {
             height={864}
           />
         </div>
-      </section>
-
-      <section className="specs" aria-label="Product facts">
-        <dl className="specs__grid">
-          <div className="specs__item">
-            <dt>{messages.landing.spec1Label}</dt>
-            <dd>{messages.landing.spec1Value}</dd>
-          </div>
-          <div className="specs__item">
-            <dt>{messages.landing.spec2Label}</dt>
-            <dd>{messages.landing.spec2Value}</dd>
-          </div>
-          <div className="specs__item">
-            <dt>{messages.landing.spec3Label}</dt>
-            <dd>{messages.landing.spec3Value}</dd>
-          </div>
-          <div className="specs__item">
-            <dt>{messages.landing.spec4Label}</dt>
-            <dd>{messages.landing.spec4Value}</dd>
-          </div>
-        </dl>
       </section>
 
       <section className="faq reveal" aria-labelledby="faq-title">
@@ -258,7 +270,18 @@ export default async function LandingPage({ params }: Props) {
               <summary>{messages.landing.faq4Q}</summary>
               <p>{messages.landing.faq4A}</p>
             </details>
+            <details className="faq__item">
+              <summary>{messages.landing.faq5Q}</summary>
+              <p>{messages.landing.faq5A}</p>
+            </details>
+            <details className="faq__item">
+              <summary>{messages.landing.faq6Q}</summary>
+              <p>{messages.landing.faq6A}</p>
+            </details>
           </div>
+          <p className="faq__more">
+            <Link href={`/${raw}/faq`}>{messages.landing.learnFaq}</Link>
+          </p>
         </div>
       </section>
 

@@ -1,11 +1,16 @@
 import { getMessages } from "@/i18n";
 import { defaultLocale } from "@/i18n/locales";
+import { SEO_CONTENT_ROUTES, getSeoContentCopy } from "./content-routes";
 import { getSiteUrl } from "./site-url";
 
 /** Curated llms.txt index (llmstxt.org CommonMark). */
 export function buildLlmsTxt(): string {
   const site = getSiteUrl();
   const m = getMessages(defaultLocale);
+  const contentLines = SEO_CONTENT_ROUTES.map((route) => {
+    const copy = getSeoContentCopy(m, route.path);
+    return `- [${copy.footerLabel}](${site}/en${route.path}): ${copy.description}`;
+  });
 
   return [
     `# ${m.meta.siteName}`,
@@ -19,6 +24,7 @@ export function buildLlmsTxt(): string {
     "## Product",
     "",
     `- [Squimbo home](${site}/en): ${m.meta.landingDescription}`,
+    ...contentLines,
     `- [Support](${site}/en/support): ${m.meta.supportDescription}`,
     "",
     "## Optional",
@@ -34,6 +40,11 @@ export function buildLlmsFullTxt(): string {
   const site = getSiteUrl();
   const m = getMessages(defaultLocale);
   const L = m.landing;
+  const F = m.faqPage;
+  const contentLinks = SEO_CONTENT_ROUTES.map((route) => {
+    const copy = getSeoContentCopy(m, route.path);
+    return `- ${copy.footerLabel}: ${site}/en${route.path}`;
+  });
 
   return [
     `# ${m.meta.siteName}`,
@@ -68,34 +79,44 @@ export function buildLlmsFullTxt(): string {
     `- ${L.fitPoint2}`,
     `- ${L.fitPoint3}`,
     "",
-    "## Product facts",
+    `## ${F.title}`,
     "",
-    `- ${L.spec1Label}: ${L.spec1Value}`,
-    `- ${L.spec2Label}: ${L.spec2Value}`,
-    `- ${L.spec3Label}: ${L.spec3Value}`,
-    `- ${L.spec4Label}: ${L.spec4Value}`,
+    `### ${F.faq1Q}`,
     "",
-    `## ${L.faqTitle}`,
+    F.faq1A,
     "",
-    `### ${L.faq1Q}`,
+    `### ${F.faq2Q}`,
     "",
-    L.faq1A,
+    F.faq2A,
     "",
-    `### ${L.faq2Q}`,
+    `### ${F.faq3Q}`,
     "",
-    L.faq2A,
+    F.faq3A,
     "",
-    `### ${L.faq3Q}`,
+    `### ${F.faq4Q}`,
     "",
-    L.faq3A,
+    F.faq4A,
     "",
-    `### ${L.faq4Q}`,
+    `### ${F.faq5Q}`,
     "",
-    L.faq4A,
+    F.faq5A,
+    "",
+    `### ${F.faq6Q}`,
+    "",
+    F.faq6A,
+    "",
+    `### ${F.faq7Q}`,
+    "",
+    F.faq7A,
+    "",
+    `### ${F.faq8Q}`,
+    "",
+    F.faq8A,
     "",
     "## Links",
     "",
     `- Home: ${site}/en`,
+    ...contentLinks,
     `- Support: ${site}/en/support`,
     `- Privacy: ${site}/en/privacy`,
     `- Terms: ${site}/en/terms`,

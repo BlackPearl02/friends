@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { SEO_CONTENT_ROUTES } from "@/seo/content-routes";
 import { getSiteUrl } from "@/seo/site-url";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -12,6 +13,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 1,
     },
+    ...SEO_CONTENT_ROUTES.map((route) => ({
+      url: `${siteUrl}/en${route.path}`,
+      lastModified,
+      changeFrequency: route.changeFrequency,
+      priority: route.priority,
+    })),
     {
       url: `${siteUrl}/en/support`,
       lastModified,

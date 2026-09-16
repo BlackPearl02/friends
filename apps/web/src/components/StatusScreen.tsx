@@ -27,7 +27,6 @@ export function StatusScreen({
 }: Props) {
   return (
     <section className="status-screen" aria-labelledby="status-screen-title">
-      <div className="status-screen__glow" aria-hidden="true" />
       <div className="status-screen__copy">
         <p className="status-screen__brand">{brand}</p>
         {code ? <p className="status-screen__code">{code}</p> : null}
