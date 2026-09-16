@@ -58,7 +58,7 @@ North-star thinking: **groups completing sessions**, not solo DAU — see [metri
 - Kumple’s proprietary question bank or assets
 - Paid IAP / question packs in the lobby (see monetization thesis in [strategy.md](./strategy.md))
 - Standalone mobile app as MVP
-- Full Discord bot surface beyond Activity launch (`/squimbo`, `/play`) — no moderation/economy bots
+- Discord bot / chat slash surface (`/play`, moderation, economy) — Activity Entry Point + launcher only
 - AI prompt generation before a strong human bank proves session length
 - PlayGrid library / sessions / store OAuth
 

@@ -31,39 +31,34 @@ Community / support Discord guild setup: [discord-support-server.md](./discord-s
 
 Marketing site copy is English only (`/en/...`). See [deployment.md](./deployment.md).
 
-## Launch commands (slash / App Launcher)
+## Launch (Activity Entry Point — no bot)
 
-After Activities are enabled, Discord creates a default Entry Point command (`Launch`). Register Squimbo’s branded commands:
+Discord requires **one** global [Entry Point](https://docs.discord.com/developers/interactions/application-commands#entry-point-commands) command or the Activity may not launch. That is **not** the same as adding a bot to player guilds.
+
+| Keep | Skip |
+|---|---|
+| Entry Point `/squimbo` with handler `DISCORD_LAUNCH_ACTIVITY` (Discord opens the Activity) | Chat slash `/play` |
+| Activity launcher / voice channel UI | Interactions Endpoint URL |
+| Bot token only for ops scripts | Invite with `bot` scope on player servers |
+
+Register / repair the Entry Point (HTTP only — Discord has no portal button for this):
 
 ```bash
 # Needs DISCORD_BOT_TOKEN + DISCORD_CLIENT_ID (loads from .env.production / .env.development).
-node scripts/register-discord-activity-commands.mjs
+node scripts/register-discord-activity-entrypoint.mjs
 ```
 
-| Command | Type | Behavior |
-|---|---|---|
-| `/squimbo` | Entry Point (App Launcher + `/`) | Discord opens the Activity (`DISCORD_LAUNCH_ACTIVITY`) |
-| `/play` (PL: `/graj`) | Chat slash command | API responds with `LAUNCH_ACTIVITY` (type 12) |
-
-For `/play`, set on the **API** and in Developer Portal:
-
-1. Env `DISCORD_PUBLIC_KEY` = Application Public Key (General Information)
-2. **Interactions Endpoint URL** → `https://<API_PUBLIC_URL>/discord/interactions`
-3. Invite the app with `bot` + `applications.commands` (permissions `0` is enough for launch):
-   `https://discord.com/oauth2/authorize?client_id=CLIENT_ID&scope=bot%20applications.commands&permissions=0`
-
-Global commands can take up to ~1 hour to appear.
+Leave **Interactions Endpoint URL** empty in the Developer Portal. Do not register chat slash commands.
 
 ## Env
 
 Root `.env.development`:
 
 - `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET`
-- `DISCORD_PUBLIC_KEY` (Interactions Endpoint signature verify; public)
 - `VITE_DISCORD_CLIENT_ID` (same id; public)
 - `JWT_SECRET`
 - Optional `DISCORD_ACTIVITY_REDIRECT_URI` to pin one redirect
-- Optional `DISCORD_BOT_TOKEN` for setup / command-registration scripts only
+- Optional `DISCORD_BOT_TOKEN` only for ops scripts (Entry Point register, support-server setup)
 
 Inside the Discord iframe, `VITE_FRIENDS_API_URL` should stay **empty** so the client calls `/api/...` through Discord’s mapping. Set it only for the browser mock (`DiscordSDKMock`).
 
