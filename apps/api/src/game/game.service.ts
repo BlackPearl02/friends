@@ -14,6 +14,7 @@ import { PRESENCE_STALE_MS } from "./presence";
 import { clientVisibleRoundResults, clientVisibleScore } from "./public-room-mask";
 import { ROOM_IN_PROGRESS_CODE } from "./room-codes";
 import { isRoundTie, tallyVotes } from "./round-results";
+import { REVEAL_SYNC_MS } from "./reveal-sync";
 import { aggregateScoreIncrements } from "./scoring";
 
 const MIN_PLAYERS = 2;
@@ -316,7 +317,13 @@ export class GameService {
       });
       if (!stillVoting) return;
 
-      await tx.round.update({ where: { id: round.id }, data: { status: "reveal" } });
+      await tx.round.update({
+        where: { id: round.id },
+        data: {
+          status: "reveal",
+          revealedAt: new Date(Date.now() + REVEAL_SYNC_MS),
+        },
+      });
       await tx.roomPlayer.updateMany({
         where: { roomId },
         data: { intent: "none" },
@@ -438,6 +445,7 @@ export class GameService {
         status: { in: ["reveal", "done"] },
       },
     });
+    const serverTime = new Date();
 
     return {
       id: room.id,
@@ -446,6 +454,7 @@ export class GameService {
       hostUserId: room.hostUserId,
       sessionKey: room.sessionKey,
       sessionRoundCount,
+      serverTime: serverTime.toISOString(),
       players: room.players.map((p) => ({
         userId: p.userId,
         displayName: p.user.displayName,
@@ -459,6 +468,7 @@ export class GameService {
             id: round.id,
             index: round.index,
             status: round.status,
+            revealedAt: round.revealedAt ? round.revealedAt.toISOString() : null,
             prompt: {
               id: round.prompt.id,
               kind: round.prompt.kind,

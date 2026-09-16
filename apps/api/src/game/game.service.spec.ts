@@ -360,6 +360,42 @@ describe("GameService session finale", () => {
     expect(revealRound).toHaveBeenCalledWith("room-1");
   });
 
+  it("schedules revealedAt in the near future when locking the round", async () => {
+    const roundUpdate = vi.fn().mockResolvedValue({});
+    const updateMany = vi.fn().mockResolvedValue({ count: 2 });
+    const findFirst = vi
+      .fn()
+      .mockResolvedValueOnce({ id: "round-1", status: "voting" })
+      .mockResolvedValueOnce({ id: "round-1", status: "voting" });
+    const tx = {
+      round: { findFirst, update: roundUpdate },
+      roomPlayer: { updateMany },
+    };
+    const prisma = {
+      round: { findFirst, update: roundUpdate },
+      roomPlayer: { updateMany },
+      $transaction: vi.fn(async (fn: (client: typeof tx) => Promise<void>) => fn(tx)),
+    };
+    const service = new GameService(prisma as never);
+    const before = Date.now();
+    await (
+      service as unknown as { revealRound: (roomId: string) => Promise<void> }
+    ).revealRound("room-1");
+    const after = Date.now();
+
+    expect(roundUpdate).toHaveBeenCalledWith({
+      where: { id: "round-1" },
+      data: {
+        status: "reveal",
+        revealedAt: expect.any(Date),
+      },
+    });
+    const revealedAt = (roundUpdate.mock.calls[0][0] as { data: { revealedAt: Date } }).data
+      .revealedAt;
+    expect(revealedAt.getTime()).toBeGreaterThanOrEqual(before + 600);
+    expect(revealedAt.getTime()).toBeLessThanOrEqual(after + 600);
+  });
+
   it("replays with a new sessionKey and cleared scores", async () => {
     const loadPublic = vi.fn().mockResolvedValue({ id: "room-1", status: "lobby" });
     const roomUpdate = vi.fn().mockResolvedValue({});
