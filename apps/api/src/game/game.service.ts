@@ -11,7 +11,7 @@ import type { User } from "@friends/db";
 import type { PublicRoom, RoomIntent } from "@friends/types" with { "resolution-mode": "import" };
 import { PrismaService } from "../prisma/prisma.service";
 import { pickRandomOffset } from "./pick-random";
-import { PRESENCE_STALE_MS } from "./presence";
+import { PRESENCE_STALE_MS, PRESENCE_STALE_PLAYING_MS } from "./presence";
 import { clientVisibleRoundResults, clientVisibleScore } from "./public-room-mask";
 import { ROOM_IN_PROGRESS_CODE } from "./room-codes";
 import { isRoundTie, tallyVotes } from "./round-results";
@@ -409,10 +409,15 @@ export class GameService {
   }
 
   private async pruneStalePlayers(roomId: string) {
+    const room = await this.prisma.gameRoom.findUnique({
+      where: { id: roomId },
+      select: { status: true },
+    });
+    const staleMs = room?.status === "playing" ? PRESENCE_STALE_PLAYING_MS : PRESENCE_STALE_MS;
     await this.prisma.roomPlayer.deleteMany({
       where: {
         roomId,
-        lastSeenAt: { lt: new Date(Date.now() - PRESENCE_STALE_MS) },
+        lastSeenAt: { lt: new Date(Date.now() - staleMs) },
       },
     });
   }

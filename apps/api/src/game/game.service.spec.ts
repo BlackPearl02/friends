@@ -328,13 +328,16 @@ describe("GameService session finale", () => {
     const revealRound = vi.fn().mockResolvedValue(undefined);
     const loadPublic = vi.fn().mockResolvedValue({ id: "room-1" });
     const prisma = {
+      gameRoom: {
+        findUnique: vi.fn().mockResolvedValue({ status: "playing" }),
+      },
       round: {
         findUnique: vi.fn().mockResolvedValue({
           id: "round-1",
           roomId: "room-1",
           status: "voting",
           prompt: { kind: "most_likely" },
-          room: { id: "room-1" },
+          room: { id: "room-1", discordInstanceId: "inst-1" },
         }),
       },
       roomPlayer: {
@@ -542,9 +545,14 @@ describe("GameService session finale", () => {
     expect(upsert).toHaveBeenCalled();
   });
 
-  it("prunes stale players using the presence cutoff", async () => {
+  it("prunes stale players using the lobby presence cutoff", async () => {
     const deleteMany = vi.fn().mockResolvedValue({ count: 1 });
-    const prisma = { roomPlayer: { deleteMany } };
+    const prisma = {
+      gameRoom: {
+        findUnique: vi.fn().mockResolvedValue({ status: "lobby" }),
+      },
+      roomPlayer: { deleteMany },
+    };
     const service = new GameService(prisma as never);
     const before = Date.now();
 
@@ -561,6 +569,27 @@ describe("GameService session finale", () => {
     const cutoff = deleteMany.mock.calls[0][0].where.lastSeenAt.lt as Date;
     expect(before - PRESENCE_STALE_MS - 50).toBeLessThanOrEqual(cutoff.getTime());
     expect(cutoff.getTime()).toBeLessThanOrEqual(Date.now() - PRESENCE_STALE_MS + 50);
+  });
+
+  it("uses a longer presence cutoff while a round is playing", async () => {
+    const deleteMany = vi.fn().mockResolvedValue({ count: 0 });
+    const prisma = {
+      gameRoom: {
+        findUnique: vi.fn().mockResolvedValue({ status: "playing" }),
+      },
+      roomPlayer: { deleteMany },
+    };
+    const service = new GameService(prisma as never);
+    const before = Date.now();
+    const { PRESENCE_STALE_PLAYING_MS } = await import("./presence");
+
+    await (service as unknown as { pruneStalePlayers: (id: string) => Promise<void> }).pruneStalePlayers(
+      "room-1",
+    );
+
+    const cutoff = deleteMany.mock.calls[0][0].where.lastSeenAt.lt as Date;
+    expect(before - PRESENCE_STALE_PLAYING_MS - 50).toBeLessThanOrEqual(cutoff.getTime());
+    expect(cutoff.getTime()).toBeLessThanOrEqual(Date.now() - PRESENCE_STALE_PLAYING_MS + 50);
   });
 
   it("picks a random unused prompt when beginning a round", async () => {

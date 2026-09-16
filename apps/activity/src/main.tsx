@@ -27,6 +27,7 @@ import {
 } from "./discordPresence";
 import { applyLocalIntent, applyLocalVote } from "./roomOptimistic";
 import { mergePublicRoom, shouldApplyPollResult } from "./roomApply";
+import { createRoomRefreshGate, isRoomMembershipLostError } from "./roomRefresh";
 import { subscribeRoomInvalidation } from "./roomRealtime";
 import { ROOM_POLL_MS } from "./roomSync";
 import { isShellLoading, shellBannerKind, type ShellPhase } from "./shellStatus";
@@ -229,32 +230,43 @@ function App() {
     if (preview) return;
     if (phase !== "ready" || !accessToken || !instanceId) return;
     let cancelled = false;
-    let inFlight = false;
 
-    const tick = () => {
-      if (cancelled || inFlight) return;
-      inFlight = true;
+    const gate = createRoomRefreshGate(async () => {
+      if (cancelled) return;
       const startedGen = syncGeneration.current;
-      void fetchRoom(accessToken, instanceId)
-        .then((next) => {
-          if (
-            cancelled ||
-            !shouldApplyPollResult(startedGen, syncGeneration.current, mutationsInFlight.current)
-          ) {
-            return;
+      try {
+        const next = await fetchRoom(accessToken, instanceId);
+        if (
+          cancelled ||
+          !shouldApplyPollResult(startedGen, syncGeneration.current, mutationsInFlight.current)
+        ) {
+          return;
+        }
+        setRoom((prev) => (prev ? mergePublicRoom(prev, next) : next));
+      } catch (err: unknown) {
+        if (cancelled || !isRoomMembershipLostError(err)) return;
+        // Presence prune can drop a frozen iframe — re-join while still in lobby/empty play.
+        try {
+          const sdk = sdkRef.current;
+          const next = await joinRoom(accessToken, {
+            instanceId,
+            channelId: sdk?.channelId,
+            guildId: sdk?.guildId,
+          });
+          if (!cancelled) setRoom(next);
+        } catch (joinErr: unknown) {
+          if (cancelled) return;
+          if (joinErr instanceof RoomInProgressError) {
+            setPhase("waiting-in-progress");
           }
-          setRoom((prev) => (prev ? mergePublicRoom(prev, next) : next));
-        })
-        .catch(() => undefined)
-        .finally(() => {
-          inFlight = false;
-        });
-    };
+        }
+      }
+    });
 
-    tick();
-    const id = window.setInterval(tick, ROOM_POLL_MS);
+    gate.request();
+    const id = window.setInterval(() => gate.request(), ROOM_POLL_MS);
     const unsubscribeRealtime = subscribeRoomInvalidation(instanceId, () => {
-      tick();
+      gate.request();
     });
     return () => {
       cancelled = true;
