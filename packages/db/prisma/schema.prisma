@@ -123,6 +123,8 @@ model Round {
   sessionKey String
   index      Int
   status     RoundStatus @default(voting)
+  /// When status becomes reveal — clients hold tallies until this wall time.
+  revealedAt DateTime?
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
   votes      Vote[]

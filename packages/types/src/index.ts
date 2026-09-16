@@ -61,6 +61,11 @@ export type PublicRound = {
   prompt: PublicPrompt;
   /** Votes cast so far — safe during voting (no targets). */
   voteCount: number;
+  /**
+   * Wall-clock (ISO) when clients should show tallies after status becomes reveal.
+   * Null while voting / before reveal is scheduled.
+   */
+  revealedAt: string | null;
   results?: {
     tallies: Record<string, number>;
     answers?: Array<{ userId: string; text: string }>;
@@ -76,6 +81,8 @@ export type PublicRoom = {
   sessionKey: string;
   /** Revealed rounds in the current session (0-based next index ≈ this value). */
   sessionRoundCount: number;
+  /** Server clock (ISO) at DTO build — pair with round.revealedAt for sync hold. */
+  serverTime: string;
   players: PublicPlayer[];
   round: PublicRound | null;
 };
