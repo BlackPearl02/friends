@@ -66,7 +66,15 @@ describe("partyRoomWebSocketUrl", () => {
 });
 
 describe("isRoomRealtimeConfigured", () => {
-  it("is false in unit tests without Vite PartyKit env", () => {
+  it("is false in unit tests without Vite PartyKit/Supabase env", () => {
     expect(isRoomRealtimeConfigured()).toBe(false);
+  });
+});
+
+describe("resolveMappedBase via resolvePartyKitBase", () => {
+  it("expands /sb the same way as /party", () => {
+    expect(resolvePartyKitBase("/sb", "https://123.discordsays.com")).toBe(
+      "https://123.discordsays.com/sb",
+    );
   });
 });

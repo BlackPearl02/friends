@@ -17,6 +17,7 @@ import { ROOM_IN_PROGRESS_CODE } from "./room-codes";
 import { isRoundTie, tallyVotes } from "./round-results";
 import { REVEAL_SYNC_MS } from "./reveal-sync";
 import { RoomPartyService } from "./room-party.service";
+import { RoomRealtimeService } from "./room-realtime.service";
 import { aggregateScoreIncrements } from "./scoring";
 
 const MIN_PLAYERS = 2;
@@ -26,6 +27,7 @@ export class GameService {
   constructor(
     private readonly prisma: PrismaService,
     @Optional() private readonly party?: RoomPartyService,
+    @Optional() private readonly realtime?: RoomRealtimeService,
   ) {}
 
   async join(
@@ -428,7 +430,12 @@ export class GameService {
       intent?: RoomIntent;
     },
   ) {
-    await this.party?.notifyRoomChanged(discordInstanceId, patch);
+    // Party (Discord /party) + Supabase (Discord /sb) in parallel — either path can
+    // deliver the public vote/intent patch when the other proxy is flaky.
+    await Promise.all([
+      this.party?.notifyRoomChanged(discordInstanceId, patch),
+      this.realtime?.notifyRoomChanged(discordInstanceId, patch),
+    ]);
   }
 
   private async pruneStalePlayers(roomId: string) {
