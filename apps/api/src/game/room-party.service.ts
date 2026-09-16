@@ -45,9 +45,15 @@ export class RoomPartyService {
   }
 
   private readConfig(name: string): string | undefined {
-    const fromConfig = this.config?.get<string>(name)?.trim();
-    if (fromConfig) return fromConfig;
-    const fromEnv = process.env[name]?.trim();
-    return fromEnv || undefined;
+    const fromConfig = this.config?.get<string>(name);
+    const fromEnv = process.env[name];
+    const raw = (fromConfig ?? fromEnv)?.trim();
+    if (!raw) return undefined;
+    // Strip shell/dotenv artifacts from `vercel env add` piping.
+    return raw
+      .replace(/^['"]+|['"]+$/g, "")
+      .replace(/\\r\\n$|\\n$|\\r$/g, "")
+      .replace(/[\r\n]+$/g, "")
+      .trim() || undefined;
   }
 }

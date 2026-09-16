@@ -8,7 +8,7 @@ export function resolvePartyKitBase(
   configured: string | undefined,
   origin: string | undefined = typeof window !== "undefined" ? window.location.origin : undefined,
 ): string {
-  const raw = configured?.trim().replace(/\/+$/, "") ?? "";
+  const raw = configured?.trim().replace(/^['"]|['"]$/g, "").replace(/\/+$/, "") ?? "";
   if (!raw) return "";
   if (/^https?:\/\//i.test(raw)) return raw;
   if (!origin) return "";
@@ -134,8 +134,13 @@ export function subscribeRoomInvalidation(
         onInvalidate(parseRoomRealtimePayload(raw));
       };
 
-      ws.onclose = () => {
-        console.info("[squimbo-party] close", discordInstanceId);
+      ws.onclose = (ev) => {
+        console.info(
+          "[squimbo-party] close",
+          discordInstanceId,
+          `code=${ev.code}`,
+          "If this loops immediately, add Discord URL Mapping /party → squimbo-party.utopian-lead.workers.dev (no https://)",
+        );
         if (socket === ws) socket = null;
         scheduleReconnect();
       };

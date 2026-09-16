@@ -42,4 +42,18 @@ describe("RoomPartyService", () => {
     const headers = init.headers as Record<string, string>;
     expect(headers.Authorization).toBe("Bearer party-secret");
   });
+
+  it("strips quoted CRLF artifacts from env piping", async () => {
+    process.env.PARTYKIT_HOST = '"https://squimbo.example.partykit.dev\\r\\n"';
+    process.env.PARTY_SERVER_SECRET = '"party-secret\\r\\n"';
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, text: async () => "" });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const service = new RoomPartyService();
+    await service.notifyRoomChanged("inst-abc", { kind: "roster" });
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://squimbo.example.partykit.dev/parties/main/inst-abc");
+    expect((init.headers as Record<string, string>).Authorization).toBe("Bearer party-secret");
+  });
 });

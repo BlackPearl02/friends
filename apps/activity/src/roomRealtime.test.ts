@@ -50,8 +50,10 @@ describe("resolvePartyKitBase", () => {
     );
   });
 
-  it("returns empty when a relative path has no origin", () => {
-    expect(resolvePartyKitBase("/party", undefined)).toBe("");
+  it("strips accidental surrounding quotes from env values", () => {
+    expect(resolvePartyKitBase('"/party"', "https://123.discordsays.com")).toBe(
+      "https://123.discordsays.com/party",
+    );
   });
 });
 
