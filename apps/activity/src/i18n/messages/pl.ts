@@ -15,6 +15,7 @@ export const pl: ActivityMessages = {
     waitingInProgress: "Runda już trwa.",
     waitingInProgressDetail:
       "Poczekaj — wejdziesz do lobby, gdy skończą noc albo zagrają jeszcze raz.",
+    actionFailed: "Nie poszło — spróbuj jeszcze raz.",
   },
   lobby: {
     players: "W pokoju",
@@ -30,6 +31,7 @@ export const pl: ActivityMessages = {
     waitingDiscordJoin:
       "Ktoś jest w Activity Discorda, ale jeszcze nie dokończył dołączania do Squimbo. Niech otworzy Squimbo i zaakceptuje uprawnienia.",
     sweetSpot: "Najlepiej 3–8 osób na kanale.",
+    waitingOnOthers: "Jesteś gotowy — czekamy na jeszcze {count}.",
   },
   round: {
     vote: "Głosuj",
@@ -47,6 +49,7 @@ export const pl: ActivityMessages = {
     votedBadge: "Oddał głos",
     waitingVoteBadge: "…",
     waitingVotes: "Czekamy, aż wszyscy oddadzą głos…",
+    waitingOnOthers: "Jesteś gotowy — czekamy na jeszcze {count}.",
     pickPlayer: "Wybierz kogoś",
     votesInFlight: "{voted}/{total} oddało głos",
     votesLocked: "Głosy oddane.",

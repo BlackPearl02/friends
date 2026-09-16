@@ -19,6 +19,7 @@ import { LobbyPanel } from "./LobbyPanel";
 import { previewFinished, previewReveal, previewRound, previewRoom, previewTie } from "./previewData";
 import { RoundPanel } from "./RoundPanel";
 import { subscribeDiscordParticipants } from "./discordParticipants";
+import { applyLocalIntent, applyLocalVote } from "./roomOptimistic";
 import { ROOM_POLL_MS } from "./roomSync";
 import { isShellLoading, shellBannerKind, type ShellPhase } from "./shellStatus";
 
@@ -119,6 +120,11 @@ function App() {
   const [discordParticipantCount, setDiscordParticipantCount] = useState<number | null>(
     preview ? 2 : null,
   );
+  const [actionError, setActionError] = useState<string | null>(null);
+  const roomRef = useRef<PublicRoom | null>(room);
+  roomRef.current = room;
+  /** Skip poll overwrites while a mutation's optimistic patch is in flight. */
+  const mutationsInFlight = useRef(0);
 
   useEffect(() => {
     if (preview) return;
@@ -216,7 +222,7 @@ function App() {
       inFlight = true;
       void fetchRoom(accessToken, instanceId)
         .then((next) => {
-          if (!cancelled) setRoom(next);
+          if (!cancelled && mutationsInFlight.current === 0) setRoom(next);
         })
         .catch(() => undefined)
         .finally(() => {
@@ -293,6 +299,12 @@ function App() {
           </section>
         )}
 
+        {ready && actionError && (
+          <p className="hint" role="alert" style={{ margin: "0 0 0.5rem" }}>
+            {actionError}
+          </p>
+        )}
+
         {ready && room.status === "lobby" && (
           <LobbyPanel
             room={room}
@@ -305,16 +317,19 @@ function App() {
               await sdk.commands.openInviteDialog();
             }}
             onIntent={async (intent) => {
-              if (preview) {
-                setRoom({
-                  ...room,
-                  players: room.players.map((p) =>
-                    p.userId === userId ? { ...p, intent } : p,
-                  ),
-                });
-                return;
+              const snapshot = roomRef.current ?? room;
+              setRoom(applyLocalIntent(snapshot, userId, intent));
+              if (preview) return;
+              setActionError(null);
+              mutationsInFlight.current += 1;
+              try {
+                setRoom(await setRoomIntent(accessToken, instanceId, intent));
+              } catch {
+                setRoom(snapshot);
+                setActionError(t("shell.actionFailed"));
+              } finally {
+                mutationsInFlight.current -= 1;
               }
-              setRoom(await setRoomIntent(accessToken, instanceId, intent));
             }}
           />
         )}
@@ -325,19 +340,35 @@ function App() {
             currentUserId={userId}
             onVote={async (body) => {
               if (preview) return;
-              setRoom(await voteRound(accessToken, { roundId: room.round!.id, ...body }));
+              const snapshot = roomRef.current ?? room;
+              setRoom(applyLocalVote(snapshot, userId));
+              setActionError(null);
+              mutationsInFlight.current += 1;
+              try {
+                setRoom(
+                  await voteRound(accessToken, { roundId: snapshot.round!.id, ...body }),
+                );
+              } catch {
+                setRoom(snapshot);
+                setActionError(t("shell.actionFailed"));
+              } finally {
+                mutationsInFlight.current -= 1;
+              }
             }}
             onIntent={async (intent) => {
-              if (preview) {
-                setRoom({
-                  ...room,
-                  players: room.players.map((p) =>
-                    p.userId === userId ? { ...p, intent } : p,
-                  ),
-                });
-                return;
+              const snapshot = roomRef.current ?? room;
+              setRoom(applyLocalIntent(snapshot, userId, intent));
+              if (preview) return;
+              setActionError(null);
+              mutationsInFlight.current += 1;
+              try {
+                setRoom(await setRoomIntent(accessToken, instanceId, intent));
+              } catch {
+                setRoom(snapshot);
+                setActionError(t("shell.actionFailed"));
+              } finally {
+                mutationsInFlight.current -= 1;
               }
-              setRoom(await setRoomIntent(accessToken, instanceId, intent));
             }}
           />
         )}

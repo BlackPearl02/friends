@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { PublicRoom, RoomIntent } from "@friends/types";
 import { t } from "./i18n";
 import { lobbyWaitingForDiscordJoin } from "./lobbyHints";
+import { playersWaitingOnIntent } from "./roomOptimistic";
 import { colors } from "./theme";
 
 export function LobbyPanel(props: {
@@ -15,12 +16,14 @@ export function LobbyPanel(props: {
   const me = props.room.players.find((p) => p.userId === props.currentUserId);
   const continueCount = props.room.players.filter((p) => p.intent === "continue").length;
   const total = props.room.players.length;
+  const waitingOnIntent = playersWaitingOnIntent(props.room);
   const waitingDiscord = lobbyWaitingForDiscordJoin(
     total,
     props.discordParticipantCount ?? null,
   );
   const iAmContinue = me?.intent === "continue";
-  const [busy, setBusy] = useState(false);
+  const intentInFlight = useRef(false);
+  const [inviteBusy, setInviteBusy] = useState(false);
   const [inviteHint, setInviteHint] = useState<string | null>(null);
 
   return (
@@ -58,15 +61,21 @@ export function LobbyPanel(props: {
       </p>
       {waitingDiscord && <p className="hint">{t("lobby.waitingDiscordJoin")}</p>}
       {!waitingDiscord && total < 2 && <p className="hint">{t("lobby.needPlayers")}</p>}
+      {iAmContinue && waitingOnIntent > 0 && (
+        <p className="hint">{t("lobby.waitingOnOthers", { count: String(waitingOnIntent) })}</p>
+      )}
 
       <div className="actions">
         <button
           type="button"
           className={iAmContinue ? "btn btn-ghost is-selected" : "btn btn-primary"}
-          disabled={busy || total < 2}
+          disabled={total < 2}
           onClick={() => {
-            setBusy(true);
-            void props.onIntent(iAmContinue ? "none" : "continue").finally(() => setBusy(false));
+            if (intentInFlight.current || total < 2) return;
+            intentInFlight.current = true;
+            void props.onIntent(iAmContinue ? "none" : "continue").finally(() => {
+              intentInFlight.current = false;
+            });
           }}
         >
           {iAmContinue ? t("lobby.notReady") : t("lobby.ready")}
@@ -74,14 +83,14 @@ export function LobbyPanel(props: {
         <button
           type="button"
           className="btn btn-ghost"
-          disabled={busy}
+          disabled={inviteBusy}
           onClick={() => {
-            setBusy(true);
+            setInviteBusy(true);
             setInviteHint(null);
             void props
               .onInvite()
               .catch(() => setInviteHint(t("lobby.invitePreview")))
-              .finally(() => setBusy(false));
+              .finally(() => setInviteBusy(false));
           }}
         >
           {t("lobby.invite")}

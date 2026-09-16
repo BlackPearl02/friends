@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PublicRoom, RoomIntent } from "@friends/types";
 import { t } from "./i18n";
+import { playersWaitingOnIntent } from "./roomOptimistic";
 import { isRevealTie, leadersFromTallies } from "./roundReveal";
 import { colors } from "./theme";
 
@@ -22,10 +23,13 @@ export function RoundPanel(props: {
 }) {
   const round = props.room.round;
   const me = props.room.players.find((p) => p.userId === props.currentUserId);
-  const [busy, setBusy] = useState(false);
+  const voteInFlight = useRef(false);
+  const intentInFlight = useRef(false);
   const [picked, setPicked] = useState<string | null>(null);
   useEffect(() => {
     setPicked(null);
+    voteInFlight.current = false;
+    intentInFlight.current = false;
   }, [round?.id]);
   if (!round) return null;
 
@@ -34,12 +38,23 @@ export function RoundPanel(props: {
   const continueCount = props.room.players.filter((p) => p.intent === "continue").length;
   const wrapCount = props.room.players.filter((p) => p.intent === "wrap_up").length;
   const revoteCount = props.room.players.filter((p) => p.intent === "revote").length;
+  const waitingOnIntent = playersWaitingOnIntent(props.room);
   const softWrap = props.room.sessionRoundCount >= SOFT_WRAP_FROM_SESSION_ROUND;
   const tallies = round.results?.tallies;
   const leaders = tallies ? leadersFromTallies(tallies) : { userIds: [] as string[], votes: 0 };
   const tied = isRevealTie(tallies);
   const leaderPlayers = props.room.players.filter((p) => leaders.userIds.includes(p.userId));
   const leaderNames = leaderPlayers.map((p) => p.displayName).join(", ");
+  const showWaitingOnOthers =
+    revealed && me != null && me.intent !== "none" && waitingOnIntent > 0;
+
+  const runIntent = (intent: RoomIntent) => {
+    if (intentInFlight.current) return;
+    intentInFlight.current = true;
+    void props.onIntent(intent).finally(() => {
+      intentInFlight.current = false;
+    });
+  };
 
   return (
     <section className="friends-card">
@@ -56,11 +71,14 @@ export function RoundPanel(props: {
                 key={p.userId}
                 type="button"
                 className={picked === p.userId ? "btn btn-choice is-selected" : "btn btn-choice"}
-                disabled={busy}
+                disabled={Boolean(picked) || me?.hasVoted}
                 onClick={() => {
+                  if (voteInFlight.current || me?.hasVoted) return;
+                  voteInFlight.current = true;
                   setPicked(p.userId);
-                  setBusy(true);
-                  void props.onVote({ targetUserId: p.userId }).finally(() => setBusy(false));
+                  void props.onVote({ targetUserId: p.userId }).finally(() => {
+                    voteInFlight.current = false;
+                  });
                 }}
               >
                 <span className="player-row-main">
@@ -173,6 +191,11 @@ export function RoundPanel(props: {
                   total: String(playerCount),
                 })}
           </p>
+          {showWaitingOnOthers && (
+            <p className="hint">
+              {t("round.waitingOnOthers", { count: String(waitingOnIntent) })}
+            </p>
+          )}
         </div>
       )}
 
@@ -181,26 +204,14 @@ export function RoundPanel(props: {
           <button
             type="button"
             className={me?.intent === "revote" ? "btn btn-primary is-selected" : "btn btn-primary"}
-            disabled={busy}
-            onClick={() => {
-              setBusy(true);
-              void props
-                .onIntent(me?.intent === "revote" ? "none" : "revote")
-                .finally(() => setBusy(false));
-            }}
+            onClick={() => runIntent(me?.intent === "revote" ? "none" : "revote")}
           >
             {t("round.revote")}
           </button>
           <button
             type="button"
             className={me?.intent === "continue" ? "btn btn-ghost is-selected" : "btn btn-ghost"}
-            disabled={busy}
-            onClick={() => {
-              setBusy(true);
-              void props
-                .onIntent(me?.intent === "continue" ? "none" : "continue")
-                .finally(() => setBusy(false));
-            }}
+            onClick={() => runIntent(me?.intent === "continue" ? "none" : "continue")}
           >
             {t("round.continueTied")}
           </button>
@@ -212,13 +223,7 @@ export function RoundPanel(props: {
           <button
             type="button"
             className={me?.intent === "continue" ? "btn btn-primary is-selected" : "btn btn-primary"}
-            disabled={busy}
-            onClick={() => {
-              setBusy(true);
-              void props
-                .onIntent(me?.intent === "continue" ? "none" : "continue")
-                .finally(() => setBusy(false));
-            }}
+            onClick={() => runIntent(me?.intent === "continue" ? "none" : "continue")}
           >
             {t("round.continue")}
           </button>
@@ -233,13 +238,7 @@ export function RoundPanel(props: {
                   ? "btn btn-primary"
                   : "btn btn-ghost"
             }
-            disabled={busy}
-            onClick={() => {
-              setBusy(true);
-              void props
-                .onIntent(me?.intent === "wrap_up" ? "none" : "wrap_up")
-                .finally(() => setBusy(false));
-            }}
+            onClick={() => runIntent(me?.intent === "wrap_up" ? "none" : "wrap_up")}
           >
             {t("round.wrapUp")}
           </button>

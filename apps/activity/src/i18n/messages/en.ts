@@ -13,6 +13,7 @@ export const en = {
     waitingInProgress: "A round is already underway.",
     waitingInProgressDetail:
       "Hang tight — you’ll join the lobby when this night wraps up or they play again.",
+    actionFailed: "That didn’t go through — try again.",
   },
   lobby: {
     players: "In the room",
@@ -28,6 +29,7 @@ export const en = {
     waitingDiscordJoin:
       "Someone is in the Discord Activity but has not finished joining Squimbo yet. Ask them to open Squimbo and accept permissions.",
     sweetSpot: "Best with 3–8 friends in the channel.",
+    waitingOnOthers: "You're ready — waiting on {count} more.",
   },
   round: {
     vote: "Vote",
@@ -45,6 +47,7 @@ export const en = {
     votedBadge: "Voted",
     waitingVoteBadge: "…",
     waitingVotes: "Waiting for everyone to vote…",
+    waitingOnOthers: "You're in — waiting on {count} more.",
     pickPlayer: "Tap someone",
     votesInFlight: "{voted}/{total} voted",
     votesLocked: "Votes are in.",
