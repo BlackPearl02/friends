@@ -1,11 +1,39 @@
 import { describe, expect, it } from "vitest";
 import { ROOM_REALTIME_EVENT, roomRealtimeTopic } from "@friends/types";
-import { isRoomRealtimeConfigured, resolveSupabaseUrl } from "./roomRealtime";
+import {
+  isRoomRealtimeConfigured,
+  parseRoomRealtimePayload,
+  resolveSupabaseUrl,
+} from "./roomRealtime";
 
 describe("roomRealtimeTopic", () => {
   it("scopes the broadcast channel to the Discord instance", () => {
     expect(roomRealtimeTopic("abc-123")).toBe("room:abc-123");
     expect(ROOM_REALTIME_EVENT).toBe("room_changed");
+  });
+});
+
+describe("parseRoomRealtimePayload", () => {
+  it("keeps safe vote fields and drops unknown junk", () => {
+    expect(
+      parseRoomRealtimePayload({
+        t: 1,
+        kind: "vote",
+        votedUserId: "u1",
+        voteCount: 2,
+        targetUserId: "secret",
+      }),
+    ).toEqual({
+      t: 1,
+      kind: "vote",
+      votedUserId: "u1",
+      voteCount: 2,
+    });
+  });
+
+  it("falls back to a bare wake-up for invalid shapes", () => {
+    expect(parseRoomRealtimePayload(null)).toEqual({ t: 1 });
+    expect(parseRoomRealtimePayload({ kind: "hack", intent: "drop_tables" })).toEqual({ t: 1 });
   });
 });
 

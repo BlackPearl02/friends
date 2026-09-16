@@ -25,7 +25,7 @@ import {
   resolvePresencePhase,
   syncDiscordPresence,
 } from "./discordPresence";
-import { applyLocalIntent, applyLocalVote } from "./roomOptimistic";
+import { applyLocalIntent, applyLocalVote, applyPeerIntent, applyPeerVote } from "./roomOptimistic";
 import { mergePublicRoom, shouldApplyPollResult } from "./roomApply";
 import { createRoomRefreshGate, isRoomMembershipLostError } from "./roomRefresh";
 import { subscribeRoomInvalidation } from "./roomRealtime";
@@ -265,7 +265,17 @@ function App() {
 
     gate.request();
     const id = window.setInterval(() => gate.request(), ROOM_POLL_MS);
-    const unsubscribeRealtime = subscribeRoomInvalidation(instanceId, () => {
+    const unsubscribeRealtime = subscribeRoomInvalidation(instanceId, (payload) => {
+      // Apply safe public patch before GET so peer badges do not wait ~poll latency.
+      if (payload.kind === "vote" && payload.votedUserId) {
+        const voterId = payload.votedUserId;
+        const voteCount = payload.voteCount;
+        setRoom((prev) => (prev ? applyPeerVote(prev, voterId, voteCount) : prev));
+      } else if (payload.kind === "intent" && payload.intentUserId && payload.intent) {
+        const intentUserId = payload.intentUserId;
+        const intent = payload.intent;
+        setRoom((prev) => (prev ? applyPeerIntent(prev, intentUserId, intent) : prev));
+      }
       gate.request();
     });
     return () => {

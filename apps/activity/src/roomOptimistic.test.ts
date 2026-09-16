@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { PublicRoom } from "@friends/types";
-import { applyLocalIntent, applyLocalVote, playersWaitingOnIntent } from "./roomOptimistic";
+import {
+  applyLocalIntent,
+  applyLocalVote,
+  applyPeerIntent,
+  applyPeerVote,
+  playersWaitingOnIntent,
+} from "./roomOptimistic";
 
 function baseRoom(overrides: Partial<PublicRoom> = {}): PublicRoom {
   return {
@@ -101,6 +107,46 @@ describe("applyLocalVote", () => {
       },
     });
     expect(applyLocalVote(room, "a")).toBe(room);
+  });
+});
+
+describe("applyPeerVote", () => {
+  it("marks a peer as voted and prefers the server voteCount", () => {
+    const next = applyPeerVote(baseRoom(), "b", 1);
+    expect(next.players.find((p) => p.userId === "b")?.hasVoted).toBe(true);
+    expect(next.players.find((p) => p.userId === "a")?.hasVoted).toBe(false);
+    expect(next.round?.voteCount).toBe(1);
+  });
+
+  it("is a no-op for unknown peers or non-voting rounds", () => {
+    const room = baseRoom();
+    expect(applyPeerVote(room, "missing", 1)).toBe(room);
+    const revealed = baseRoom({
+      round: {
+        id: "r1",
+        index: 0,
+        status: "reveal",
+        revealedAt: "2026-09-16T18:00:01.000Z",
+        prompt: {
+          id: "p1",
+          kind: "most_likely",
+          category: null,
+          body: "Who?",
+          optionA: null,
+          optionB: null,
+        },
+        voteCount: 2,
+      },
+    });
+    expect(applyPeerVote(revealed, "b", 2)).toBe(revealed);
+  });
+});
+
+describe("applyPeerIntent", () => {
+  it("updates only the named peer intent", () => {
+    const next = applyPeerIntent(baseRoom(), "b", "wrap_up");
+    expect(next.players.find((p) => p.userId === "b")?.intent).toBe("wrap_up");
+    expect(next.players.find((p) => p.userId === "a")?.intent).toBe("none");
   });
 });
 

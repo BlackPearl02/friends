@@ -10,7 +10,7 @@ export const API_PATHS = {
 
 /**
  * Supabase Realtime Broadcast topic for a Discord Activity instance.
- * Payload is a wake-up only — clients must refetch PublicRoom via JWT.
+ * Safe public patches may be included; clients still refetch PublicRoom via JWT.
  */
 export function roomRealtimeTopic(discordInstanceId: string): string {
   return `room:${discordInstanceId}`;
@@ -29,6 +29,19 @@ export type RoomStatus = "lobby" | "playing" | "finished";
 export type RoundStatus = "voting" | "reveal" | "done";
 export type VoteChoice = "a" | "b" | "complete" | "skip";
 export type RoomIntent = "none" | "continue" | "wrap_up" | "revote";
+
+/**
+ * Optional public patch on the wake-up event (no targets / tallies).
+ * Peers apply this immediately so UI does not wait on a slow GET.
+ */
+export type RoomRealtimePayload = {
+  t: 1;
+  kind?: "vote" | "intent" | "roster";
+  votedUserId?: string;
+  voteCount?: number;
+  intentUserId?: string;
+  intent?: RoomIntent;
+};
 
 export type ActivityExchangeRequest = {
   code: string;

@@ -73,7 +73,7 @@ export class GameService {
     });
 
     const publicRoom = await this.loadPublic(room.id);
-    this.pingRealtime(input.instanceId);
+    this.pingRealtime(input.instanceId, { kind: "roster" });
     return publicRoom;
   }
 
@@ -93,7 +93,7 @@ export class GameService {
     await this.prisma.roomPlayer.deleteMany({
       where: { roomId: room.id, userId: user.id },
     });
-    this.pingRealtime(instanceId);
+    this.pingRealtime(instanceId, { kind: "roster" });
     return { ok: true };
   }
 
@@ -173,7 +173,11 @@ export class GameService {
     }
 
     const publicRoom = await this.loadPublic(room.id);
-    this.pingRealtime(instanceId);
+    this.pingRealtime(instanceId, {
+      kind: "intent",
+      intentUserId: user.id,
+      intent,
+    });
     return publicRoom;
   }
 
@@ -222,7 +226,11 @@ export class GameService {
     }
 
     const publicRoom = await this.loadPublic(round.roomId);
-    this.pingRealtime(round.room.discordInstanceId);
+    this.pingRealtime(round.room.discordInstanceId, {
+      kind: "vote",
+      votedUserId: user.id,
+      voteCount,
+    });
     return publicRoom;
   }
 
@@ -243,7 +251,7 @@ export class GameService {
       }),
     ]);
     const publicRoom = await this.loadPublic(room.id);
-    this.pingRealtime(instanceId);
+    this.pingRealtime(instanceId, { kind: "roster" });
     return publicRoom;
   }
 
@@ -404,8 +412,17 @@ export class GameService {
     ]);
   }
 
-  private pingRealtime(discordInstanceId: string) {
-    void this.realtime?.notifyRoomChanged(discordInstanceId);
+  private pingRealtime(
+    discordInstanceId: string,
+    patch?: {
+      kind?: "vote" | "intent" | "roster";
+      votedUserId?: string;
+      voteCount?: number;
+      intentUserId?: string;
+      intent?: RoomIntent;
+    },
+  ) {
+    void this.realtime?.notifyRoomChanged(discordInstanceId, patch);
   }
 
   private async pruneStalePlayers(roomId: string) {

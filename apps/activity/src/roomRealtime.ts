@@ -1,5 +1,9 @@
 import { createClient, type RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
-import { ROOM_REALTIME_EVENT, roomRealtimeTopic } from "@friends/types";
+import {
+  ROOM_REALTIME_EVENT,
+  roomRealtimeTopic,
+  type RoomRealtimePayload,
+} from "@friends/types";
 
 /**
  * Resolve Supabase URL for the Discord Activity sandbox.
@@ -30,13 +34,43 @@ export function isRoomRealtimeConfigured(): boolean {
   return Boolean(getSupabaseUrl() && getSupabaseAnonKey());
 }
 
+const INTENT_VALUES = new Set(["none", "continue", "wrap_up", "revote"]);
+
 /**
- * Subscribe to room wake-ups. Payload is ignored — caller must refetch via JWT.
+ * Narrow Broadcast payload to safe public fields (no vote targets).
+ * Invalid shapes become a bare wake-up so GET still runs.
+ */
+export function parseRoomRealtimePayload(raw: unknown): RoomRealtimePayload {
+  if (!raw || typeof raw !== "object") return { t: 1 };
+  const o = raw as Record<string, unknown>;
+  const payload: RoomRealtimePayload = { t: 1 };
+
+  if (o.kind === "vote" || o.kind === "intent" || o.kind === "roster") {
+    payload.kind = o.kind;
+  }
+  if (typeof o.votedUserId === "string" && o.votedUserId) {
+    payload.votedUserId = o.votedUserId;
+  }
+  if (typeof o.voteCount === "number" && Number.isFinite(o.voteCount) && o.voteCount >= 0) {
+    payload.voteCount = Math.floor(o.voteCount);
+  }
+  if (typeof o.intentUserId === "string" && o.intentUserId) {
+    payload.intentUserId = o.intentUserId;
+  }
+  if (typeof o.intent === "string" && INTENT_VALUES.has(o.intent)) {
+    payload.intent = o.intent as RoomRealtimePayload["intent"];
+  }
+  return payload;
+}
+
+/**
+ * Subscribe to room wake-ups (+ optional public patch).
+ * Caller applies the patch immediately, then refetches via JWT.
  * Returns unsubscribe. Never throws — Realtime is best-effort over poll.
  */
 export function subscribeRoomInvalidation(
   discordInstanceId: string,
-  onInvalidate: () => void,
+  onInvalidate: (payload: RoomRealtimePayload) => void,
 ): () => void {
   if (!discordInstanceId || !isRoomRealtimeConfigured()) {
     return () => undefined;
@@ -61,8 +95,8 @@ export function subscribeRoomInvalidation(
       .channel(roomRealtimeTopic(discordInstanceId), {
         config: { broadcast: { self: false } },
       })
-      .on("broadcast", { event: ROOM_REALTIME_EVENT }, () => {
-        onInvalidate();
+      .on("broadcast", { event: ROOM_REALTIME_EVENT }, ({ payload }) => {
+        onInvalidate(parseRoomRealtimePayload(payload));
       })
       .subscribe();
   } catch {

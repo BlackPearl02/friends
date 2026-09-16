@@ -41,4 +41,29 @@ describe("RoomRealtimeService", () => {
     const headers = init.headers as Record<string, string>;
     expect(headers.apikey).toBe("service-role-test");
   });
+
+  it("includes a public vote patch on the wake-up payload", async () => {
+    process.env.SUPABASE_URL = "https://example.supabase.co";
+    process.env.SUPABASE_ANON_KEY = "anon-test";
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const service = new RoomRealtimeService();
+    await service.notifyRoomChanged("inst-vote", {
+      kind: "vote",
+      votedUserId: "user-a",
+      voteCount: 1,
+    });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(String(init.body)) as {
+      messages: Array<{ payload: unknown }>;
+    };
+    expect(body.messages[0].payload).toEqual({
+      t: 1,
+      kind: "vote",
+      votedUserId: "user-a",
+      voteCount: 1,
+    });
+  });
 });
