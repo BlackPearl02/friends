@@ -1,21 +1,15 @@
 /**
- * Register / update Squimbo Discord Activity launch commands.
+ * Ensure Squimbo has a global PRIMARY_ENTRY_POINT command.
  *
- * What it does:
- * 1. Renames the Activity Entry Point (App Launcher) to `/squimbo`
- *    with DISCORD_LAUNCH_ACTIVITY — Discord opens the Activity itself.
- * 2. Ensures a chat slash command `/play` exists (handled by the API
- *    Interactions Endpoint → LAUNCH_ACTIVITY).
+ * Discord Activities require exactly one Entry Point or the client warns
+ * that the Activity may not be launchable. Handler DISCORD_LAUNCH_ACTIVITY (2)
+ * means Discord opens the Activity itself — no Interactions Endpoint and no
+ * bot invite in player guilds.
  *
- * Prerequisites:
- * - Activities enabled on the Discord application
- * - Bot token (Developer Portal → Bot → Reset Token)
- * - API Interactions Endpoint URL set to:
- *     https://<API_PUBLIC_URL>/discord/interactions
- *   (required for `/play`; Entry Point works without it when handler=2)
+ * Does NOT register chat slash commands (`/play`, etc.).
  *
  * Usage (repo root):
- *   DISCORD_BOT_TOKEN=… DISCORD_CLIENT_ID=… node scripts/register-discord-activity-commands.mjs
+ *   node scripts/register-discord-activity-entrypoint.mjs
  *
  * Loads DISCORD_BOT_TOKEN / DISCORD_CLIENT_ID from .env.production or
  * .env.development when present (does not override existing env).
@@ -29,18 +23,10 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 const API = "https://discord.com/api/v10";
 
-/** ApplicationCommandType */
-const CHAT_INPUT = 1;
 const PRIMARY_ENTRY_POINT = 4;
-
-/** EntryPointCommandHandlerType */
 const DISCORD_LAUNCH_ACTIVITY = 2;
-
-/** ApplicationIntegrationType: Guild Install, User Install */
 const INTEGRATION_GUILD = 0;
 const INTEGRATION_USER = 1;
-
-/** InteractionContextType: Guild, Bot DM, Private Channel */
 const CTX_GUILD = 0;
 const CTX_BOT_DM = 1;
 const CTX_PRIVATE = 2;
@@ -78,7 +64,7 @@ async function api(method, path, body) {
     headers: {
       Authorization: `Bot ${TOKEN}`,
       "Content-Type": "application/json",
-      "User-Agent": "SquimboCommands (github.com/squimbo; register-commands)",
+      "User-Agent": "SquimboCommands (github.com/squimbo; register-entrypoint)",
     },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
@@ -98,11 +84,6 @@ async function api(method, path, body) {
   return data;
 }
 
-const sharedMeta = {
-  integration_types: [INTEGRATION_GUILD, INTEGRATION_USER],
-  contexts: [CTX_GUILD, CTX_BOT_DM, CTX_PRIVATE],
-};
-
 const entryPointBody = {
   name: "squimbo",
   type: PRIMARY_ENTRY_POINT,
@@ -112,18 +93,8 @@ const entryPointBody = {
   description_localizations: {
     pl: "Uruchom Squimbo",
   },
-  ...sharedMeta,
-};
-
-const playBody = {
-  name: "play",
-  type: CHAT_INPUT,
-  description: "Launch Squimbo in this channel",
-  name_localizations: { pl: "graj" },
-  description_localizations: {
-    pl: "Uruchom Squimbo na tym kanale",
-  },
-  ...sharedMeta,
+  integration_types: [INTEGRATION_GUILD, INTEGRATION_USER],
+  contexts: [CTX_GUILD, CTX_BOT_DM, CTX_PRIVATE],
 };
 
 async function main() {
@@ -136,49 +107,39 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`Registering commands for application ${CLIENT_ID}…`);
+  console.log(`Ensuring Entry Point for application ${CLIENT_ID}…`);
   const existing = await api("GET", `/applications/${CLIENT_ID}/commands`);
-  console.log(`  existing commands: ${existing.length}`);
-
   const entry = existing.find((c) => c.type === PRIMARY_ENTRY_POINT);
+  const chat = existing.filter((c) => c.type !== PRIMARY_ENTRY_POINT);
+
   if (entry) {
     const updated = await api(
       "PATCH",
       `/applications/${CLIENT_ID}/commands/${entry.id}`,
       entryPointBody,
     );
-    console.log(`  entry point updated: /${updated.name} (id ${updated.id})`);
+    console.log(`  entry point updated: /${updated.name} (id ${updated.id}, handler ${updated.handler})`);
   } else {
     const created = await api(
       "POST",
       `/applications/${CLIENT_ID}/commands`,
       entryPointBody,
     );
-    console.log(`  entry point created: /${created.name} (id ${created.id})`);
+    console.log(`  entry point created: /${created.name} (id ${created.id}, handler ${created.handler})`);
   }
 
-  const play = existing.find((c) => c.type === CHAT_INPUT && c.name === "play");
-  if (play) {
-    const updated = await api(
-      "PATCH",
-      `/applications/${CLIENT_ID}/commands/${play.id}`,
-      playBody,
-    );
-    console.log(`  /play updated (id ${updated.id})`);
-  } else {
-    const created = await api("POST", `/applications/${CLIENT_ID}/commands`, playBody);
-    console.log(`  /play created (id ${created.id})`);
+  if (chat.length) {
+    console.log(`  note: ${chat.length} non–Entry Point command(s) still registered:`);
+    for (const c of chat) {
+      console.log(`    - /${c.name} (type ${c.type}, id ${c.id})`);
+    }
   }
 
   console.log("");
-  console.log("Next:");
-  console.log("  1. Set DISCORD_PUBLIC_KEY on the API (Developer Portal → General Information).");
-  console.log("  2. Interactions Endpoint URL → https://<API>/discord/interactions");
-  console.log("  3. Invite with applications.commands (+ bot if needed):");
-  console.log(
-    `     https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&scope=bot%20applications.commands&permissions=0`,
-  );
-  console.log("  Global commands can take up to ~1 hour to propagate (often minutes).");
+  console.log("Entry Point with DISCORD_LAUNCH_ACTIVITY does not need:");
+  console.log("  - Interactions Endpoint URL");
+  console.log("  - bot invite in player guilds");
+  console.log("Propagation can take up to ~1 hour (often minutes).");
 }
 
 main().catch((err) => {
