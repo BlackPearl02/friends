@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
       process.env.DISCORD_CLIENT_ID ||
       "",
     NEXT_PUBLIC_SUPPORT_EMAIL: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "",
+    NEXT_PUBLIC_SUPPORT_DISCORD_URL:
+      process.env.NEXT_PUBLIC_SUPPORT_DISCORD_URL || "",
     NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN:
       process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN || "",
     NEXT_PUBLIC_POSTHOG_HOST:

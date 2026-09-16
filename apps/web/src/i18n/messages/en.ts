@@ -112,9 +112,8 @@ export const en = {
     how3: "Ask everyone to refresh so you share one session.",
     contactTitle: "Contact",
     contactBody:
-      "Write to {email} with a short description and roughly when it happened.",
-    contactMissing:
-      "A support email is not set yet. If you have repo access, open an issue. Otherwise message the app owner on Discord.",
+      "Still stuck? Join our Discord server, describe what happened and roughly when, and we will help.",
+    contactCta: "Join Squimbo on Discord",
   },
   privacy: {
     title: "Privacy Policy",

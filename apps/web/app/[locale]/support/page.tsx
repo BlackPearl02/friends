@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getMessages, t } from "@/i18n";
+import { getMessages } from "@/i18n";
 import { isLocale } from "@/i18n/locales";
 import { buildPageMetadata } from "@/seo/metadata";
+
+/** Public Squimbo support Discord invite (override with NEXT_PUBLIC_SUPPORT_DISCORD_URL). */
+const DEFAULT_SUPPORT_DISCORD_URL = "https://discord.gg/PrQkDcxEqk";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -25,7 +28,8 @@ export default async function SupportPage({ params }: Props) {
   const { locale: raw } = await params;
   if (!isLocale(raw)) notFound();
   const m = getMessages(raw);
-  const email = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
+  const discordUrl =
+    process.env.NEXT_PUBLIC_SUPPORT_DISCORD_URL || DEFAULT_SUPPORT_DISCORD_URL;
 
   return (
     <article className="prose-page">
@@ -40,14 +44,12 @@ export default async function SupportPage({ params }: Props) {
       </ul>
 
       <h2>{m.support.contactTitle}</h2>
-      {email ? (
-        <p>
-          {t(m, "support.contactBody", { email })}{" "}
-          <a href={`mailto:${email}`}>{email}</a>
-        </p>
-      ) : (
-        <p>{m.support.contactMissing}</p>
-      )}
+      <p>
+        {m.support.contactBody}{" "}
+        <a href={discordUrl} target="_blank" rel="noopener noreferrer">
+          {m.support.contactCta}
+        </a>
+      </p>
     </article>
   );
 }
