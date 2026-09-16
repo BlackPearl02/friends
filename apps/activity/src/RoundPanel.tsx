@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { PublicRoom, RoomIntent } from "@friends/types";
 import { t } from "./i18n";
 import { playersWaitingOnIntent } from "./roomOptimistic";
-import { isRevealTie, leadersFromTallies } from "./roundReveal";
+import { isRevealTie, leadersFromTallies, msUntilReveal, shouldShowReveal } from "./roundReveal";
 import { colors } from "./theme";
 
 /** Soft-nudge “wrap up?” from the 8th revealed round onward. */
@@ -26,14 +26,26 @@ export function RoundPanel(props: {
   const voteInFlight = useRef(false);
   const intentInFlight = useRef(false);
   const [picked, setPicked] = useState<string | null>(null);
+  const [revealGate, setRevealGate] = useState(0);
   useEffect(() => {
     setPicked(null);
     voteInFlight.current = false;
     intentInFlight.current = false;
   }, [round?.id]);
+
+  useEffect(() => {
+    if (!round || round.status === "voting") return;
+    const wait = msUntilReveal(round.revealedAt, props.room.serverTime);
+    if (wait === 0) return;
+    const id = window.setTimeout(() => setRevealGate((n) => n + 1), wait);
+    return () => window.clearTimeout(id);
+  }, [round?.id, round?.status, round?.revealedAt, props.room.serverTime]);
+
   if (!round) return null;
 
-  const revealed = round.status !== "voting";
+  void revealGate;
+  const revealed = shouldShowReveal(round, props.room.serverTime);
+  const holdingReveal = round.status !== "voting" && !revealed;
   const playerCount = props.room.players.length;
   const continueCount = props.room.players.filter((p) => p.intent === "continue").length;
   const wrapCount = props.room.players.filter((p) => p.intent === "wrap_up").length;
@@ -71,9 +83,9 @@ export function RoundPanel(props: {
                 key={p.userId}
                 type="button"
                 className={picked === p.userId ? "btn btn-choice is-selected" : "btn btn-choice"}
-                disabled={Boolean(picked) || me?.hasVoted}
+                disabled={holdingReveal || Boolean(picked) || me?.hasVoted}
                 onClick={() => {
-                  if (voteInFlight.current || me?.hasVoted) return;
+                  if (holdingReveal || voteInFlight.current || me?.hasVoted) return;
                   voteInFlight.current = true;
                   setPicked(p.userId);
                   void props.onVote({ targetUserId: p.userId }).finally(() => {
@@ -94,27 +106,32 @@ export function RoundPanel(props: {
             ))}
 
           <ul className="player-list" style={{ marginTop: "0.75rem" }}>
-            {props.room.players.map((p) => (
-              <li key={p.userId} className="player-row">
-                <span className="player-row-main">
-                  <span className="player-name">{p.displayName}</span>
-                </span>
-                <span
-                  className="player-badge"
-                  style={{ color: p.hasVoted ? colors.accent2 : colors.muted }}
-                >
-                  {p.hasVoted ? t("round.votedBadge") : t("round.waitingVoteBadge")}
-                </span>
-              </li>
-            ))}
+            {props.room.players.map((p) => {
+              const voted = holdingReveal || p.hasVoted;
+              return (
+                <li key={p.userId} className="player-row">
+                  <span className="player-row-main">
+                    <span className="player-name">{p.displayName}</span>
+                  </span>
+                  <span
+                    className="player-badge"
+                    style={{ color: voted ? colors.accent2 : colors.muted }}
+                  >
+                    {voted ? t("round.votedBadge") : t("round.waitingVoteBadge")}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
           <p className="hint">
             {t("round.votesInFlight", {
-              voted: String(round.voteCount),
+              voted: String(holdingReveal ? playerCount : round.voteCount),
               total: String(playerCount),
             })}
           </p>
-          <p className="hint">{t("round.waitingVotes")}</p>
+          <p className="hint">
+            {holdingReveal ? t("round.revealHold") : t("round.waitingVotes")}
+          </p>
         </div>
       )}
 

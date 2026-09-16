@@ -16,3 +16,28 @@ export function isRevealTie(tallies: Record<string, number> | undefined): boolea
   if (!tallies) return false;
   return leadersFromTallies(tallies).userIds.length > 1;
 }
+
+/**
+ * Remaining ms until clients should show tallies, using server clocks from the DTO.
+ * Callers schedule a timeout for this duration so every Activity flips together.
+ */
+export function msUntilReveal(
+  revealedAt: string | null | undefined,
+  serverTime: string,
+): number {
+  if (!revealedAt) return 0;
+  const revealMs = Date.parse(revealedAt);
+  const serverMs = Date.parse(serverTime);
+  if (Number.isNaN(revealMs) || Number.isNaN(serverMs)) return 0;
+  return Math.max(0, revealMs - serverMs);
+}
+
+/** True when round is past voting and the reveal hold has elapsed. */
+export function shouldShowReveal(
+  round: { status: string; revealedAt?: string | null } | null | undefined,
+  serverTime: string,
+): boolean {
+  if (!round || round.status === "voting") return false;
+  return msUntilReveal(round.revealedAt, serverTime) === 0;
+}
+

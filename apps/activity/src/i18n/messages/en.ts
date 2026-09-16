@@ -47,6 +47,7 @@ export const en = {
     votedBadge: "Voted",
     waitingVoteBadge: "…",
     waitingVotes: "Waiting for everyone to vote…",
+    revealHold: "Votes are in — results drop together…",
     waitingOnOthers: "You're in — waiting on {count} more.",
     pickPlayer: "Tap someone",
     votesInFlight: "{voted}/{total} voted",

@@ -49,6 +49,7 @@ export const pl: ActivityMessages = {
     votedBadge: "Oddał głos",
     waitingVoteBadge: "…",
     waitingVotes: "Czekamy, aż wszyscy oddadzą głos…",
+    revealHold: "Głosy oddane — wynik pokażemy razem…",
     waitingOnOthers: "Jesteś gotowy — czekamy na jeszcze {count}.",
     pickPlayer: "Wybierz kogoś",
     votesInFlight: "{voted}/{total} oddało głos",

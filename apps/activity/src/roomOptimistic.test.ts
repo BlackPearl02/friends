@@ -10,6 +10,7 @@ function baseRoom(overrides: Partial<PublicRoom> = {}): PublicRoom {
     hostUserId: "a",
     sessionKey: "sess",
     sessionRoundCount: 1,
+    serverTime: "2026-09-16T18:00:00.000Z",
     players: [
       {
         userId: "a",
@@ -32,6 +33,7 @@ function baseRoom(overrides: Partial<PublicRoom> = {}): PublicRoom {
       id: "r1",
       index: 0,
       status: "voting",
+      revealedAt: null,
       prompt: {
         id: "p1",
         kind: "most_likely",
@@ -86,6 +88,7 @@ describe("applyLocalVote", () => {
         id: "r1",
         index: 0,
         status: "voting",
+        revealedAt: null,
         prompt: {
           id: "p1",
           kind: "most_likely",

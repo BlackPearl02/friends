@@ -26,6 +26,7 @@ import {
   syncDiscordPresence,
 } from "./discordPresence";
 import { applyLocalIntent, applyLocalVote } from "./roomOptimistic";
+import { mergePublicRoom, shouldApplyPollResult } from "./roomApply";
 import { ROOM_POLL_MS } from "./roomSync";
 import { isShellLoading, shellBannerKind, type ShellPhase } from "./shellStatus";
 
@@ -131,6 +132,8 @@ function App() {
   roomRef.current = room;
   /** Skip poll overwrites while a mutation's optimistic patch is in flight. */
   const mutationsInFlight = useRef(0);
+  /** Bumped when a mutation starts — invalidates in-flight polls. */
+  const syncGeneration = useRef(0);
   /** Unix seconds — stable across presence updates until sessionKey changes. */
   const presenceStartedAtSec = useRef<number | null>(null);
   const presenceSessionKey = useRef<string | null>(null);
@@ -230,9 +233,16 @@ function App() {
     const tick = () => {
       if (cancelled || inFlight) return;
       inFlight = true;
+      const startedGen = syncGeneration.current;
       void fetchRoom(accessToken, instanceId)
         .then((next) => {
-          if (!cancelled && mutationsInFlight.current === 0) setRoom(next);
+          if (
+            cancelled ||
+            !shouldApplyPollResult(startedGen, syncGeneration.current, mutationsInFlight.current)
+          ) {
+            return;
+          }
+          setRoom((prev) => (prev ? mergePublicRoom(prev, next) : next));
         })
         .catch(() => undefined)
         .finally(() => {
@@ -360,6 +370,7 @@ function App() {
             }}
             onIntent={async (intent) => {
               const snapshot = roomRef.current ?? room;
+              syncGeneration.current += 1;
               setRoom(applyLocalIntent(snapshot, userId, intent));
               if (preview) return;
               setActionError(null);
@@ -383,6 +394,7 @@ function App() {
             onVote={async (body) => {
               if (preview) return;
               const snapshot = roomRef.current ?? room;
+              syncGeneration.current += 1;
               setRoom(applyLocalVote(snapshot, userId));
               setActionError(null);
               mutationsInFlight.current += 1;
@@ -399,6 +411,7 @@ function App() {
             }}
             onIntent={async (intent) => {
               const snapshot = roomRef.current ?? room;
+              syncGeneration.current += 1;
               setRoom(applyLocalIntent(snapshot, userId, intent));
               if (preview) return;
               setActionError(null);

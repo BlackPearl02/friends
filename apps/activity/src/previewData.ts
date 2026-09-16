@@ -1,5 +1,7 @@
 import type { PublicRoom } from "@friends/types";
 
+const PREVIEW_SERVER_TIME = "2026-09-16T18:00:00.000Z";
+
 /** Local `?preview=lobby|round` only — never used in the Discord iframe. */
 export const previewRoom: PublicRoom = {
   id: "preview",
@@ -8,6 +10,7 @@ export const previewRoom: PublicRoom = {
   hostUserId: "you",
   sessionKey: "preview-session",
   sessionRoundCount: 0,
+  serverTime: PREVIEW_SERVER_TIME,
   players: [
     { userId: "you", displayName: "Alex", avatarUrl: null, score: 0, intent: "continue", hasVoted: false },
     { userId: "p2", displayName: "Sam", avatarUrl: null, score: 0, intent: "none", hasVoted: false },
@@ -30,6 +33,7 @@ export const previewRound: PublicRoom = {
     id: "r1",
     index: 0,
     status: "voting",
+    revealedAt: null,
     voteCount: 1,
     prompt: {
       id: "q1",
@@ -50,6 +54,7 @@ export const previewReveal: PublicRoom = {
     id: "r1",
     index: 7,
     status: "reveal",
+    revealedAt: "2026-09-16T17:59:59.000Z",
     voteCount: 3,
     prompt: {
       id: "q1",
