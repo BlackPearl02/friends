@@ -27,6 +27,8 @@ After the marketing site is deployed (`apps/web`), set these in **Developer Port
 | Terms of Service | `https://friends-web.vercel.app/en/terms` |
 | Support / contact | `https://friends-web.vercel.app/en/support` |
 
+Community / support Discord guild setup: [discord-support-server.md](./discord-support-server.md) (`1549781444300251270`, invite `https://discord.gg/PrQkDcxEqk`).
+
 Marketing site copy is English only (`/en/...`). See [deployment.md](./deployment.md).
 
 ## Env

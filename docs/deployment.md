@@ -110,7 +110,8 @@ Note the deployed URL, e.g. `https://friends-api.vercel.app`.
 | Variable | Production | Preview |
 |---|---|---|
 | `NEXT_PUBLIC_DISCORD_CLIENT_ID` | Discord Client ID (Application Directory CTA) | Same |
-| `NEXT_PUBLIC_SUPPORT_EMAIL` | Support inbox shown on Support / Privacy / Terms | Same (optional) |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | Optional inbox for Privacy / Terms contact lines | Same (optional) |
+| `NEXT_PUBLIC_SUPPORT_DISCORD_URL` | Discord invite on Support (defaults to community invite if unset) | Same (optional) |
 | `NEXT_PUBLIC_SITE_URL` | Canonical origin, no trailing slash (`https://squimbo.app`) — metadata, sitemap, Open Graph, `llms.txt` | Omit (Preview should not claim the canonical marketing origin) |
 | `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | PostHog project token (`phc_…`) for the Squimbo / Friends marketing project (EU cloud) | Same |
 | `NEXT_PUBLIC_POSTHOG_HOST` | `https://eu.i.posthog.com` | Same |
@@ -186,6 +187,7 @@ For Discord iframe testing locally you still need a temporary tunnel (see [disco
 | `VITE_FRIENDS_API_URL` | *(empty)* | — | *(empty)* | — |
 | `NEXT_PUBLIC_DISCORD_CLIENT_ID` | falls back to Discord client id | — | — | Production + Preview |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | optional | — | — | Production + Preview |
+| `NEXT_PUBLIC_SUPPORT_DISCORD_URL` | optional (community invite default in code) | — | — | Production + Preview |
 | `NEXT_PUBLIC_SITE_URL` | `http://localhost:3001` (or unset) | — | — | Production only (`https://squimbo.app`) |
 | `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` | optional (empty = no init) | — | — | Production + Preview |
 | `NEXT_PUBLIC_POSTHOG_HOST` | `https://eu.i.posthog.com` | — | — | Production + Preview |

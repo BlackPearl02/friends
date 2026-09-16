@@ -19,6 +19,7 @@ Manual steps after the in-repo Friends → Squimbo rebrand. Engineering packages
 2. Activity / store **description** → Squimbo (party game, vote in the dark, no join code)
 3. Keep URL mappings (`/` → Activity, `/api` → API) unless hosts change
 4. Cover art / logo filenames use `squimbo-*`; Discord listing can reuse `squimbo-cover-art.png` / `squimbo-logo.png`
+5. Support guild (`1549781444300251270`) — channels/roles: [discord-support-server.md](./discord-support-server.md)
 
 ## Verify
 
