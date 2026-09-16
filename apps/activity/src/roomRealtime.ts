@@ -139,7 +139,7 @@ export function subscribeRoomInvalidation(
           "[squimbo-party] close",
           discordInstanceId,
           `code=${ev.code}`,
-          "If this loops immediately, add Discord URL Mapping /party → squimbo-party.utopian-lead.workers.dev (no https://)",
+          "If this loops immediately, add Discord URL Mapping /party → squimbo-party.foggy-boar.workers.dev (no https://)",
         );
         if (socket === ws) socket = null;
         scheduleReconnect();

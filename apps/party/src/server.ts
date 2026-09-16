@@ -1,6 +1,7 @@
 import { routePartykitRequest, Server } from "partyserver";
 import type { Connection } from "partyserver";
 import { isAuthorizedNotify } from "./notify-auth";
+import { stripDiscordPartyPrefix } from "./party-path";
 
 export type PartyEnv = {
   Main: DurableObjectNamespace<Main>;
@@ -12,9 +13,11 @@ export type PartyEnv = {
  * Nest POSTs a safe public patch; connected Activities receive it over WS.
  *
  * Binding name `Main` → PartyKit-compatible path `/parties/main/:roomId`.
+ * Discord `/party` mapping may keep or strip the prefix — accept both.
  */
 export class Main extends Server<PartyEnv> {
-  static options = { hibernate: true };
+  // Hibernation has been flaky through Discord's Activity proxy; keep sockets warm.
+  static options = { hibernate: false };
 
   onConnect(conn: Connection) {
     conn.send(JSON.stringify({ t: 1, kind: "roster" }));
@@ -55,8 +58,9 @@ export class Main extends Server<PartyEnv> {
 
 export default {
   async fetch(request: Request, env: PartyEnv): Promise<Response> {
+    const normalized = stripDiscordPartyPrefix(request);
     return (
-      (await routePartykitRequest(request, env)) ||
+      (await routePartykitRequest(normalized, env)) ||
       new Response("Not Found", { status: 404 })
     );
   },

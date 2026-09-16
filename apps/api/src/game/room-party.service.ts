@@ -37,6 +37,10 @@ export class RoomPartyService {
         this.logger.warn(
           `PartyKit notify failed: HTTP ${res.status}${detail ? ` ${detail.slice(0, 120)}` : ""}`,
         );
+      } else {
+        this.logger.log(
+          `PartyKit notify ok room=${discordInstanceId} kind=${payload.kind ?? "wake"}`,
+        );
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "unknown";

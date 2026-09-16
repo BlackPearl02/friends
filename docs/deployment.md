@@ -124,7 +124,7 @@ Note the workers.dev host, e.g. `https://squimbo-party.<subdomain>.workers.dev`.
 
 Current production fan-out (claim/migrate to your Cloudflare account if this was a preview deploy):
 
-`https://squimbo-party.utopian-lead.workers.dev`
+`https://squimbo-party.foggy-boar.workers.dev`
 
 1. Vercel API: `PARTYKIT_HOST` = that https URL; `PARTY_SERVER_SECRET` = same secret as Wrangler.
 2. Vercel Activity: `VITE_PARTYKIT_HOST=/party`.
