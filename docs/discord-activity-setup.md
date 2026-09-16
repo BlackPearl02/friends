@@ -14,7 +14,7 @@ Discord rejects bare `localhost` mappings. Local play needs a public HTTPS tunne
 4. OAuth2 → Redirects: include the shapes Nest tries when `DISCORD_ACTIVITY_REDIRECT_URI` is empty:
    - `https://127.0.0.1`
    - `https://<CLIENT_ID>.discordsays.com`
-5. OAuth scopes used by the Activity: `identify`, `guilds`, `rpc.activities.write`.
+5. OAuth scopes used by the Activity: `identify`, `guilds` (required). `rpc.activities.write` is requested for Rich Presence and falls back if Discord rejects it.
 
 ## Application information URLs
 

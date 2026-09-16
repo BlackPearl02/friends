@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { ACTIVITY_OAUTH_SCOPES, authorizeActivityCode } from "./auth";
+import {
+  ACTIVITY_CORE_OAUTH_SCOPES,
+  ACTIVITY_OAUTH_SCOPES,
+  authorizeActivityCode,
+} from "./auth";
 
 describe("authorizeActivityCode", () => {
   it("returns the code from silent authorize when it succeeds", async () => {
@@ -25,5 +29,23 @@ describe("authorizeActivityCode", () => {
     expect(code).toBe("consent-code");
     expect(authorize).toHaveBeenCalledTimes(2);
     expect(authorize.mock.calls[1][0]).not.toHaveProperty("prompt");
+    expect(authorize.mock.calls[1][0].scope).toEqual([...ACTIVITY_OAUTH_SCOPES]);
+  });
+
+  it("falls back to core scopes when presence authorize fails", async () => {
+    const authorize = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("invalid_scope"))
+      .mockRejectedValueOnce(new Error("invalid_scope"))
+      .mockResolvedValueOnce({ code: "core-code" });
+    const code = await authorizeActivityCode({ commands: { authorize } } as never, "client");
+    expect(code).toBe("core-code");
+    expect(authorize).toHaveBeenCalledTimes(3);
+    expect(authorize.mock.calls[2][0]).toEqual(
+      expect.objectContaining({
+        prompt: "none",
+        scope: [...ACTIVITY_CORE_OAUTH_SCOPES],
+      }),
+    );
   });
 });
