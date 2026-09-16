@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
 import type { User } from "@friends/db";
@@ -15,13 +16,17 @@ import { clientVisibleRoundResults, clientVisibleScore } from "./public-room-mas
 import { ROOM_IN_PROGRESS_CODE } from "./room-codes";
 import { isRoundTie, tallyVotes } from "./round-results";
 import { REVEAL_SYNC_MS } from "./reveal-sync";
+import { RoomRealtimeService } from "./room-realtime.service";
 import { aggregateScoreIncrements } from "./scoring";
 
 const MIN_PLAYERS = 2;
 
 @Injectable()
 export class GameService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly realtime?: RoomRealtimeService,
+  ) {}
 
   async join(
     user: User,
@@ -67,7 +72,9 @@ export class GameService {
       update: { lastSeenAt: now },
     });
 
-    return this.loadPublic(room.id);
+    const publicRoom = await this.loadPublic(room.id);
+    this.pingRealtime(input.instanceId);
+    return publicRoom;
   }
 
   async current(user: User, instanceId: string): Promise<PublicRoom> {
@@ -86,6 +93,7 @@ export class GameService {
     await this.prisma.roomPlayer.deleteMany({
       where: { roomId: room.id, userId: user.id },
     });
+    this.pingRealtime(instanceId);
     return { ok: true };
   }
 
@@ -164,7 +172,9 @@ export class GameService {
       await this.reopenTiedRound(room.id);
     }
 
-    return this.loadPublic(room.id);
+    const publicRoom = await this.loadPublic(room.id);
+    this.pingRealtime(instanceId);
+    return publicRoom;
   }
 
   async vote(
@@ -211,7 +221,9 @@ export class GameService {
       await this.revealRound(round.roomId);
     }
 
-    return this.loadPublic(round.roomId);
+    const publicRoom = await this.loadPublic(round.roomId);
+    this.pingRealtime(round.room.discordInstanceId);
+    return publicRoom;
   }
 
   async replay(user: User, instanceId: string): Promise<PublicRoom> {
@@ -230,7 +242,9 @@ export class GameService {
         data: { score: 0, intent: "none" },
       }),
     ]);
-    return this.loadPublic(room.id);
+    const publicRoom = await this.loadPublic(room.id);
+    this.pingRealtime(instanceId);
+    return publicRoom;
   }
 
   private async beginRound(roomId: string) {
@@ -388,6 +402,10 @@ export class GameService {
         data: { intent: "none" },
       }),
     ]);
+  }
+
+  private pingRealtime(discordInstanceId: string) {
+    void this.realtime?.notifyRoomChanged(discordInstanceId);
   }
 
   private async pruneStalePlayers(roomId: string) {
