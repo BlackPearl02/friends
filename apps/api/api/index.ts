@@ -20,7 +20,6 @@ async function bootstrap(): Promise<void> {
   const activityOrigin = process.env.ACTIVITY_ORIGIN ?? "";
 
   const app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp), {
-    rawBody: true,
     logger: ["error", "warn", "log"],
   });
 
