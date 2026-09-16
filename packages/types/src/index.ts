@@ -8,6 +8,17 @@ export const API_PATHS = {
   roundVote: "/game/rounds/vote",
 } as const;
 
+/**
+ * Supabase Realtime Broadcast topic for a Discord Activity instance.
+ * Payload is a wake-up only — clients must refetch PublicRoom via JWT.
+ */
+export function roomRealtimeTopic(discordInstanceId: string): string {
+  return `room:${discordInstanceId}`;
+}
+
+/** Broadcast event name — never carries vote targets or tallies. */
+export const ROOM_REALTIME_EVENT = "room_changed" as const;
+
 /** Nest ConflictException body when join is refused mid-session. */
 export const ROOM_IN_PROGRESS_CODE = "ROOM_IN_PROGRESS" as const;
 
