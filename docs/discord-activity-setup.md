@@ -31,14 +31,39 @@ Community / support Discord guild setup: [discord-support-server.md](./discord-s
 
 Marketing site copy is English only (`/en/...`). See [deployment.md](./deployment.md).
 
+## Launch commands (slash / App Launcher)
+
+After Activities are enabled, Discord creates a default Entry Point command (`Launch`). Register Squimbo’s branded commands:
+
+```bash
+# Needs DISCORD_BOT_TOKEN + DISCORD_CLIENT_ID (loads from .env.production / .env.development).
+node scripts/register-discord-activity-commands.mjs
+```
+
+| Command | Type | Behavior |
+|---|---|---|
+| `/squimbo` | Entry Point (App Launcher + `/`) | Discord opens the Activity (`DISCORD_LAUNCH_ACTIVITY`) |
+| `/play` (PL: `/graj`) | Chat slash command | API responds with `LAUNCH_ACTIVITY` (type 12) |
+
+For `/play`, set on the **API** and in Developer Portal:
+
+1. Env `DISCORD_PUBLIC_KEY` = Application Public Key (General Information)
+2. **Interactions Endpoint URL** → `https://<API_PUBLIC_URL>/discord/interactions`
+3. Invite the app with `bot` + `applications.commands` (permissions `0` is enough for launch):
+   `https://discord.com/oauth2/authorize?client_id=CLIENT_ID&scope=bot%20applications.commands&permissions=0`
+
+Global commands can take up to ~1 hour to appear.
+
 ## Env
 
 Root `.env.development`:
 
 - `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET`
+- `DISCORD_PUBLIC_KEY` (Interactions Endpoint signature verify; public)
 - `VITE_DISCORD_CLIENT_ID` (same id; public)
 - `JWT_SECRET`
 - Optional `DISCORD_ACTIVITY_REDIRECT_URI` to pin one redirect
+- Optional `DISCORD_BOT_TOKEN` for setup / command-registration scripts only
 
 Inside the Discord iframe, `VITE_FRIENDS_API_URL` should stay **empty** so the client calls `/api/...` through Discord’s mapping. Set it only for the browser mock (`DiscordSDKMock`).
 

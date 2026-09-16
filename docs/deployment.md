@@ -86,6 +86,7 @@ Add each variable twice: once for **Production**, once for **Preview**. Preview 
 | `JWT_SECRET` | Prod secret from `.env.production` (prefer distinct from local `.env.development`) |
 | `DISCORD_CLIENT_ID` | Discord Client ID |
 | `DISCORD_CLIENT_SECRET` | Discord Client Secret |
+| `DISCORD_PUBLIC_KEY` | Application Public Key (General Information) — `/discord/interactions` |
 | `DISCORD_ACTIVITY_REDIRECT_URI` | *(leave empty — handler tries `.discordsays.com` automatically)* |
 | `API_PUBLIC_URL` | `https://friends-api.vercel.app` (your API Vercel URL) |
 | `ACTIVITY_ORIGIN` | `https://friends-activity.vercel.app` (your Activity Vercel URL) |
@@ -96,6 +97,8 @@ vercel --cwd apps/api
 ```
 
 Note the deployed URL, e.g. `https://friends-api.vercel.app`.
+
+After the API is live: Developer Portal → **Interactions Endpoint URL** → `https://<API>/discord/interactions`, then register launch commands (`node scripts/register-discord-activity-commands.mjs`). See [discord-activity-setup.md](./discord-activity-setup.md).
 
 ---
 
@@ -109,7 +112,7 @@ Note the deployed URL, e.g. `https://friends-api.vercel.app`.
 
 | Variable | Production | Preview |
 |---|---|---|
-| `NEXT_PUBLIC_DISCORD_CLIENT_ID` | Discord Client ID (Application Directory CTA) | Same |
+| `NEXT_PUBLIC_DISCORD_CLIENT_ID` | Discord Client ID (App Directory / discovery CTA) | Same |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | Optional inbox for Privacy / Terms contact lines | Same (optional) |
 | `NEXT_PUBLIC_SUPPORT_DISCORD_URL` | Discord invite on Support (defaults to community invite if unset) | Same (optional) |
 | `NEXT_PUBLIC_SITE_URL` | Canonical origin, no trailing slash (`https://squimbo.app`) — metadata, sitemap, Open Graph, `llms.txt` | Omit (Preview should not claim the canonical marketing origin) |
@@ -181,6 +184,7 @@ For Discord iframe testing locally you still need a temporary tunnel (see [disco
 | `JWT_SECRET` | local secret | Vercel Production + Preview scopes | — | — |
 | `DISCORD_CLIENT_ID` | local / Discord app | Vercel Production + Preview | — | — |
 | `DISCORD_CLIENT_SECRET` | local | Vercel Production + Preview | — | — |
+| `DISCORD_PUBLIC_KEY` | local (public key) | Vercel Production + Preview | — | — |
 | `API_PUBLIC_URL` | `http://localhost:3000` | Production API URL (Preview may reuse) | — | — |
 | `ACTIVITY_ORIGIN` | `http://localhost:3003` | Production Activity URL (Preview may reuse) | — | — |
 | `VITE_DISCORD_CLIENT_ID` | local | — | Production + Preview | — |

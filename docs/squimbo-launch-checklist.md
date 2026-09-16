@@ -11,7 +11,7 @@ Manual steps after the in-repo Friends → Squimbo rebrand. Engineering packages
 2. Attach the domain to the **web** Vercel project.
 3. Set production env on the web project:
    - `NEXT_PUBLIC_SITE_URL=https://squimbo.app` (no trailing slash)
-4. Confirm HTTPS and canonical URLs on `/en`, sitemap, and Open Graph.
+4. Confirm HTTPS and canonical URLs on `/en`, sitemap (including SEO content pages), and Open Graph. See [seo.md](./seo.md).
 
 ## Discord Developer Portal
 
@@ -20,6 +20,7 @@ Manual steps after the in-repo Friends → Squimbo rebrand. Engineering packages
 3. Keep URL mappings (`/` → Activity, `/api` → API) unless hosts change
 4. Cover art / logo filenames use `squimbo-*`; Discord listing can reuse `squimbo-cover-art.png` / `squimbo-logo.png`
 5. Support guild (`1549781444300251270`) — channels/roles: [discord-support-server.md](./discord-support-server.md)
+6. Launch commands: set Interactions Endpoint URL + `DISCORD_PUBLIC_KEY` on API, then `node scripts/register-discord-activity-commands.mjs` → `/squimbo` + `/play` ([discord-activity-setup.md](./discord-activity-setup.md))
 
 ## Verify
 
