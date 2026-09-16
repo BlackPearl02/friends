@@ -2,8 +2,8 @@
 
 Engineering packages remain `@friends/*`. Product / Discord name: **Squimbo**. Marketing: **squimbo.app**.
 
-**Stack:** Vercel (Activity + API + Web) + Supabase (PostgreSQL).  
-**Dev stack:** Vite :3003 + Nest :3000 + Next :3001 + Docker Postgres :15433.
+**Stack:** Vercel (Activity + API + Web) + Supabase (PostgreSQL) + Cloudflare Workers PartyServer (room WebSocket push).  
+**Dev stack:** Vite :3003 + Nest :3000 + Next :3001 + Docker Postgres :15433 (+ optional `pnpm --filter @friends/party dev`).
 
 This repository is public. Treat git as source-only: no real secrets in commits, issues, or CI logs. `DISCORD_CLIENT_ID` / `VITE_DISCORD_CLIENT_ID` may appear in the Activity bundle; `DISCORD_CLIENT_SECRET`, `JWT_SECRET`, and database URLs must live only in Vercel, Supabase, and gitignored `.env.development` / `.env.production`. If a secret leaks, rotate it before the next deploy.
 
@@ -59,10 +59,9 @@ Set separately for **Production** and **Preview** (same Client ID is fine).
 |---|---|
 | `VITE_DISCORD_CLIENT_ID` | Discord Client ID |
 | `VITE_FRIENDS_API_URL` | *(leave empty — URL mapping handles `/api`)* |
-| `VITE_SUPABASE_URL` | `/sb` (Discord maps `/sb` → your Supabase project URL) |
-| `VITE_SUPABASE_ANON_KEY` | Supabase **anon** public key (Project Settings → API) |
+| `VITE_PARTYKIT_HOST` | `/party` (Discord maps `/party` → your party Worker host) |
 
-Realtime is a wake-up only: the Activity still loads room state via JWT `GET /game/rooms/current`. Without these vars the Activity falls back to 750ms polling alone.
+PartyServer WebSocket push delivers safe public patches (vote/intent/roster). The Activity still refetches `GET /game/rooms/current` for authoritative state. Without `VITE_PARTYKIT_HOST` it falls back to 750ms polling alone.
 
 ### Deploy command (or use Vercel dashboard → Import Git)
 ```bash
@@ -91,12 +90,12 @@ Add each variable twice: once for **Production**, once for **Preview**. Preview 
 | `DISCORD_CLIENT_ID` | Discord Client ID |
 | `DISCORD_CLIENT_SECRET` | Discord Client Secret |
 | `DISCORD_ACTIVITY_REDIRECT_URI` | *(leave empty — handler tries `.discordsays.com` automatically)* |
-| `API_PUBLIC_URL` | `https://friends-api.vercel.app` (your API Vercel URL) |
+| `API_PUBLIC_URL` | `https://friends-api-five.vercel.app` (your API Vercel URL) |
 | `ACTIVITY_ORIGIN` | `https://friends-activity.vercel.app` (your Activity Vercel URL) |
-| `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase **service_role** secret (broadcast REST; never ship to Activity) |
+| `PARTYKIT_HOST` | `https://squimbo-party.<subdomain>.workers.dev` (Nest notify target) |
+| `PARTY_SERVER_SECRET` | Shared secret for Nest → party Worker HTTP notify (never ship to Activity) |
 
-`SUPABASE_ANON_KEY` may be set on the API as a fallback if service role is unset. Room sync still works without Realtime (HTTP poll only).
+Room sync still works without PartyKit (HTTP poll only).
 
 ### Deploy command
 ```bash
@@ -105,7 +104,33 @@ vercel --cwd apps/api
 
 Note the deployed URL, e.g. `https://friends-api.vercel.app`.
 
-After the API is live: confirm Discord URL mappings (`/` → Activity, `/api` → API). Ensure the Activity **Entry Point** exists (`node scripts/register-discord-activity-entrypoint.mjs`). Leave Interactions Endpoint empty and do not invite as a bot on player servers. See [discord-activity-setup.md](./discord-activity-setup.md).
+After the API is live: confirm Discord URL mappings (`/` → Activity, `/api` → API, `/party` → party Worker). Ensure the Activity **Entry Point** exists (`node scripts/register-discord-activity-entrypoint.mjs`). Leave Interactions Endpoint empty and do not invite as a bot on player servers. See [discord-activity-setup.md](./discord-activity-setup.md).
+
+---
+
+## 3b. PartyKit-compatible room push (Cloudflare Workers)
+
+**Package:** `apps/party` (`@friends/party`) — PartyServer Durable Object with PartyKit-style paths (`/parties/main/:instanceId`).
+
+Managed `*.partykit.dev` deploys currently fail (shared zone custom-domain limit). Deploy to your Cloudflare account instead:
+
+```powershell
+cd apps/party
+pnpm deploy
+npx wrangler secret put PARTY_SERVER_SECRET
+```
+
+Note the workers.dev host, e.g. `https://squimbo-party.<subdomain>.workers.dev`.
+
+Current production fan-out (claim/migrate to your Cloudflare account if this was a preview deploy):
+
+`https://squimbo-party.utopian-lead.workers.dev`
+
+1. Vercel API: `PARTYKIT_HOST` = that https URL; `PARTY_SERVER_SECRET` = same secret as Wrangler.
+2. Vercel Activity: `VITE_PARTYKIT_HOST=/party`.
+3. Discord URL Mapping: `/party` → `squimbo-party.<subdomain>.workers.dev` (**omit** `https://`).
+
+Nest awaits an HTTP notify after vote/intent/join/leave/replay. Activities receive the safe public patch over WebSocket, then refetch JWT room state. Polling every 750ms remains the safety net.
 
 ---
 
@@ -157,11 +182,11 @@ After both Vercel deployments are live, set in **Developer Portal → Activities
 
 | Mapping | Prefix | Target |
 |---|---|---|
-| Root Mapping | `/` | `https://friends-activity.vercel.app` |
-| Proxy Path Mapping | `/api` | `https://friends-api.vercel.app` |
-| Proxy Path Mapping | `/sb` | `https://<project-ref>.supabase.co` |
+| Root Mapping | `/` | `friends-activity.vercel.app` |
+| Proxy Path Mapping | `/api` | `friends-api-five.vercel.app` |
+| Proxy Path Mapping | `/party` | `squimbo-party.<subdomain>.workers.dev` |
 
-`/sb` is required for Realtime Broadcast inside the Discord iframe (Discord only allows mapped hosts). Use the same project as `DATABASE_URL`.
+`/party` is required for PartyServer WebSocket push inside the Discord iframe (Discord only allows mapped hosts). **Omit `https://` in the target** — Discord picks the scheme from the request.
 
 **OAuth2 → Redirects** must include:
 - `https://<CLIENT_ID>.discordsays.com`
@@ -198,10 +223,9 @@ For Discord iframe testing locally you still need a temporary tunnel (see [disco
 | `ACTIVITY_ORIGIN` | `http://localhost:3003` | Production Activity URL (Preview may reuse) | — | — |
 | `VITE_DISCORD_CLIENT_ID` | local | — | Production + Preview | — |
 | `VITE_FRIENDS_API_URL` | *(empty)* | — | *(empty)* | — |
-| `VITE_SUPABASE_URL` | `/sb` or full project URL for browser mock | — | `/sb` | — |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anon | — | Production + Preview | — |
-| `SUPABASE_URL` | optional (Realtime) | Production + Preview | — | — |
-| `SUPABASE_SERVICE_ROLE_KEY` | optional (Realtime) | Production + Preview | — | — |
+| `VITE_PARTYKIT_HOST` | `/party` or full workers.dev URL for browser mock | — | `/party` | — |
+| `PARTYKIT_HOST` | optional (local party Worker) | Production + Preview | — | — |
+| `PARTY_SERVER_SECRET` | optional | Production + Preview | — | — |
 | `NEXT_PUBLIC_DISCORD_CLIENT_ID` | falls back to Discord client id | — | — | Production + Preview |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | optional | — | — | Production + Preview |
 | `NEXT_PUBLIC_SUPPORT_DISCORD_URL` | optional (community invite default in code) | — | — | Production + Preview |

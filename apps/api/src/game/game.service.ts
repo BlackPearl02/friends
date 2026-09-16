@@ -16,7 +16,7 @@ import { clientVisibleRoundResults, clientVisibleScore } from "./public-room-mas
 import { ROOM_IN_PROGRESS_CODE } from "./room-codes";
 import { isRoundTie, tallyVotes } from "./round-results";
 import { REVEAL_SYNC_MS } from "./reveal-sync";
-import { RoomRealtimeService } from "./room-realtime.service";
+import { RoomPartyService } from "./room-party.service";
 import { aggregateScoreIncrements } from "./scoring";
 
 const MIN_PLAYERS = 2;
@@ -25,7 +25,7 @@ const MIN_PLAYERS = 2;
 export class GameService {
   constructor(
     private readonly prisma: PrismaService,
-    @Optional() private readonly realtime?: RoomRealtimeService,
+    @Optional() private readonly party?: RoomPartyService,
   ) {}
 
   async join(
@@ -73,7 +73,7 @@ export class GameService {
     });
 
     const publicRoom = await this.loadPublic(room.id);
-    this.pingRealtime(input.instanceId, { kind: "roster" });
+    await this.pingRealtime(input.instanceId, { kind: "roster" });
     return publicRoom;
   }
 
@@ -93,7 +93,7 @@ export class GameService {
     await this.prisma.roomPlayer.deleteMany({
       where: { roomId: room.id, userId: user.id },
     });
-    this.pingRealtime(instanceId, { kind: "roster" });
+    await this.pingRealtime(instanceId, { kind: "roster" });
     return { ok: true };
   }
 
@@ -173,7 +173,7 @@ export class GameService {
     }
 
     const publicRoom = await this.loadPublic(room.id);
-    this.pingRealtime(instanceId, {
+    await this.pingRealtime(instanceId, {
       kind: "intent",
       intentUserId: user.id,
       intent,
@@ -222,7 +222,7 @@ export class GameService {
       this.prisma.vote.count({ where: { roundId: round.id } }),
     ]);
     // Ping peers before heavy loadPublic so badges move even if GET is cold.
-    this.pingRealtime(round.room.discordInstanceId, {
+    await this.pingRealtime(round.room.discordInstanceId, {
       kind: "vote",
       votedUserId: user.id,
       voteCount,
@@ -230,7 +230,7 @@ export class GameService {
 
     if (playerCount >= MIN_PLAYERS && voteCount >= playerCount) {
       await this.revealRound(round.roomId);
-      this.pingRealtime(round.room.discordInstanceId, {
+      await this.pingRealtime(round.room.discordInstanceId, {
         kind: "vote",
         votedUserId: user.id,
         voteCount,
@@ -257,7 +257,7 @@ export class GameService {
       }),
     ]);
     const publicRoom = await this.loadPublic(room.id);
-    this.pingRealtime(instanceId, { kind: "roster" });
+    await this.pingRealtime(instanceId, { kind: "roster" });
     return publicRoom;
   }
 
@@ -418,7 +418,7 @@ export class GameService {
     ]);
   }
 
-  private pingRealtime(
+  private async pingRealtime(
     discordInstanceId: string,
     patch?: {
       kind?: "vote" | "intent" | "roster";
@@ -428,7 +428,7 @@ export class GameService {
       intent?: RoomIntent;
     },
   ) {
-    void this.realtime?.notifyRoomChanged(discordInstanceId, patch);
+    await this.party?.notifyRoomChanged(discordInstanceId, patch);
   }
 
   private async pruneStalePlayers(roomId: string) {

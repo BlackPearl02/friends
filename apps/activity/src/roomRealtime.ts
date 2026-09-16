@@ -1,16 +1,10 @@
-import { createClient, type RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
-import {
-  ROOM_REALTIME_EVENT,
-  roomRealtimeTopic,
-  type RoomRealtimePayload,
-} from "@friends/types";
+import { partyRoomPath, type RoomRealtimePayload } from "@friends/types";
 
 /**
- * Resolve Supabase URL for the Discord Activity sandbox.
- * `VITE_SUPABASE_URL=/sb` must become an absolute discordsays.com URL —
- * supabase-js rejects bare relative paths and can crash the React tree.
+ * Resolve PartyKit HTTP/WS base for the Discord Activity sandbox.
+ * `VITE_PARTYKIT_HOST=/party` must become an absolute discordsays.com URL.
  */
-export function resolveSupabaseUrl(
+export function resolvePartyKitBase(
   configured: string | undefined,
   origin: string | undefined = typeof window !== "undefined" ? window.location.origin : undefined,
 ): string {
@@ -22,22 +16,30 @@ export function resolveSupabaseUrl(
   return `${origin.replace(/\/+$/, "")}${path}`;
 }
 
-export function getSupabaseUrl(): string {
-  return resolveSupabaseUrl(import.meta.env.VITE_SUPABASE_URL);
-}
-
-export function getSupabaseAnonKey(): string {
-  return import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() ?? "";
+export function getPartyKitBase(): string {
+  return resolvePartyKitBase(import.meta.env.VITE_PARTYKIT_HOST);
 }
 
 export function isRoomRealtimeConfigured(): boolean {
-  return Boolean(getSupabaseUrl() && getSupabaseAnonKey());
+  return Boolean(getPartyKitBase());
+}
+
+/** WebSocket URL for a Discord Activity instance room. */
+export function partyRoomWebSocketUrl(
+  configuredHost: string | undefined,
+  discordInstanceId: string,
+  origin?: string,
+): string {
+  const httpBase = resolvePartyKitBase(configuredHost, origin);
+  if (!httpBase || !discordInstanceId) return "";
+  const wsBase = httpBase.replace(/^http/i, "ws");
+  return `${wsBase}${partyRoomPath(discordInstanceId)}`;
 }
 
 const INTENT_VALUES = new Set(["none", "continue", "wrap_up", "revote"]);
 
 /**
- * Narrow Broadcast payload to safe public fields (no vote targets).
+ * Narrow PartyKit payload to safe public fields (no vote targets).
  * Invalid shapes become a bare wake-up so GET still runs.
  */
 export function parseRoomRealtimePayload(raw: unknown): RoomRealtimePayload {
@@ -66,7 +68,7 @@ export function parseRoomRealtimePayload(raw: unknown): RoomRealtimePayload {
 const RECONNECT_MS = 2_000;
 
 /**
- * Subscribe to room wake-ups (+ optional public patch).
+ * Subscribe to PartyKit room wake-ups (+ optional public patch).
  * Caller applies the patch immediately, then refetches via JWT.
  * Returns unsubscribe. Never throws — Realtime is best-effort over poll.
  */
@@ -74,14 +76,15 @@ export function subscribeRoomInvalidation(
   discordInstanceId: string,
   onInvalidate: (payload: RoomRealtimePayload) => void,
 ): () => void {
-  if (!discordInstanceId || !isRoomRealtimeConfigured()) {
+  const url = partyRoomWebSocketUrl(import.meta.env.VITE_PARTYKIT_HOST, discordInstanceId);
+  if (!discordInstanceId || !url) {
     return () => undefined;
   }
 
   let stopped = false;
-  let client: SupabaseClient | null = null;
-  let channel: RealtimeChannel | null = null;
+  let socket: WebSocket | null = null;
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  let sawFirstMessage = false;
 
   const clearReconnect = () => {
     if (reconnectTimer) {
@@ -90,52 +93,62 @@ export function subscribeRoomInvalidation(
     }
   };
 
-  const teardownChannel = () => {
-    if (client && channel) {
-      void client.removeChannel(channel);
-    }
-    channel = null;
+  const scheduleReconnect = () => {
+    if (stopped) return;
+    clearReconnect();
+    reconnectTimer = setTimeout(connect, RECONNECT_MS);
   };
 
   const connect = () => {
     if (stopped) return;
     clearReconnect();
-    teardownChannel();
+    try {
+      socket?.close();
+    } catch {
+      // ignore
+    }
+    socket = null;
 
     try {
-      const url = getSupabaseUrl();
-      const key = getSupabaseAnonKey();
-      if (!client) {
-        client = createClient(url, key, {
-          auth: {
-            persistSession: false,
-            autoRefreshToken: false,
-            detectSessionInUrl: false,
-          },
-          realtime: {
-            params: { eventsPerSecond: 10, apikey: key },
-          },
-        });
-      }
+      const ws = new WebSocket(url);
+      socket = ws;
 
-      channel = client
-        .channel(roomRealtimeTopic(discordInstanceId), {
-          config: { broadcast: { self: true, ack: false } },
-        })
-        .on("broadcast", { event: ROOM_REALTIME_EVENT }, ({ payload }) => {
-          onInvalidate(parseRoomRealtimePayload(payload));
-        })
-        .subscribe((status) => {
-          if (stopped) return;
-          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-            clearReconnect();
-            reconnectTimer = setTimeout(connect, RECONNECT_MS);
+      ws.onopen = () => {
+        // Temporary connect telemetry — confirm Discord `/party` mapping delivers WS.
+        console.info("[squimbo-party] open", discordInstanceId);
+      };
+
+      ws.onmessage = (event) => {
+        if (!sawFirstMessage) {
+          sawFirstMessage = true;
+          console.info("[squimbo-party] first message", discordInstanceId);
+        }
+        let raw: unknown = event.data;
+        if (typeof event.data === "string") {
+          try {
+            raw = JSON.parse(event.data) as unknown;
+          } catch {
+            raw = null;
           }
-        });
+        }
+        onInvalidate(parseRoomRealtimePayload(raw));
+      };
+
+      ws.onclose = () => {
+        console.info("[squimbo-party] close", discordInstanceId);
+        if (socket === ws) socket = null;
+        scheduleReconnect();
+      };
+
+      ws.onerror = () => {
+        try {
+          ws.close();
+        } catch {
+          // ignore
+        }
+      };
     } catch {
-      // Poll fallback remains — do not take down the Activity shell.
-      clearReconnect();
-      reconnectTimer = setTimeout(connect, RECONNECT_MS);
+      scheduleReconnect();
     }
   };
 
@@ -144,10 +157,11 @@ export function subscribeRoomInvalidation(
   return () => {
     stopped = true;
     clearReconnect();
-    teardownChannel();
-    if (client) {
-      void client.removeAllChannels();
+    try {
+      socket?.close();
+    } catch {
+      // ignore
     }
-    client = null;
+    socket = null;
   };
 }

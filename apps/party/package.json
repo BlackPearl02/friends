@@ -1,0 +1,21 @@
+{
+  "name": "@friends/party",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "lint": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@friends/types": "workspace:*",
+    "partyserver": "0.5.10"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240718.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "wrangler": "^4.133.0"
+  }
+}

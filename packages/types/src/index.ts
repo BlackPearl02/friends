@@ -10,7 +10,7 @@ export const API_PATHS = {
 
 /**
  * Supabase Realtime Broadcast topic for a Discord Activity instance.
- * Safe public patches may be included; clients still refetch PublicRoom via JWT.
+ * Kept for legacy docs; primary push is PartyKit (`partyRoomPath`).
  */
 export function roomRealtimeTopic(discordInstanceId: string): string {
   return `room:${discordInstanceId}`;
@@ -18,6 +18,11 @@ export function roomRealtimeTopic(discordInstanceId: string): string {
 
 /** Broadcast event name — never carries vote targets or tallies. */
 export const ROOM_REALTIME_EVENT = "room_changed" as const;
+
+/** PartyKit HTTP/WS path segment for a Discord Activity instance. */
+export function partyRoomPath(discordInstanceId: string): string {
+  return `/parties/main/${encodeURIComponent(discordInstanceId)}`;
+}
 
 /** Nest ConflictException body when join is refused mid-session. */
 export const ROOM_IN_PROGRESS_CODE = "ROOM_IN_PROGRESS" as const;

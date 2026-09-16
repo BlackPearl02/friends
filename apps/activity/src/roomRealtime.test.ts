@@ -1,15 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { ROOM_REALTIME_EVENT, roomRealtimeTopic } from "@friends/types";
+import { partyRoomPath } from "@friends/types";
 import {
   isRoomRealtimeConfigured,
   parseRoomRealtimePayload,
-  resolveSupabaseUrl,
+  partyRoomWebSocketUrl,
+  resolvePartyKitBase,
 } from "./roomRealtime";
 
-describe("roomRealtimeTopic", () => {
-  it("scopes the broadcast channel to the Discord instance", () => {
-    expect(roomRealtimeTopic("abc-123")).toBe("room:abc-123");
-    expect(ROOM_REALTIME_EVENT).toBe("room_changed");
+describe("partyRoomPath", () => {
+  it("scopes the PartyKit room to the Discord instance", () => {
+    expect(partyRoomPath("abc-123")).toBe("/parties/main/abc-123");
   });
 });
 
@@ -37,26 +37,34 @@ describe("parseRoomRealtimePayload", () => {
   });
 });
 
-describe("resolveSupabaseUrl", () => {
+describe("resolvePartyKitBase", () => {
   it("passes through absolute https URLs", () => {
-    expect(resolveSupabaseUrl("https://abc.supabase.co/", "https://ignored.example")).toBe(
-      "https://abc.supabase.co",
+    expect(resolvePartyKitBase("https://squimbo.partykit.dev/", "https://ignored.example")).toBe(
+      "https://squimbo.partykit.dev",
     );
   });
 
   it("expands Discord-mapped prefixes against the Activity origin", () => {
-    expect(resolveSupabaseUrl("/sb", "https://123.discordsays.com")).toBe(
-      "https://123.discordsays.com/sb",
+    expect(resolvePartyKitBase("/party", "https://123.discordsays.com")).toBe(
+      "https://123.discordsays.com/party",
     );
   });
 
   it("returns empty when a relative path has no origin", () => {
-    expect(resolveSupabaseUrl("/sb", undefined)).toBe("");
+    expect(resolvePartyKitBase("/party", undefined)).toBe("");
+  });
+});
+
+describe("partyRoomWebSocketUrl", () => {
+  it("builds a wss URL under the Discord /party mapping", () => {
+    expect(partyRoomWebSocketUrl("/party", "inst-1", "https://123.discordsays.com")).toBe(
+      "wss://123.discordsays.com/party/parties/main/inst-1",
+    );
   });
 });
 
 describe("isRoomRealtimeConfigured", () => {
-  it("is false in unit tests without Vite Supabase env", () => {
+  it("is false in unit tests without Vite PartyKit env", () => {
     expect(isRoomRealtimeConfigured()).toBe(false);
   });
 });
