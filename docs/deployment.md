@@ -59,6 +59,10 @@ Set separately for **Production** and **Preview** (same Client ID is fine).
 |---|---|
 | `VITE_DISCORD_CLIENT_ID` | Discord Client ID |
 | `VITE_FRIENDS_API_URL` | *(leave empty — URL mapping handles `/api`)* |
+| `VITE_SUPABASE_URL` | `/sb` (Discord maps `/sb` → your Supabase project URL) |
+| `VITE_SUPABASE_ANON_KEY` | Supabase **anon** public key (Project Settings → API) |
+
+Realtime is a wake-up only: the Activity still loads room state via JWT `GET /game/rooms/current`. Without these vars the Activity falls back to 750ms polling alone.
 
 ### Deploy command (or use Vercel dashboard → Import Git)
 ```bash
@@ -89,6 +93,10 @@ Add each variable twice: once for **Production**, once for **Preview**. Preview 
 | `DISCORD_ACTIVITY_REDIRECT_URI` | *(leave empty — handler tries `.discordsays.com` automatically)* |
 | `API_PUBLIC_URL` | `https://friends-api.vercel.app` (your API Vercel URL) |
 | `ACTIVITY_ORIGIN` | `https://friends-activity.vercel.app` (your Activity Vercel URL) |
+| `SUPABASE_URL` | `https://<project-ref>.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase **service_role** secret (broadcast REST; never ship to Activity) |
+
+`SUPABASE_ANON_KEY` may be set on the API as a fallback if service role is unset. Room sync still works without Realtime (HTTP poll only).
 
 ### Deploy command
 ```bash
@@ -151,6 +159,9 @@ After both Vercel deployments are live, set in **Developer Portal → Activities
 |---|---|---|
 | Root Mapping | `/` | `https://friends-activity.vercel.app` |
 | Proxy Path Mapping | `/api` | `https://friends-api.vercel.app` |
+| Proxy Path Mapping | `/sb` | `https://<project-ref>.supabase.co` |
+
+`/sb` is required for Realtime Broadcast inside the Discord iframe (Discord only allows mapped hosts). Use the same project as `DATABASE_URL`.
 
 **OAuth2 → Redirects** must include:
 - `https://<CLIENT_ID>.discordsays.com`
@@ -187,6 +198,10 @@ For Discord iframe testing locally you still need a temporary tunnel (see [disco
 | `ACTIVITY_ORIGIN` | `http://localhost:3003` | Production Activity URL (Preview may reuse) | — | — |
 | `VITE_DISCORD_CLIENT_ID` | local | — | Production + Preview | — |
 | `VITE_FRIENDS_API_URL` | *(empty)* | — | *(empty)* | — |
+| `VITE_SUPABASE_URL` | `/sb` or full project URL for browser mock | — | `/sb` | — |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon | — | Production + Preview | — |
+| `SUPABASE_URL` | optional (Realtime) | Production + Preview | — | — |
+| `SUPABASE_SERVICE_ROLE_KEY` | optional (Realtime) | Production + Preview | — | — |
 | `NEXT_PUBLIC_DISCORD_CLIENT_ID` | falls back to Discord client id | — | — | Production + Preview |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | optional | — | — | Production + Preview |
 | `NEXT_PUBLIC_SUPPORT_DISCORD_URL` | optional (community invite default in code) | — | — | Production + Preview |
