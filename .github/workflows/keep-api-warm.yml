@@ -1,0 +1,29 @@
+# Keep the Nest serverless isolate warm so Discord Activity polls are not
+# stuck behind a ~1–3s cold boot on every vote sync.
+name: Keep API warm
+
+on:
+  schedule:
+    - cron: "*/2 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: GET /health
+        run: |
+          set -euo pipefail
+          for i in 1 2 3; do
+            code=$(curl -sS -o /tmp/health.json -w "%{http_code}" \
+              --max-time 25 \
+              "https://friends-api.vercel.app/health" || true)
+            if [ "$code" = "200" ]; then
+              cat /tmp/health.json
+              exit 0
+            fi
+            echo "attempt $i -> HTTP $code"
+            sleep 2
+          done
+          echo "keep-warm failed"
+          exit 1

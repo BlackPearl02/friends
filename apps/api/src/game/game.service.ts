@@ -221,17 +221,23 @@ export class GameService {
       this.prisma.roomPlayer.count({ where: { roomId: round.roomId } }),
       this.prisma.vote.count({ where: { roundId: round.id } }),
     ]);
-    if (playerCount >= MIN_PLAYERS && voteCount >= playerCount) {
-      await this.revealRound(round.roomId);
-    }
-
-    const publicRoom = await this.loadPublic(round.roomId);
+    // Ping peers before heavy loadPublic so badges move even if GET is cold.
     this.pingRealtime(round.room.discordInstanceId, {
       kind: "vote",
       votedUserId: user.id,
       voteCount,
     });
-    return publicRoom;
+
+    if (playerCount >= MIN_PLAYERS && voteCount >= playerCount) {
+      await this.revealRound(round.roomId);
+      this.pingRealtime(round.room.discordInstanceId, {
+        kind: "vote",
+        votedUserId: user.id,
+        voteCount,
+      });
+    }
+
+    return this.loadPublic(round.roomId);
   }
 
   async replay(user: User, instanceId: string): Promise<PublicRoom> {

@@ -6,6 +6,7 @@ import { AuthModule } from "./auth/auth.module";
 import { JwtAuthGuard } from "./auth/jwt-auth.guard";
 import { DiscordModule } from "./discord/discord.module";
 import { GameModule } from "./game/game.module";
+import { HealthController } from "./health.controller";
 import { PrismaModule } from "./prisma/prisma.module";
 
 @Module({
@@ -17,6 +18,7 @@ import { PrismaModule } from "./prisma/prisma.module";
     DiscordModule,
     GameModule,
   ],
+  controllers: [HealthController],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },

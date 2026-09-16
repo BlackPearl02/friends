@@ -41,12 +41,16 @@ export class RoomRealtimeService {
               topic: roomRealtimeTopic(discordInstanceId),
               event: ROOM_REALTIME_EVENT,
               payload,
+              private: false,
             },
           ],
         }),
       });
       if (!res.ok) {
-        this.logger.warn(`Realtime broadcast failed: HTTP ${res.status}`);
+        const detail = await res.text().catch(() => "");
+        this.logger.warn(
+          `Realtime broadcast failed: HTTP ${res.status}${detail ? ` ${detail.slice(0, 120)}` : ""}`,
+        );
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "unknown";

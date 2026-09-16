@@ -37,6 +37,7 @@ describe("RoomRealtimeService", () => {
       topic: "room:inst-abc",
       event: "room_changed",
       payload: { t: 1 },
+      private: false,
     });
     const headers = init.headers as Record<string, string>;
     expect(headers.apikey).toBe("service-role-test");
@@ -65,5 +66,8 @@ describe("RoomRealtimeService", () => {
       votedUserId: "user-a",
       voteCount: 1,
     });
+    expect(
+      (body.messages[0] as { private?: boolean }).private,
+    ).toBe(false);
   });
 });

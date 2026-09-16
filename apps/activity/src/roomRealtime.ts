@@ -63,6 +63,8 @@ export function parseRoomRealtimePayload(raw: unknown): RoomRealtimePayload {
   return payload;
 }
 
+const RECONNECT_MS = 2_000;
+
 /**
  * Subscribe to room wake-ups (+ optional public patch).
  * Caller applies the patch immediately, then refetches via JWT.
@@ -76,39 +78,76 @@ export function subscribeRoomInvalidation(
     return () => undefined;
   }
 
+  let stopped = false;
   let client: SupabaseClient | null = null;
   let channel: RealtimeChannel | null = null;
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
-  try {
-    client = createClient(getSupabaseUrl(), getSupabaseAnonKey(), {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
-      },
-      realtime: {
-        params: { eventsPerSecond: 8 },
-      },
-    });
+  const clearReconnect = () => {
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
+    }
+  };
 
-    channel = client
-      .channel(roomRealtimeTopic(discordInstanceId), {
-        config: { broadcast: { self: false } },
-      })
-      .on("broadcast", { event: ROOM_REALTIME_EVENT }, ({ payload }) => {
-        onInvalidate(parseRoomRealtimePayload(payload));
-      })
-      .subscribe();
-  } catch {
-    // Poll fallback remains — do not take down the Activity shell.
-    return () => undefined;
-  }
-
-  return () => {
+  const teardownChannel = () => {
     if (client && channel) {
       void client.removeChannel(channel);
     }
-    client = null;
     channel = null;
+  };
+
+  const connect = () => {
+    if (stopped) return;
+    clearReconnect();
+    teardownChannel();
+
+    try {
+      const url = getSupabaseUrl();
+      const key = getSupabaseAnonKey();
+      if (!client) {
+        client = createClient(url, key, {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false,
+          },
+          realtime: {
+            params: { eventsPerSecond: 10, apikey: key },
+          },
+        });
+      }
+
+      channel = client
+        .channel(roomRealtimeTopic(discordInstanceId), {
+          config: { broadcast: { self: true, ack: false } },
+        })
+        .on("broadcast", { event: ROOM_REALTIME_EVENT }, ({ payload }) => {
+          onInvalidate(parseRoomRealtimePayload(payload));
+        })
+        .subscribe((status) => {
+          if (stopped) return;
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            clearReconnect();
+            reconnectTimer = setTimeout(connect, RECONNECT_MS);
+          }
+        });
+    } catch {
+      // Poll fallback remains — do not take down the Activity shell.
+      clearReconnect();
+      reconnectTimer = setTimeout(connect, RECONNECT_MS);
+    }
+  };
+
+  connect();
+
+  return () => {
+    stopped = true;
+    clearReconnect();
+    teardownChannel();
+    if (client) {
+      void client.removeAllChannels();
+    }
+    client = null;
   };
 }
