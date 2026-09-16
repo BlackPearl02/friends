@@ -30,6 +30,7 @@ export default async function PrivacyPage({ params }: Props) {
 
   return (
     <LegalDocument
+      locale={raw}
       title={m.privacy.title}
       updated={m.privacy.updated}
       sections={m.privacy.sections}

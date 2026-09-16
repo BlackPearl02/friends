@@ -49,7 +49,9 @@ export function CookieConsentBanner({ locale, messages }: Props) {
           </p>
           <p id="cookie-banner-body" className="cookie-banner__body">
             {messages.body}{" "}
-            <Link href={`/${locale}/privacy`}>{messages.privacyLink}</Link>
+            <Link href={`/${locale}/privacy#cookies`}>
+              {messages.privacyLink}
+            </Link>
           </p>
         </div>
         <div className="cookie-banner__actions">

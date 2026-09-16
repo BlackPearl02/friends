@@ -30,6 +30,7 @@ export default async function TermsPage({ params }: Props) {
 
   return (
     <LegalDocument
+      locale={raw}
       title={m.terms.title}
       updated={m.terms.updated}
       sections={m.terms.sections}

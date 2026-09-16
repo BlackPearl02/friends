@@ -1143,6 +1143,10 @@ img {
   color: var(--ink);
 }
 
+.prose-page section[id] {
+  scroll-margin-top: 5rem;
+}
+
 .prose-page p,
 .prose-page li {
   color: var(--ink-soft);
@@ -1156,6 +1160,23 @@ img {
 
 .prose-page a {
   color: var(--cyan);
+}
+
+.prose-page__inline-action {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--cyan);
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+  cursor: pointer;
+}
+
+.prose-page__inline-action:hover {
+  color: var(--ink);
 }
 
 @keyframes rise {

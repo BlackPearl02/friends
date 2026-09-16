@@ -112,8 +112,7 @@ export const en = {
     how3: "Ask everyone to refresh so you share one session.",
     contactTitle: "Contact",
     contactBody:
-      "Still stuck? Join our Discord server, describe what happened and roughly when, and we will help.",
-    contactCta: "Join Squimbo on Discord",
+      "Still stuck? [Join our Discord server](discord:invite), describe what happened and roughly when, and we will help. You can also read our [Privacy Policy](/privacy) and [Terms of Use](/terms).",
   },
   privacy: {
     title: "Privacy Policy",
@@ -129,7 +128,7 @@ export const en = {
       {
         title: "2. Scope",
         paragraphs: [
-          "This policy covers (a) playing Squimbo inside Discord (the Activity and related game API), and (b) visiting squimbo.app or other Squimbo marketing pages we operate. Discord is a separate controller for Discord accounts, voice, and platform features. Your use of Discord is also governed by Discord’s own privacy policy and terms.",
+          "This policy covers (a) playing Squimbo inside Discord (the Activity and related game API), and (b) visiting [squimbo.app](/) or other Squimbo marketing pages we operate. Discord is a separate controller for Discord accounts, voice, and platform features. Your use of Discord is also governed by Discord’s own [privacy policy](https://discord.com/privacy) and [terms](https://discord.com/terms).",
         ],
       },
       {
@@ -196,7 +195,7 @@ export const en = {
         title: "8. Your rights (EEA / UK / Switzerland)",
         paragraphs: [
           "Subject to GDPR and local law, you may have the right to access, rectify, erase, restrict, or port your personal data, and to object to processing based on legitimate interests. Where processing is based on consent, you may withdraw consent at any time without affecting prior lawful processing.",
-          "To exercise these rights, contact us using the details below. You also have the right to lodge a complaint with a supervisory authority. In Poland, that is the President of the Personal Data Protection Office (UODO), ul. Stawki 2, 00-193 Warsaw, Poland (uodo.gov.pl). You may also contact the authority in your country of residence.",
+          "To exercise these rights, contact us using the details below. You also have the right to lodge a complaint with a supervisory authority. In Poland, that is the President of the Personal Data Protection Office (UODO), ul. Stawki 2, 00-193 Warsaw, Poland ([uodo.gov.pl](https://uodo.gov.pl)). You may also contact the authority in your country of residence.",
         ],
       },
       {
@@ -217,14 +216,14 @@ export const en = {
       {
         title: "11. Cookies and similar technologies",
         paragraphs: [
-          "The marketing site may use essential technologies needed to deliver pages. Optional analytics tools (PostHog and Vercel Analytics) can involve cookies, local storage, or similar identifiers. Those analytics load only after you accept via our cookie banner. You can change your choice anytime using Cookies in the site footer. Rejecting analytics does not block browsing this website.",
-          "The Discord Activity runs inside Discord’s client; Discord may use its own technologies subject to Discord’s policies.",
+          "The marketing site may use essential technologies needed to deliver pages. Optional analytics tools (PostHog and Vercel Analytics) can involve cookies, local storage, or similar identifiers. Those analytics load only after you accept via our cookie banner. You can change your choice anytime using [Cookies](cookie:settings) in the site footer. Rejecting analytics does not block browsing this website.",
+          "The Discord Activity runs inside Discord’s client; Discord may use its own technologies subject to Discord’s [privacy policy](https://discord.com/privacy).",
         ],
       },
       {
         title: "12. Contact",
         paragraphs: [
-          "Privacy questions and data-subject requests: {email}. Postal address: Rafał Szołtysik, ul. Wolna 35, 44-187 Wielowieś, Poland.",
+          "Privacy questions and data-subject requests: {email}. Postal address: Rafał Szołtysik, ul. Wolna 35, 44-187 Wielowieś, Poland. For product help, see the [Support page](/support).",
         ],
       },
       {
@@ -235,7 +234,7 @@ export const en = {
       },
     ],
     contactFallback:
-      "Privacy questions and data-subject requests: use the contact options on the Support page. Postal address: Rafał Szołtysik, ul. Wolna 35, 44-187 Wielowieś, Poland.",
+      "Privacy questions and data-subject requests: use the contact options on the [Support page](/support). Postal address: Rafał Szołtysik, ul. Wolna 35, 44-187 Wielowieś, Poland.",
   },
   terms: {
     title: "Terms of Use",
@@ -257,7 +256,7 @@ export const en = {
       {
         title: "3. Agreement and Discord terms",
         paragraphs: [
-          "By accessing or using Squimbo, you agree to these Terms and to Discord’s terms and policies that apply to Activities and your Discord account (including Discord’s Terms of Service and Community Guidelines). If you do not agree, do not use Squimbo.",
+          "By accessing or using Squimbo, you agree to these Terms and to Discord’s terms and policies that apply to Activities and your Discord account (including Discord’s [Terms of Service](https://discord.com/terms) and [Community Guidelines](https://discord.com/guidelines)). If you do not agree, do not use Squimbo.",
         ],
       },
       {
@@ -315,7 +314,7 @@ export const en = {
       {
         title: "11. US consumers",
         paragraphs: [
-          "If you access Squimbo from the United States, you use it voluntarily as an entertainment service delivered through Discord. Some US states do not allow certain warranty disclaimers or liability limits; in those jurisdictions, our liability is limited to the maximum extent permitted by law. You may also have rights under state privacy laws described in our Privacy Policy.",
+          "If you access Squimbo from the United States, you use it voluntarily as an entertainment service delivered through Discord. Some US states do not allow certain warranty disclaimers or liability limits; in those jurisdictions, our liability is limited to the maximum extent permitted by law. You may also have rights under state privacy laws described in our [Privacy Policy](/privacy).",
         ],
       },
       {
@@ -347,12 +346,12 @@ export const en = {
       {
         title: "16. Contact",
         paragraphs: [
-          "Questions about these Terms: {email}. Postal address: Rafał Szołtysik, ul. Wolna 35, 44-187 Wielowieś, Poland.",
+          "Questions about these Terms: {email}. Postal address: Rafał Szołtysik, ul. Wolna 35, 44-187 Wielowieś, Poland. For product help, see the [Support page](/support).",
         ],
       },
     ],
     contactFallback:
-      "Questions about these Terms: see the Support page. Postal address: Rafał Szołtysik, ul. Wolna 35, 44-187 Wielowieś, Poland.",
+      "Questions about these Terms: see the [Support page](/support). Postal address: Rafał Szołtysik, ul. Wolna 35, 44-187 Wielowieś, Poland.",
   },
   errors: {
     notFound: {

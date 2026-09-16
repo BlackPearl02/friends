@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { RichText } from "@/components/RichText";
 import { getMessages } from "@/i18n";
 import { isLocale } from "@/i18n/locales";
 import { buildPageMetadata } from "@/seo/metadata";
@@ -34,21 +35,30 @@ export default async function SupportPage({ params }: Props) {
   return (
     <article className="prose-page">
       <h1>{m.support.title}</h1>
-      <p>{m.support.intro}</p>
+      <p>
+        <RichText text={m.support.intro} locale={raw} />
+      </p>
 
       <h2>{m.support.howTitle}</h2>
       <ul>
-        <li>{m.support.how1}</li>
-        <li>{m.support.how2}</li>
-        <li>{m.support.how3}</li>
+        <li>
+          <RichText text={m.support.how1} locale={raw} />
+        </li>
+        <li>
+          <RichText text={m.support.how2} locale={raw} />
+        </li>
+        <li>
+          <RichText text={m.support.how3} locale={raw} />
+        </li>
       </ul>
 
       <h2>{m.support.contactTitle}</h2>
       <p>
-        {m.support.contactBody}{" "}
-        <a href={discordUrl} target="_blank" rel="noopener noreferrer">
-          {m.support.contactCta}
-        </a>
+        <RichText
+          text={m.support.contactBody}
+          locale={raw}
+          discordInviteUrl={discordUrl}
+        />
       </p>
     </article>
   );

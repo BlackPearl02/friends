@@ -4,14 +4,18 @@ import { openCookieConsentBanner } from "@/consent/analytics-consent";
 
 type Props = {
   label: string;
+  className?: string;
 };
 
-/** Footer control to reopen the cookie consent banner. */
-export function CookieSettingsButton({ label }: Props) {
+/** Control to reopen the cookie consent banner (footer or inline prose). */
+export function CookieSettingsButton({
+  label,
+  className = "site-footer__cookie-btn",
+}: Props) {
   return (
     <button
       type="button"
-      className="site-footer__cookie-btn"
+      className={className}
       onClick={() => openCookieConsentBanner()}
     >
       {label}

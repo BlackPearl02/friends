@@ -1,3 +1,5 @@
+import { RichText } from "@/components/RichText";
+
 type LegalSection = {
   title: string;
   paragraphs: readonly string[];
@@ -6,6 +8,7 @@ type LegalSection = {
 };
 
 type Props = {
+  locale: string;
   title: string;
   updated: string;
   sections: readonly LegalSection[];
@@ -14,13 +17,9 @@ type Props = {
   contactFallback?: string;
 };
 
-function withEmail(text: string, email: string | undefined) {
-  if (!email || !text.includes("{email}")) return text;
-  return text.replace(/\{email\}/g, email);
-}
-
 /** Renders Privacy / Terms sections from the i18n catalog. */
 export function LegalDocument({
+  locale,
   title,
   updated,
   sections,
@@ -35,32 +34,38 @@ export function LegalDocument({
       {sections.map((section) => {
         const usesEmail = section.paragraphs.some((p) => p.includes("{email}"));
         const showFallback = usesEmail && !email && contactFallback;
+        const sectionId = section.title.toLowerCase().includes("cookies")
+          ? "cookies"
+          : undefined;
 
         return (
-          <section key={section.title}>
+          <section key={section.title} id={sectionId}>
             <h2>{section.title}</h2>
-            {showFallback ? (
-              <p>{contactFallback}</p>
+            {showFallback && contactFallback ? (
+              <p>
+                <RichText text={contactFallback} locale={locale} />
+              </p>
             ) : (
               section.paragraphs.map((paragraph) => (
-                <p key={paragraph}>{withEmail(paragraph, email)}</p>
+                <p key={paragraph}>
+                  <RichText text={paragraph} locale={locale} email={email} />
+                </p>
               ))
             )}
             {section.bullets && section.bullets.length > 0 ? (
               <ul>
                 {section.bullets.map((item) => (
-                  <li key={item}>{item}</li>
+                  <li key={item}>
+                    <RichText text={item} locale={locale} email={email} />
+                  </li>
                 ))}
               </ul>
             ) : null}
             {section.paragraphsAfterBullets?.map((paragraph) => (
-              <p key={paragraph}>{withEmail(paragraph, email)}</p>
-            ))}
-            {email && usesEmail && !showFallback ? (
-              <p>
-                <a href={`mailto:${email}`}>{email}</a>
+              <p key={paragraph}>
+                <RichText text={paragraph} locale={locale} email={email} />
               </p>
-            ) : null}
+            ))}
           </section>
         );
       })}
