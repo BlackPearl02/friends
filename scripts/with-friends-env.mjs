@@ -6,16 +6,20 @@ import { config } from "dotenv";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const mode = process.env.NODE_ENV ?? "development";
+/** On Vercel, dashboard env is source of truth — never let uploaded .env* override it. */
+const onVercel = process.env.VERCEL === "1";
 
-// Priority (last wins): .env → .env.<mode> → .env.local
+// Priority (last wins locally): .env → .env.<mode> → .env.local
 const files = [
   join(root, ".env"),
   join(root, `.env.${mode}`),
   join(root, ".env.local"),
 ].filter((p) => existsSync(p));
 
-for (const p of files) {
-  config({ path: p, override: true });
+if (!onVercel) {
+  for (const p of files) {
+    config({ path: p, override: true });
+  }
 }
 
 const args = process.argv.slice(2);
