@@ -460,6 +460,7 @@ describe("GameService session finale", () => {
           id: "room-1",
           sessionKey: "sess",
           locale: "en",
+          status: "lobby",
         }),
       },
       round: {
@@ -688,8 +689,14 @@ describe("GameService session finale", () => {
   it("picks a random unused prompt when beginning a round", async () => {
     const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.5);
     const tx = {
-      gameRoom: { update: vi.fn() },
-      round: { create: vi.fn().mockResolvedValue({ id: "round-new" }) },
+      gameRoom: {
+        update: vi.fn(),
+        findUniqueOrThrow: vi.fn().mockResolvedValue({ status: "lobby", sessionKey: "sess" }),
+      },
+      round: {
+        create: vi.fn().mockResolvedValue({ id: "round-new" }),
+        findFirst: vi.fn(),
+      },
       roomPlayer: { updateMany: vi.fn() },
     };
     const transaction = vi.fn(async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx));
@@ -699,6 +706,7 @@ describe("GameService session finale", () => {
           id: "room-1",
           sessionKey: "sess",
           locale: "en",
+          status: "lobby",
         }),
         update: vi.fn(),
       },
@@ -764,5 +772,56 @@ describe("GameService session finale", () => {
     });
     expect(transaction).toHaveBeenCalled();
     randomSpy.mockRestore();
+  });
+
+  it("reuses an open voting round when beginRound races after Ready", async () => {
+    const prisma = {
+      gameRoom: {
+        findUniqueOrThrow: vi.fn().mockResolvedValue({
+          id: "room-1",
+          sessionKey: "sess",
+          locale: "en",
+          status: "playing",
+        }),
+      },
+      round: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "round-open",
+          index: 0,
+          prompt: {
+            id: "p1",
+            kind: "most_likely",
+            category: null,
+            body: "Who?",
+            optionA: null,
+            optionB: null,
+          },
+        }),
+      },
+      prompt: { findMany: vi.fn() },
+      $transaction: vi.fn(),
+    };
+    const service = new GameService(prisma as never);
+
+    const started = await (
+      service as unknown as {
+        beginRound: (id: string) => Promise<{ roundId: string; index: number } | null>;
+      }
+    ).beginRound("room-1");
+
+    expect(started).toEqual({
+      roundId: "round-open",
+      index: 0,
+      prompt: {
+        id: "p1",
+        kind: "most_likely",
+        category: null,
+        body: "Who?",
+        optionA: null,
+        optionB: null,
+      },
+    });
+    expect(prisma.prompt.findMany).not.toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 });
