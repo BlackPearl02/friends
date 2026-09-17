@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isRevealTie, leadersFromTallies, msUntilReveal, shouldShowReveal } from "./roundReveal";
+import { isRevealTie, leadersFromTallies, msUntilReveal, shouldShowReveal, shouldShowRevealResults } from "./roundReveal";
 
 describe("leadersFromTallies", () => {
   it("returns the single top vote-getter", () => {
@@ -80,5 +80,31 @@ describe("msUntilReveal / shouldShowReveal", () => {
         now,
       ),
     ).toBe(false);
+  });
+});
+
+describe("shouldShowRevealResults", () => {
+  const serverTime = "2026-09-16T18:00:00.000Z";
+  const now = Date.parse(serverTime);
+
+  it("waits for tallies even after the hold elapsed", () => {
+    expect(
+      shouldShowRevealResults(
+        { status: "reveal", revealedAt: "2026-09-16T17:59:59.000Z" },
+        serverTime,
+        now,
+      ),
+    ).toBe(false);
+    expect(
+      shouldShowRevealResults(
+        {
+          status: "reveal",
+          revealedAt: "2026-09-16T17:59:59.000Z",
+          results: { tallies: { a: 1, b: 1 } },
+        },
+        serverTime,
+        now,
+      ),
+    ).toBe(true);
   });
 });

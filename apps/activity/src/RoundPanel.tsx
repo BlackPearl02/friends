@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { PublicRoom, RoomIntent } from "@friends/types";
 import { t } from "./i18n";
 import { playersWaitingOnIntent } from "./roomOptimistic";
-import { isRevealTie, leadersFromTallies, msUntilReveal, shouldShowReveal } from "./roundReveal";
+import { isRevealTie, leadersFromTallies, msUntilReveal, shouldShowRevealResults } from "./roundReveal";
 import { colors } from "./theme";
 
 /** Soft-nudge “wrap up?” from the 8th revealed round onward. */
@@ -15,10 +15,30 @@ function intentBadge(intent: RoomIntent): { label: string; color: string } {
   return { label: t("round.waitingBadge"), color: colors.muted };
 }
 
+/** Unanimous continue / wrap / revote — Nest is about to advance the phase. */
+export function awaitingRevealAdvance(room: PublicRoom, tied: boolean): boolean {
+  if (room.status !== "playing" || room.round?.status !== "reveal") return false;
+  if (room.players.length < 2) return false;
+  if (tied) {
+    return (
+      room.players.every((p) => p.intent === "revote") ||
+      room.players.every((p) => p.intent === "continue")
+    );
+  }
+  return (
+    room.players.every((p) => p.intent === "continue") ||
+    room.players.every((p) => p.intent === "wrap_up")
+  );
+}
+
 export function RoundPanel(props: {
   room: PublicRoom;
   currentUserId: string;
-  onVote: (body: { targetUserId?: string; choice?: "a" | "b" | "complete" | "skip"; text?: string }) => Promise<void>;
+  onVote: (body: {
+    targetUserId?: string;
+    choice?: "a" | "b" | "complete" | "skip";
+    text?: string;
+  }) => Promise<void>;
   onIntent: (intent: RoomIntent) => Promise<void>;
 }) {
   const round = props.room.round;
@@ -27,10 +47,13 @@ export function RoundPanel(props: {
   const intentInFlight = useRef(false);
   const [picked, setPicked] = useState<string | null>(null);
   const [revealGate, setRevealGate] = useState(0);
+  const [advanceLatched, setAdvanceLatched] = useState(false);
+
   useEffect(() => {
     setPicked(null);
     voteInFlight.current = false;
     intentInFlight.current = false;
+    setAdvanceLatched(false);
   }, [round?.id]);
 
   useEffect(() => {
@@ -41,30 +64,42 @@ export function RoundPanel(props: {
     return () => window.clearTimeout(id);
   }, [round?.id, round?.status, round?.revealedAt, props.room.serverTime]);
 
+  const talliesPreview = round?.results?.tallies;
+  const tiedPreview = isRevealTie(talliesPreview);
+  const advancingNow = round ? awaitingRevealAdvance(props.room, tiedPreview) : false;
+
+  useEffect(() => {
+    if (advancingNow) setAdvanceLatched(true);
+  }, [advancingNow]);
+
   if (!round) return null;
 
   void revealGate;
-  const revealed = shouldShowReveal(round, props.room.serverTime);
+  // Hold UI until tallies exist — otherwise "Votes are in." flashes before GET.
+  const revealed = shouldShowRevealResults(round, props.room.serverTime);
   const holdingReveal = round.status !== "voting" && !revealed;
   const playerCount = props.room.players.length;
-  const continueCount = props.room.players.filter((p) => p.intent === "continue").length;
+  const tallies = round.results?.tallies;
+  const leaders = tallies ? leadersFromTallies(tallies) : { userIds: [] as string[], votes: 0 };
+  const tied = isRevealTie(tallies);
+  const advancing = advanceLatched || advancingNow;
+
+  const continueCount = advancing
+    ? playerCount
+    : props.room.players.filter((p) => p.intent === "continue").length;
   const wrapCount = props.room.players.filter((p) => p.intent === "wrap_up").length;
   const revoteCount = props.room.players.filter((p) => p.intent === "revote").length;
   const waitingOnIntent = playersWaitingOnIntent(props.room);
   const softWrap = props.room.sessionRoundCount >= SOFT_WRAP_FROM_SESSION_ROUND;
-  const tallies = round.results?.tallies;
-  const leaders = tallies ? leadersFromTallies(tallies) : { userIds: [] as string[], votes: 0 };
-  const tied = isRevealTie(tallies);
-  // Follow leaders.userIds order (stable), not room.players which can reshuffle between polls.
   const leaderPlayers = leaders.userIds
     .map((id) => props.room.players.find((p) => p.userId === id))
     .filter((p): p is NonNullable<typeof p> => p != null);
   const leaderNames = leaderPlayers.map((p) => p.displayName).join(", ");
   const showWaitingOnOthers =
-    revealed && me != null && me.intent !== "none" && waitingOnIntent > 0;
+    revealed && !advancing && me != null && me.intent !== "none" && waitingOnIntent > 0;
 
   const runIntent = (intent: RoomIntent) => {
-    if (intentInFlight.current) return;
+    if (intentInFlight.current || advancing) return;
     intentInFlight.current = true;
     void props.onIntent(intent).finally(() => {
       intentInFlight.current = false;
@@ -164,10 +199,19 @@ export function RoundPanel(props: {
                     const count = tallies?.[p.userId] ?? 0;
                     const isLeader = leaders.userIds.includes(p.userId);
                     return (
-                      <li key={p.userId} className={isLeader ? "player-row is-winner" : "player-row"}>
+                      <li
+                        key={p.userId}
+                        className={isLeader ? "player-row is-winner" : "player-row"}
+                      >
                         <span className="player-row-main">
                           {p.avatarUrl ? (
-                            <img className="player-avatar" src={p.avatarUrl} alt="" width={28} height={28} />
+                            <img
+                              className="player-avatar"
+                              src={p.avatarUrl}
+                              alt=""
+                              width={28}
+                              height={28}
+                            />
                           ) : (
                             <span className="player-avatar player-avatar-fallback" aria-hidden />
                           )}
@@ -189,7 +233,9 @@ export function RoundPanel(props: {
 
           <ul className="player-list" style={{ marginTop: "0.85rem" }}>
             {props.room.players.map((p) => {
-              const badge = intentBadge(p.intent);
+              const badge = advancing
+                ? { label: t("round.continueBadge"), color: colors.accent2 }
+                : intentBadge(p.intent);
               return (
                 <li key={p.userId} className="player-row">
                   <span className="player-row-main">
@@ -203,17 +249,19 @@ export function RoundPanel(props: {
             })}
           </ul>
           <p className="hint">
-            {tied
-              ? t("round.tieIntentCount", {
-                  continue: String(continueCount),
-                  revote: String(revoteCount),
-                  total: String(playerCount),
-                })
-              : t("round.intentCount", {
-                  continue: String(continueCount),
-                  wrap: String(wrapCount),
-                  total: String(playerCount),
-                })}
+            {advancing
+              ? t("round.advancing")
+              : tied
+                ? t("round.tieIntentCount", {
+                    continue: String(continueCount),
+                    revote: String(revoteCount),
+                    total: String(playerCount),
+                  })
+                : t("round.intentCount", {
+                    continue: String(continueCount),
+                    wrap: String(wrapCount),
+                    total: String(playerCount),
+                  })}
           </p>
           {showWaitingOnOthers && (
             <p className="hint">
@@ -223,7 +271,7 @@ export function RoundPanel(props: {
         </div>
       )}
 
-      {revealed && tied && (
+      {revealed && tied && !advancing && (
         <div className="actions">
           <button
             type="button"
@@ -242,7 +290,7 @@ export function RoundPanel(props: {
         </div>
       )}
 
-      {revealed && !tied && (
+      {revealed && !tied && !advancing && (
         <div className="actions">
           <button
             type="button"

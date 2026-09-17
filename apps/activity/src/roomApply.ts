@@ -42,8 +42,18 @@ export function mergeStickyPlayerIntents(
  * Never degrade reveal/done back to voting for the same round id.
  * Never drop an in-progress round for a stale lobby snapshot.
  * Never clear fanout Ready/continue badges on a stale lobby/reveal poll.
+ * Never rewind to an older round.index from a stale GET.
  */
 export function mergePublicRoom(prev: PublicRoom, next: PublicRoom): PublicRoom {
+  // Replay: finished must not overwrite a newer lobby session.
+  if (
+    prev.status === "lobby" &&
+    next.status === "finished" &&
+    prev.sessionKey !== next.sessionKey
+  ) {
+    return prev;
+  }
+
   // Stale lobby must not undo an already-started round (slow intent HTTP).
   if (prev.status === "playing" && prev.round && next.status === "lobby") {
     return prev;
@@ -61,7 +71,19 @@ export function mergePublicRoom(prev: PublicRoom, next: PublicRoom): PublicRoom 
     return next;
   }
   if (!prev.round || !next.round) return next;
-  if (prev.round.id !== next.round.id) return next;
+
+  // Different rounds: keep the newer index (stale GET must not rewind after round start).
+  if (prev.round.id !== next.round.id) {
+    if (prev.sessionKey === next.sessionKey) {
+      if (next.round.index < prev.round.index) return prev;
+      if (next.round.index > prev.round.index) return next;
+      // Same index, different id — prefer higher status rank, else next.
+      if (STATUS_RANK[prev.round.status] > STATUS_RANK[next.round.status]) {
+        return prev;
+      }
+    }
+    return next;
+  }
 
   if (STATUS_RANK[prev.round.status] > STATUS_RANK[next.round.status]) {
     return prev;
@@ -72,7 +94,8 @@ export function mergePublicRoom(prev: PublicRoom, next: PublicRoom): PublicRoom 
     const prevVoted = new Set(
       prev.players.filter((p) => p.hasVoted).map((p) => p.userId),
     );
-    const players = mergeStickyPlayerIntents(prev.players, next.players).map((p) => ({
+    // No sticky intents while voting — beginRound cleared them on purpose.
+    const players = next.players.map((p) => ({
       ...p,
       hasVoted: p.hasVoted || prevVoted.has(p.userId),
     }));

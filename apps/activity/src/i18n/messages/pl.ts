@@ -52,6 +52,7 @@ export const pl: ActivityMessages = {
     waitingVotes: "Czekamy, aż wszyscy oddadzą głos…",
     revealHold: "Głosy oddane — wynik pokażemy razem…",
     waitingOnOthers: "Jesteś gotowy — czekamy na jeszcze {count}.",
+    advancing: "Wszyscy gotowi — lecimy dalej…",
     pickPlayer: "Wybierz kogoś",
     votesInFlight: "{voted}/{total} oddało głos",
     votesLocked: "Głosy oddane.",

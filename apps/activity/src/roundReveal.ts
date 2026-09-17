@@ -46,3 +46,23 @@ export function shouldShowReveal(
   if (!round || round.status === "voting") return false;
   return msUntilReveal(round.revealedAt, serverTime, nowMs) === 0;
 }
+
+/**
+ * Tallies UI only when hold elapsed AND server results exist.
+ * Avoids a flash of "Votes are in." / empty reveal before GET fills tallies.
+ */
+export function shouldShowRevealResults(
+  round:
+    | {
+        status: string;
+        revealedAt?: string | null;
+        results?: { tallies?: Record<string, number> } | null;
+      }
+    | null
+    | undefined,
+  serverTime: string | null | undefined,
+  nowMs: number = Date.now(),
+): boolean {
+  if (!shouldShowReveal(round, serverTime, nowMs)) return false;
+  return round?.results != null;
+}

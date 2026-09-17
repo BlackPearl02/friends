@@ -42,8 +42,10 @@ export function applyPeerVote(
   room: PublicRoom,
   voterId: string,
   voteCount?: number,
+  roundId?: string,
 ): PublicRoom {
   if (!room.round || room.round.status !== "voting") return room;
+  if (roundId && room.round.id !== roundId) return room;
   const peer = room.players.find((p) => p.userId === voterId);
   if (!peer) return room;
 
@@ -73,6 +75,14 @@ export function applyPeerIntent(
   userId: string,
   intent: RoomIntent,
 ): PublicRoom {
+  // Intents are only meaningful in lobby or after reveal — ignore late Ready/continue on voting.
+  if (room.status === "lobby") {
+    // ok
+  } else if (room.round?.status === "reveal") {
+    // ok
+  } else {
+    return room;
+  }
   const peer = room.players.find((p) => p.userId === userId);
   if (!peer || peer.intent === intent) return room;
   return applyLocalIntent(room, userId, intent);
@@ -95,8 +105,10 @@ export function applyPeerReveal(
   room: PublicRoom,
   revealedAt: string,
   serverTime?: string,
+  roundId?: string,
 ): PublicRoom {
   if (!room.round || room.round.status === "done") return room;
+  if (roundId && room.round.id !== roundId) return room;
 
   if (room.round.status === "reveal" && room.round.revealedAt) {
     const keepAt = earlierIso(room.round.revealedAt, revealedAt);
@@ -175,8 +187,11 @@ export function applyVoteAndMaybeReveal(
   voteCount: number | undefined,
   local: boolean,
   nowMs: number = Date.now(),
+  roundId?: string,
 ): { room: PublicRoom; publishReveal: RevealHoldStart | null } {
-  const voted = local ? applyLocalVote(room, voterId) : applyPeerVote(room, voterId, voteCount);
+  const voted = local
+    ? applyLocalVote(room, voterId)
+    : applyPeerVote(room, voterId, voteCount, roundId);
   const hold = maybeStartRevealHold(voted, nowMs);
   if (!hold.started) {
     return { room: voted, publishReveal: null };
@@ -213,6 +228,9 @@ export function applyPeerRoundStart(
   if (room.round?.id === patch.roundId) {
     return room;
   }
+  if (room.round && patch.roundIndex < room.round.index) {
+    return room;
+  }
   return {
     ...room,
     status: "playing",
@@ -230,5 +248,25 @@ export function applyPeerRoundStart(
       voteCount: 0,
       prompt: patch.prompt,
     },
+  };
+}
+
+/**
+ * Build a `kind:round` patch from a Nest PublicRoom (HTTP backup when Nest→RT lags).
+ * Only when a voting round is present.
+ */
+export function roundFanoutFromRoom(room: PublicRoom): {
+  roundId: string;
+  roundIndex: number;
+  prompt: PublicPrompt;
+  serverTime: string;
+} | null {
+  const round = room.round;
+  if (!round || round.status !== "voting" || !round.prompt) return null;
+  return {
+    roundId: round.id,
+    roundIndex: round.index,
+    prompt: round.prompt,
+    serverTime: room.serverTime,
   };
 }

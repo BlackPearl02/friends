@@ -34,6 +34,7 @@ import {
   applyPeerRoundStart,
   applyVoteAndMaybeReveal,
   awaitingLobbyStart,
+  roundFanoutFromRoom,
 } from "./roomOptimistic";
 import { dbgRt } from "./dbgRt";
 import { mergePublicRoom, shouldApplyPollResult } from "./roomApply";
@@ -320,9 +321,10 @@ function App() {
       if (payload.kind === "reveal" && payload.revealedAt) {
         const revealedAt = payload.revealedAt;
         const serverTime = payload.serverTime;
+        const roundId = payload.roundId;
         setRoom((prev) => {
           if (!prev) return prev;
-          const next = applyPeerReveal(prev, revealedAt, serverTime);
+          const next = applyPeerReveal(prev, revealedAt, serverTime, roundId);
           // #region agent log
           dbgRt("H10", "main.tsx:onInvalidate", "apply_peer_reveal", {
             changed: next !== prev,
@@ -335,15 +337,27 @@ function App() {
       } else if (payload.kind === "vote" && payload.votedUserId) {
         const voterId = payload.votedUserId;
         const voteCount = payload.voteCount;
-        const revealFanout: { revealedAt: string; serverTime: string } | null = (() => {
-          const prev = roomRef.current;
-          if (!prev) return null;
+        const roundId = payload.roundId;
+        const revealBox: {
+          current: { revealedAt: string; serverTime: string; roundId?: string } | null;
+        } = { current: null };
+        setRoom((prev) => {
+          if (!prev) return prev;
           const { room: next, publishReveal } = applyVoteAndMaybeReveal(
             prev,
             voterId,
             voteCount,
             false,
+            Date.now(),
+            roundId,
           );
+          if (publishReveal) {
+            revealBox.current = {
+              revealedAt: publishReveal.revealedAt,
+              serverTime: publishReveal.serverTime,
+              roundId: next.round?.id,
+            };
+          }
           // #region agent log
           const peer = prev.players.find((p) => p.userId === voterId);
           dbgRt("H4", "main.tsx:onInvalidate", "apply_peer_vote_result", {
@@ -359,18 +373,14 @@ function App() {
             tClient: Date.now(),
           });
           // #endregion
-          setRoom(next);
-          if (!publishReveal) return null;
-          return {
-            revealedAt: publishReveal.revealedAt,
-            serverTime: publishReveal.serverTime,
-          };
-        })();
-        if (revealFanout) {
+          return next;
+        });
+        if (revealBox.current) {
           publishRoomPatch(instanceId, {
             kind: "reveal",
-            revealedAt: revealFanout.revealedAt,
-            serverTime: revealFanout.serverTime,
+            revealedAt: revealBox.current.revealedAt,
+            serverTime: revealBox.current.serverTime,
+            roundId: revealBox.current.roundId,
           });
         }
       } else if (
@@ -404,13 +414,19 @@ function App() {
       } else if (payload.kind === "intent" && payload.intentUserId && payload.intent) {
         const intentUserId = payload.intentUserId;
         const intent = payload.intent;
-        const prev = roomRef.current;
-        const next = prev ? applyPeerIntent(prev, intentUserId, intent) : prev;
-        if (next) setRoom(next);
-        if (next && awaitingLobbyStart(next)) startLobbyStartBurst();
+        setRoom((prev) => {
+          if (!prev) return prev;
+          const next = applyPeerIntent(prev, intentUserId, intent);
+          if (next && awaitingLobbyStart(next)) startLobbyStartBurst();
+          return next;
+        });
       } else if (payload.kind === "roster") {
         // Nest finished beginRound / settle — pull the new prompt ASAP.
-        startLobbyStartBurst();
+        if (roomRef.current && awaitingLobbyStart(roomRef.current)) {
+          startLobbyStartBurst();
+        } else {
+          gate.request();
+        }
       } else {
         // #region agent log
         dbgRt("H3", "main.tsx:onInvalidate", "wake_only_no_patch", {
@@ -516,6 +532,17 @@ function App() {
       const serverRoom = await setRoomIntent(accessToken, instanceId, intent);
       setRoom((prev) => (prev ? mergePublicRoom(prev, serverRoom) : serverRoom));
       clearLobbyStartBurst();
+      // Backup Nest's kind:round so peers flip even if Nest→Supabase lags after HTTP.
+      const fanout = roundFanoutFromRoom(serverRoom);
+      if (fanout && fanout.roundId !== snapshot.round?.id) {
+        publishRoomPatch(instanceId, {
+          kind: "round",
+          roundId: fanout.roundId,
+          roundIndex: fanout.roundIndex,
+          prompt: fanout.prompt,
+          serverTime: fanout.serverTime,
+        });
+      }
     } catch {
       setRoom(snapshot);
       setActionError(t("shell.actionFailed"));
@@ -593,12 +620,17 @@ function App() {
               );
               setRoom(next);
               // Peer badges in ms — do not wait for Nest cold start.
-              publishRoomPatch(instanceId, { kind: "vote", votedUserId: userId });
+              publishRoomPatch(instanceId, {
+                kind: "vote",
+                votedUserId: userId,
+                roundId: snapshot.round!.id,
+              });
               if (publishReveal) {
                 publishRoomPatch(instanceId, {
                   kind: "reveal",
                   revealedAt: publishReveal.revealedAt,
                   serverTime: publishReveal.serverTime,
+                  roundId: snapshot.round!.id,
                 });
                 // #region agent log
                 dbgRt("H10", "main.tsx:onVote", "client_reveal_hold", {
@@ -636,7 +668,18 @@ function App() {
                 setRoom(previewRoom);
                 return;
               }
-              setRoom(await replayMatch(accessToken, instanceId));
+              const snapshot = roomRef.current ?? room;
+              syncGeneration.current += 1;
+              mutationsInFlight.current += 1;
+              try {
+                const serverRoom = await replayMatch(accessToken, instanceId);
+                setRoom((prev) => (prev ? mergePublicRoom(prev, serverRoom) : serverRoom));
+              } catch {
+                setRoom(snapshot);
+                setActionError(t("shell.actionFailed"));
+              } finally {
+                mutationsInFlight.current -= 1;
+              }
             }}
           />
         )}
