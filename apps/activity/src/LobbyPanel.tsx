@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import type { PublicRoom, RoomIntent } from "@friends/types";
 import { t } from "./i18n";
 import { lobbyWaitingForDiscordJoin } from "./lobbyHints";
-import { playersWaitingOnIntent } from "./roomOptimistic";
+import { playersWaitingOnIntent, awaitingLobbyStart } from "./roomOptimistic";
 import { colors } from "./theme";
 
 export function LobbyPanel(props: {
@@ -17,6 +17,7 @@ export function LobbyPanel(props: {
   const continueCount = props.room.players.filter((p) => p.intent === "continue").length;
   const total = props.room.players.length;
   const waitingOnIntent = playersWaitingOnIntent(props.room);
+  const starting = awaitingLobbyStart(props.room);
   const waitingDiscord = lobbyWaitingForDiscordJoin(
     total,
     props.discordParticipantCount ?? null,
@@ -64,6 +65,7 @@ export function LobbyPanel(props: {
       {iAmContinue && waitingOnIntent > 0 && (
         <p className="hint">{t("lobby.waitingOnOthers", { count: String(waitingOnIntent) })}</p>
       )}
+      {starting && <p className="hint">{t("lobby.starting")}</p>}
 
       <div className="actions">
         <button

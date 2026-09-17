@@ -1,7 +1,7 @@
 import { StrictMode, useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { DiscordSDK } from "@discord/embedded-app-sdk";
-import type { PublicRoom } from "@friends/types";
+import type { PublicRoom, RoomIntent } from "@friends/types";
 import {
   fetchRoom,
   joinRoom,
@@ -12,6 +12,8 @@ import {
   voteRound,
 } from "./api";
 import { authenticateActivity } from "./auth";
+import { logDiscordEmbedProbe } from "./discordRpcTarget";
+import { resolveDiscordClientId } from "./resolveDiscordClientId";
 import "./friends.css";
 import { FinishedPanel } from "./FinishedPanel";
 import { t } from "./i18n";
@@ -25,15 +27,23 @@ import {
   resolvePresencePhase,
   syncDiscordPresence,
 } from "./discordPresence";
-import { applyLocalIntent, applyLocalVote, applyPeerIntent, applyPeerVote } from "./roomOptimistic";
+import {
+  applyLocalIntent,
+  applyPeerIntent,
+  applyPeerReveal,
+  applyPeerRoundStart,
+  applyVoteAndMaybeReveal,
+  awaitingLobbyStart,
+} from "./roomOptimistic";
 import { dbgRt } from "./dbgRt";
 import { mergePublicRoom, shouldApplyPollResult } from "./roomApply";
 import { createRoomRefreshGate, isRoomMembershipLostError } from "./roomRefresh";
-import { subscribeRoomInvalidation } from "./roomRealtime";
+import { subscribeRoomInvalidation, publishRoomPatch } from "./roomRealtime";
 import { ROOM_POLL_MS } from "./roomSync";
 import { isShellLoading, shellBannerKind, type ShellPhase } from "./shellStatus";
 
-const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID?.trim() ?? "";
+const envClientId = import.meta.env.VITE_DISCORD_CLIENT_ID?.trim() ?? "";
+const clientId = resolveDiscordClientId(envClientId);
 const JOIN_RETRY_MS = 2_000;
 
 type BootResult = {
@@ -59,6 +69,7 @@ function authenticateSession(clientId: string): Promise<AuthSession> {
   if (!authSessionPromise) {
     authSessionPromise = (async () => {
       const sdk = new DiscordSDK(clientId);
+      logDiscordEmbedProbe({ clientIdTail: clientId.slice(-6) });
       // ready() is awaited inside authenticateActivity (with timeout).
       const auth = await authenticateActivity(sdk, clientId);
       return {
@@ -139,6 +150,31 @@ function App() {
   const mutationsInFlight = useRef(0);
   /** Bumped when a mutation starts — invalidates in-flight polls. */
   const syncGeneration = useRef(0);
+  /** Burst-poll while lobby shows all Ready until Nest begins the round. */
+  const lobbyStartBurstId = useRef<number | null>(null);
+  const gateRequestRef = useRef<(() => void) | null>(null);
+
+  const clearLobbyStartBurst = () => {
+    if (lobbyStartBurstId.current != null) {
+      window.clearInterval(lobbyStartBurstId.current);
+      lobbyStartBurstId.current = null;
+    }
+  };
+
+  const startLobbyStartBurst = () => {
+    if (lobbyStartBurstId.current != null) return;
+    let ticks = 0;
+    lobbyStartBurstId.current = window.setInterval(() => {
+      ticks += 1;
+      gateRequestRef.current?.();
+      const cur = roomRef.current;
+      if (ticks >= 25 || !cur || cur.status !== "lobby" || !awaitingLobbyStart(cur)) {
+        clearLobbyStartBurst();
+      }
+    }, 120);
+    gateRequestRef.current?.();
+  };
+
   /** Unix seconds — stable across presence updates until sessionKey changes. */
   const presenceStartedAtSec = useRef<number | null>(null);
   const presenceSessionKey = useRef<string | null>(null);
@@ -185,6 +221,8 @@ function App() {
         dbgRt("H6", "main.tsx:boot", "boot_failed", {
           err: message?.slice(0, 160) ?? "unknown",
           tClient: Date.now(),
+          // Distinguishes pre-60s builds (12000) from current (60000).
+          buildHint: "ready60s",
         });
         // #endregion
         setBootError(message);
@@ -273,16 +311,39 @@ function App() {
       }
     });
 
+    gateRequestRef.current = () => gate.request();
+
     gate.request();
     const id = window.setInterval(() => gate.request(), ROOM_POLL_MS);
     const unsubscribeRealtime = subscribeRoomInvalidation(instanceId, (payload) => {
       // Apply safe public patch before GET so peer badges do not wait ~poll latency.
-      if (payload.kind === "vote" && payload.votedUserId) {
-        const voterId = payload.votedUserId;
-        const voteCount = payload.voteCount;
+      if (payload.kind === "reveal" && payload.revealedAt) {
+        const revealedAt = payload.revealedAt;
+        const serverTime = payload.serverTime;
         setRoom((prev) => {
           if (!prev) return prev;
-          const next = applyPeerVote(prev, voterId, voteCount);
+          const next = applyPeerReveal(prev, revealedAt, serverTime);
+          // #region agent log
+          dbgRt("H10", "main.tsx:onInvalidate", "apply_peer_reveal", {
+            changed: next !== prev,
+            revealedAtTail: revealedAt.slice(-10),
+            tClient: Date.now(),
+          });
+          // #endregion
+          return next;
+        });
+      } else if (payload.kind === "vote" && payload.votedUserId) {
+        const voterId = payload.votedUserId;
+        const voteCount = payload.voteCount;
+        const revealFanout: { revealedAt: string; serverTime: string } | null = (() => {
+          const prev = roomRef.current;
+          if (!prev) return null;
+          const { room: next, publishReveal } = applyVoteAndMaybeReveal(
+            prev,
+            voterId,
+            voteCount,
+            false,
+          );
           // #region agent log
           const peer = prev.players.find((p) => p.userId === voterId);
           dbgRt("H4", "main.tsx:onInvalidate", "apply_peer_vote_result", {
@@ -292,15 +353,64 @@ function App() {
             alreadyVoted: peer?.hasVoted ?? null,
             voteCount: voteCount ?? null,
             prevVoteCount: prev.round?.voteCount ?? null,
+            // post-fix: true means Realtime beat poll (badge path working).
+            rtBeatPoll: next !== prev,
+            startedReveal: Boolean(publishReveal),
+            tClient: Date.now(),
+          });
+          // #endregion
+          setRoom(next);
+          if (!publishReveal) return null;
+          return {
+            revealedAt: publishReveal.revealedAt,
+            serverTime: publishReveal.serverTime,
+          };
+        })();
+        if (revealFanout) {
+          publishRoomPatch(instanceId, {
+            kind: "reveal",
+            revealedAt: revealFanout.revealedAt,
+            serverTime: revealFanout.serverTime,
+          });
+        }
+      } else if (
+        payload.kind === "round" &&
+        payload.roundId &&
+        payload.prompt &&
+        typeof payload.roundIndex === "number"
+      ) {
+        const roundId = payload.roundId;
+        const roundIndex = payload.roundIndex;
+        const prompt = payload.prompt;
+        const serverTime = payload.serverTime;
+        setRoom((prev) => {
+          if (!prev) return prev;
+          const next = applyPeerRoundStart(prev, {
+            roundId,
+            roundIndex,
+            prompt,
+            serverTime,
+          });
+          // #region agent log
+          dbgRt("H10", "main.tsx:onInvalidate", "apply_peer_round", {
+            changed: next !== prev,
+            roundIdTail: roundId.slice(-8),
             tClient: Date.now(),
           });
           // #endregion
           return next;
         });
+        clearLobbyStartBurst();
       } else if (payload.kind === "intent" && payload.intentUserId && payload.intent) {
         const intentUserId = payload.intentUserId;
         const intent = payload.intent;
-        setRoom((prev) => (prev ? applyPeerIntent(prev, intentUserId, intent) : prev));
+        const prev = roomRef.current;
+        const next = prev ? applyPeerIntent(prev, intentUserId, intent) : prev;
+        if (next) setRoom(next);
+        if (next && awaitingLobbyStart(next)) startLobbyStartBurst();
+      } else if (payload.kind === "roster") {
+        // Nest finished beginRound / settle — pull the new prompt ASAP.
+        startLobbyStartBurst();
       } else {
         // #region agent log
         dbgRt("H3", "main.tsx:onInvalidate", "wake_only_no_patch", {
@@ -316,6 +426,8 @@ function App() {
     });
     return () => {
       cancelled = true;
+      gateRequestRef.current = null;
+      clearLobbyStartBurst();
       window.clearInterval(id);
       unsubscribeRealtime();
     };
@@ -382,6 +494,36 @@ function App() {
   const loading = isShellLoading(phase);
   const banner = shellBannerKind(phase, bootError);
 
+  /** Optimistic intent + client fanout, then Nest authority. */
+  const submitIntent = async (intent: RoomIntent) => {
+    if (!ready) return;
+    const snapshot = roomRef.current ?? room;
+    syncGeneration.current += 1;
+    const next = applyLocalIntent(snapshot, userId, intent);
+    setRoom(next);
+    if (awaitingLobbyStart(next)) startLobbyStartBurst();
+    if (!preview) {
+      publishRoomPatch(instanceId, {
+        kind: "intent",
+        intentUserId: userId,
+        intent,
+      });
+    }
+    if (preview) return;
+    setActionError(null);
+    mutationsInFlight.current += 1;
+    try {
+      const serverRoom = await setRoomIntent(accessToken, instanceId, intent);
+      setRoom((prev) => (prev ? mergePublicRoom(prev, serverRoom) : serverRoom));
+      clearLobbyStartBurst();
+    } catch {
+      setRoom(snapshot);
+      setActionError(t("shell.actionFailed"));
+    } finally {
+      mutationsInFlight.current -= 1;
+    }
+  };
+
   return (
     <main className="friends-shell">
       <div className="friends-stage">
@@ -431,22 +573,7 @@ function App() {
               if (!sdk) throw new Error("no sdk");
               await sdk.commands.openInviteDialog();
             }}
-            onIntent={async (intent) => {
-              const snapshot = roomRef.current ?? room;
-              syncGeneration.current += 1;
-              setRoom(applyLocalIntent(snapshot, userId, intent));
-              if (preview) return;
-              setActionError(null);
-              mutationsInFlight.current += 1;
-              try {
-                setRoom(await setRoomIntent(accessToken, instanceId, intent));
-              } catch {
-                setRoom(snapshot);
-                setActionError(t("shell.actionFailed"));
-              } finally {
-                mutationsInFlight.current -= 1;
-              }
-            }}
+            onIntent={submitIntent}
           />
         )}
 
@@ -458,13 +585,37 @@ function App() {
               if (preview) return;
               const snapshot = roomRef.current ?? room;
               syncGeneration.current += 1;
-              setRoom(applyLocalVote(snapshot, userId));
+              const { room: next, publishReveal } = applyVoteAndMaybeReveal(
+                snapshot,
+                userId,
+                undefined,
+                true,
+              );
+              setRoom(next);
+              // Peer badges in ms — do not wait for Nest cold start.
+              publishRoomPatch(instanceId, { kind: "vote", votedUserId: userId });
+              if (publishReveal) {
+                publishRoomPatch(instanceId, {
+                  kind: "reveal",
+                  revealedAt: publishReveal.revealedAt,
+                  serverTime: publishReveal.serverTime,
+                });
+                // #region agent log
+                dbgRt("H10", "main.tsx:onVote", "client_reveal_hold", {
+                  fromClientFanout: true,
+                  revealedAtTail: publishReveal.revealedAt.slice(-10),
+                  tClient: Date.now(),
+                });
+                // #endregion
+              }
               setActionError(null);
               mutationsInFlight.current += 1;
               try {
-                setRoom(
-                  await voteRound(accessToken, { roundId: snapshot.round!.id, ...body }),
-                );
+                const serverRoom = await voteRound(accessToken, {
+                  roundId: snapshot.round!.id,
+                  ...body,
+                });
+                setRoom((prev) => (prev ? mergePublicRoom(prev, serverRoom) : serverRoom));
               } catch {
                 setRoom(snapshot);
                 setActionError(t("shell.actionFailed"));
@@ -472,22 +623,7 @@ function App() {
                 mutationsInFlight.current -= 1;
               }
             }}
-            onIntent={async (intent) => {
-              const snapshot = roomRef.current ?? room;
-              syncGeneration.current += 1;
-              setRoom(applyLocalIntent(snapshot, userId, intent));
-              if (preview) return;
-              setActionError(null);
-              mutationsInFlight.current += 1;
-              try {
-                setRoom(await setRoomIntent(accessToken, instanceId, intent));
-              } catch {
-                setRoom(snapshot);
-                setActionError(t("shell.actionFailed"));
-              } finally {
-                mutationsInFlight.current -= 1;
-              }
-            }}
+            onIntent={submitIntent}
           />
         )}
 

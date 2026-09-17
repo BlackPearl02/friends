@@ -30,6 +30,7 @@ export const en = {
       "Someone is in the Discord Activity but has not finished joining Squimbo yet. Ask them to open Squimbo and accept permissions.",
     sweetSpot: "Best with 3–8 friends in the channel.",
     waitingOnOthers: "You're ready — waiting on {count} more.",
+    starting: "Everyone's ready — starting…",
   },
   round: {
     vote: "Vote",

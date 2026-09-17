@@ -55,7 +55,10 @@ export function RoundPanel(props: {
   const tallies = round.results?.tallies;
   const leaders = tallies ? leadersFromTallies(tallies) : { userIds: [] as string[], votes: 0 };
   const tied = isRevealTie(tallies);
-  const leaderPlayers = props.room.players.filter((p) => leaders.userIds.includes(p.userId));
+  // Follow leaders.userIds order (stable), not room.players which can reshuffle between polls.
+  const leaderPlayers = leaders.userIds
+    .map((id) => props.room.players.find((p) => p.userId === id))
+    .filter((p): p is NonNullable<typeof p> => p != null);
   const leaderNames = leaderPlayers.map((p) => p.displayName).join(", ");
   const showWaitingOnOthers =
     revealed && me != null && me.intent !== "none" && waitingOnIntent > 0;
@@ -152,7 +155,11 @@ export function RoundPanel(props: {
               </p>
               <ul className="player-list reveal-tallies">
                 {[...props.room.players]
-                  .sort((a, b) => (tallies?.[b.userId] ?? 0) - (tallies?.[a.userId] ?? 0))
+                  .sort((a, b) => {
+                    const byVotes = (tallies?.[b.userId] ?? 0) - (tallies?.[a.userId] ?? 0);
+                    if (byVotes !== 0) return byVotes;
+                    return a.userId.localeCompare(b.userId);
+                  })
                   .map((p) => {
                     const count = tallies?.[p.userId] ?? 0;
                     const isLeader = leaders.userIds.includes(p.userId);

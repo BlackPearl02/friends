@@ -1,5 +1,6 @@
 import type { DiscordSDK } from "@discord/embedded-app-sdk";
 import { activityUrl, exchangeActivityCode, type ActivityExchangeResponse } from "./api";
+import { dbgRt } from "./dbgRt";
 
 /** Required to join a room — keep minimal so authorize cannot hang on optional scopes. */
 export const ACTIVITY_CORE_OAUTH_SCOPES = ["identify", "guilds"] as const;
@@ -105,22 +106,57 @@ export async function authenticateActivity(
 
   authLog("ready");
   const readyStarted = Date.now();
-  await withTimeout(sdk.ready(), READY_TIMEOUT_MS, "Discord SDK ready");
+  // #region agent log
+  dbgRt("H6a", "auth.ts:ready", "ready_start", {
+    readyTimeoutMs: READY_TIMEOUT_MS,
+    clientIdLen: clientId.length,
+    hasInstanceId: Boolean(sdk.instanceId),
+  });
+  // #endregion
+  try {
+    await withTimeout(sdk.ready(), READY_TIMEOUT_MS, "Discord SDK ready");
+  } catch (err: unknown) {
+    // #region agent log
+    dbgRt("H6a", "auth.ts:ready", "ready_failed", {
+      readyTimeoutMs: READY_TIMEOUT_MS,
+      elapsedMs: Date.now() - readyStarted,
+      err: err instanceof Error ? err.message.slice(0, 120) : "unknown",
+    });
+    // #endregion
+    throw err;
+  }
   authLog("ready-ok", `${Date.now() - readyStarted}ms`);
+  // #region agent log
+  dbgRt("H6a", "auth.ts:ready", "ready_ok", {
+    elapsedMs: Date.now() - readyStarted,
+    readyTimeoutMs: READY_TIMEOUT_MS,
+  });
+  // #endregion
 
   const code = await authorizeActivityCode(sdk, clientId);
   authLog("exchange");
+  // #region agent log
+  dbgRt("H6c", "auth.ts:exchange", "exchange_start", {
+    codeLen: typeof code === "string" ? code.length : 0,
+  });
+  // #endregion
   const auth = await withTimeout(
     exchangeActivityCode({ code }),
     EXCHANGE_TIMEOUT_MS,
     "Activity code exchange",
   );
   authLog("authenticate");
+  // #region agent log
+  dbgRt("H6d", "auth.ts:authenticate", "authenticate_start", {});
+  // #endregion
   await withTimeout(
     sdk.commands.authenticate({ access_token: auth.discordAccessToken }),
     AUTHORIZE_TIMEOUT_MS,
     "Discord authenticate",
   );
   authLog("ok");
+  // #region agent log
+  dbgRt("H6", "auth.ts:ok", "auth_ok", { elapsedMs: Date.now() - readyStarted });
+  // #endregion
   return auth;
 }
