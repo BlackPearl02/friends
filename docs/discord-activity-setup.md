@@ -11,8 +11,7 @@ Discord rejects bare `localhost` mappings. Local play needs a public HTTPS tunne
 3. URL mappings (typical):
    - `/` → Activity tunnel (Vite `:3003`)
    - `/api` → API tunnel (Nest `:3000`)
-   - `/party` → `squimbo-party.<subdomain>.workers.dev` (PartyServer WebSocket push; omit `https://` in the target)
-   - `/sb` → optional legacy Supabase mapping (not required for room sync)
+   - `/sb` → Supabase project host (Realtime Broadcast; omit `https://` in the target)
 4. OAuth2 → Redirects: include the shapes Nest tries when `DISCORD_ACTIVITY_REDIRECT_URI` is empty:
    - `https://127.0.0.1`
    - `https://<CLIENT_ID>.discordsays.com`

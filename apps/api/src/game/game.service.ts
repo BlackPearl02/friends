@@ -17,7 +17,6 @@ import { clientVisibleRoundResults, clientVisibleScore } from "./public-room-mas
 import { ROOM_IN_PROGRESS_CODE } from "./room-codes";
 import { isRoundTie, tallyVotes } from "./round-results";
 import { REVEAL_SYNC_MS } from "./reveal-sync";
-import { RoomPartyService } from "./room-party.service";
 import { RoomRealtimeService } from "./room-realtime.service";
 import { aggregateScoreIncrements } from "./scoring";
 
@@ -33,7 +32,6 @@ export class GameService {
 
   constructor(
     private readonly prisma: PrismaService,
-    @Optional() private readonly party?: RoomPartyService,
     @Optional() private readonly realtime?: RoomRealtimeService,
   ) {}
 
@@ -91,7 +89,7 @@ export class GameService {
     );
 
     const publicRoom = await this.loadPublic(room.id);
-    // Fire-and-forget — never block sign-in on Party/Supabase latency.
+    // Fire-and-forget — never block sign-in on Realtime latency.
     void this.pingRealtime(input.instanceId, { kind: "roster" });
     return publicRoom;
   }
@@ -452,12 +450,8 @@ export class GameService {
       intent?: RoomIntent;
     },
   ) {
-    // Party (Discord /party) + Supabase (Discord /sb) in parallel — either path can
-    // deliver the public vote/intent patch when the other proxy is flaky.
-    await Promise.all([
-      this.party?.notifyRoomChanged(discordInstanceId, patch),
-      this.realtime?.notifyRoomChanged(discordInstanceId, patch),
-    ]);
+    // Supabase Realtime Broadcast via Discord `/sb` mapping (public vote/intent patch).
+    await this.realtime?.notifyRoomChanged(discordInstanceId, patch);
   }
 
   private async pruneStalePlayers(roomId: string) {

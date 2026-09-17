@@ -1,17 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { partyRoomPath } from "@friends/types";
 import {
   isRoomRealtimeConfigured,
   parseRoomRealtimePayload,
-  partyRoomWebSocketUrl,
-  resolvePartyKitBase,
+  resolveMappedBase,
 } from "./roomRealtime";
-
-describe("partyRoomPath", () => {
-  it("scopes the PartyKit room to the Discord instance", () => {
-    expect(partyRoomPath("abc-123")).toBe("/parties/main/abc-123");
-  });
-});
 
 describe("parseRoomRealtimePayload", () => {
   it("keeps safe vote fields and drops unknown junk", () => {
@@ -37,44 +29,28 @@ describe("parseRoomRealtimePayload", () => {
   });
 });
 
-describe("resolvePartyKitBase", () => {
+describe("resolveMappedBase", () => {
   it("passes through absolute https URLs", () => {
-    expect(resolvePartyKitBase("https://squimbo.partykit.dev/", "https://ignored.example")).toBe(
-      "https://squimbo.partykit.dev",
+    expect(resolveMappedBase("https://abc.supabase.co/", "https://ignored.example")).toBe(
+      "https://abc.supabase.co",
     );
   });
 
-  it("expands Discord-mapped prefixes against the Activity origin", () => {
-    expect(resolvePartyKitBase("/party", "https://123.discordsays.com")).toBe(
-      "https://123.discordsays.com/party",
+  it("expands Discord-mapped /sb against the Activity origin", () => {
+    expect(resolveMappedBase("/sb", "https://123.discordsays.com")).toBe(
+      "https://123.discordsays.com/sb",
     );
   });
 
   it("strips accidental surrounding quotes from env values", () => {
-    expect(resolvePartyKitBase('"/party"', "https://123.discordsays.com")).toBe(
-      "https://123.discordsays.com/party",
-    );
-  });
-});
-
-describe("partyRoomWebSocketUrl", () => {
-  it("builds a wss URL under the Discord /party mapping", () => {
-    expect(partyRoomWebSocketUrl("/party", "inst-1", "https://123.discordsays.com")).toBe(
-      "wss://123.discordsays.com/party/parties/main/inst-1",
+    expect(resolveMappedBase('"/sb"', "https://123.discordsays.com")).toBe(
+      "https://123.discordsays.com/sb",
     );
   });
 });
 
 describe("isRoomRealtimeConfigured", () => {
-  it("is false in unit tests without Vite PartyKit/Supabase env", () => {
+  it("is false in unit tests without Vite Supabase env", () => {
     expect(isRoomRealtimeConfigured()).toBe(false);
-  });
-});
-
-describe("resolveMappedBase via resolvePartyKitBase", () => {
-  it("expands /sb the same way as /party", () => {
-    expect(resolvePartyKitBase("/sb", "https://123.discordsays.com")).toBe(
-      "https://123.discordsays.com/sb",
-    );
   });
 });

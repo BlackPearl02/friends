@@ -12,12 +12,19 @@ import { ExpressAdapter } from "@nestjs/platform-express";
 import helmet from "helmet";
 import express from "express";
 import { AppModule } from "../src/app.module";
+import { stripDiscordApiPrefix } from "../src/discord-api-prefix";
 
 const expressApp = express();
 let isReady = false;
 
 async function bootstrap(): Promise<void> {
   const activityOrigin = process.env.ACTIVITY_ORIGIN ?? "";
+
+  // Discord `/api` mapping may keep the prefix — rewrite before Nest routing.
+  expressApp.use((req, _res, next) => {
+    req.url = stripDiscordApiPrefix(req.url);
+    next();
+  });
 
   const app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp), {
     logger: ["error", "warn", "log"],
@@ -54,6 +61,9 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     res.writeHead(503);
     res.end("Service starting");
     return;
+  }
+  if (typeof req.url === "string") {
+    req.url = stripDiscordApiPrefix(req.url);
   }
   expressApp(req, res);
 }

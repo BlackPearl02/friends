@@ -2,8 +2,8 @@
 
 Engineering packages remain `@friends/*`. Product / Discord name: **Squimbo**. Marketing: **squimbo.app**.
 
-**Stack:** Vercel (Activity + API + Web) + Supabase (PostgreSQL) + Cloudflare Workers PartyServer (room WebSocket push).  
-**Dev stack:** Vite :3003 + Nest :3000 + Next :3001 + Docker Postgres :15433 (+ optional `pnpm --filter @friends/party dev`).
+**Stack:** Vercel (Activity + API + Web) + Supabase (PostgreSQL + Realtime Broadcast for room push).  
+**Dev stack:** Vite :3003 + Nest :3000 + Next :3001 + Docker Postgres :15433.
 
 This repository is public. Treat git as source-only: no real secrets in commits, issues, or CI logs. `DISCORD_CLIENT_ID` / `VITE_DISCORD_CLIENT_ID` may appear in the Activity bundle; `DISCORD_CLIENT_SECRET`, `JWT_SECRET`, and database URLs must live only in Vercel, Supabase, and gitignored `.env.development` / `.env.production`. If a secret leaks, rotate it before the next deploy.
 
@@ -59,9 +59,10 @@ Set separately for **Production** and **Preview** (same Client ID is fine).
 |---|---|
 | `VITE_DISCORD_CLIENT_ID` | Discord Client ID |
 | `VITE_FRIENDS_API_URL` | *(leave empty — URL mapping handles `/api`)* |
-| `VITE_PARTYKIT_HOST` | `/party` (Discord maps `/party` → your party Worker host) |
+| `VITE_SUPABASE_URL` | `/sb` (Discord maps `/sb` → your Supabase project host) |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon key (public) |
 
-PartyServer WebSocket push delivers safe public patches (vote/intent/roster). The Activity still refetches `GET /game/rooms/current` for authoritative state. Without `VITE_PARTYKIT_HOST` it falls back to 750ms polling alone.
+Supabase Realtime Broadcast delivers safe public patches (vote/intent/roster). The Activity still refetches `GET /game/rooms/current` for authoritative state. Without `VITE_SUPABASE_URL` + anon key it falls back to 750ms polling alone.
 
 ### Deploy command (or use Vercel dashboard → Import Git)
 ```bash
@@ -92,8 +93,8 @@ Add each variable twice: once for **Production**, once for **Preview**. Preview 
 | `DISCORD_ACTIVITY_REDIRECT_URI` | *(leave empty — handler tries `.discordsays.com` automatically)* |
 | `API_PUBLIC_URL` | `https://friends-api-five.vercel.app` (your API Vercel URL) |
 | `ACTIVITY_ORIGIN` | `https://friends-activity.vercel.app` (your Activity Vercel URL) |
-| `PARTYKIT_HOST` | `https://squimbo-party.<subdomain>.workers.dev` (Nest notify target) |
-| `PARTY_SERVER_SECRET` | Shared secret for Nest → party Worker HTTP notify (never ship to Activity) |
+| `SUPABASE_URL` | `https://<project-ref>.supabase.co` (Nest broadcast target) |
+| `SUPABASE_ANON_KEY` | or `SUPABASE_SERVICE_ROLE_KEY` for Nest → Realtime HTTP broadcast |
 
 Room sync still works without PartyKit (HTTP poll only).
 
@@ -104,7 +105,7 @@ vercel --cwd apps/api
 
 Note the deployed URL, e.g. `https://friends-api.vercel.app`.
 
-After the API is live: confirm Discord URL mappings (`/` → Activity, `/api` → API, `/party` → party Worker). Ensure the Activity **Entry Point** exists (`node scripts/register-discord-activity-entrypoint.mjs`). Leave Interactions Endpoint empty and do not invite as a bot on player servers. See [discord-activity-setup.md](./discord-activity-setup.md).
+After the API is live: confirm Discord URL mappings (`/` → Activity, `/api` → API, `/sb` → Supabase project host). Ensure the Activity **Entry Point** exists (`node scripts/register-discord-activity-entrypoint.mjs`). Leave Interactions Endpoint empty and do not invite as a bot on player servers. See [discord-activity-setup.md](./discord-activity-setup.md).
 
 ---
 
@@ -184,9 +185,9 @@ After both Vercel deployments are live, set in **Developer Portal → Activities
 |---|---|---|
 | Root Mapping | `/` | `friends-activity.vercel.app` |
 | Proxy Path Mapping | `/api` | `friends-api-five.vercel.app` |
-| Proxy Path Mapping | `/party` | `squimbo-party.<subdomain>.workers.dev` |
+| Proxy Path Mapping | `/sb` | `<project-ref>.supabase.co` |
 
-`/party` is required for PartyServer WebSocket push inside the Discord iframe (Discord only allows mapped hosts). **Omit `https://` in the target** — Discord picks the scheme from the request.
+`/sb` is required for Supabase Realtime inside the Discord iframe (Discord only allows mapped hosts). **Omit `https://` in the target** — Discord picks the scheme from the request.
 
 **OAuth2 → Redirects** must include:
 - `https://<CLIENT_ID>.discordsays.com`
@@ -223,9 +224,10 @@ For Discord iframe testing locally you still need a temporary tunnel (see [disco
 | `ACTIVITY_ORIGIN` | `http://localhost:3003` | Production Activity URL (Preview may reuse) | — | — |
 | `VITE_DISCORD_CLIENT_ID` | local | — | Production + Preview | — |
 | `VITE_FRIENDS_API_URL` | *(empty)* | — | *(empty)* | — |
-| `VITE_PARTYKIT_HOST` | `/party` or full workers.dev URL for browser mock | — | `/party` | — |
-| `PARTYKIT_HOST` | optional (local party Worker) | Production + Preview | — | — |
-| `PARTY_SERVER_SECRET` | optional | Production + Preview | — | — |
+| `VITE_SUPABASE_URL` | `/sb` or full project URL for browser mock | — | `/sb` | — |
+| `VITE_SUPABASE_ANON_KEY` | anon key | — | Production + Preview | — |
+| `SUPABASE_URL` | optional (Realtime) | Production + Preview | — | — |
+| `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` | optional | Production + Preview | — | — |
 | `NEXT_PUBLIC_DISCORD_CLIENT_ID` | falls back to Discord client id | — | — | Production + Preview |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | optional | — | — | Production + Preview |
 | `NEXT_PUBLIC_SUPPORT_DISCORD_URL` | optional (community invite default in code) | — | — | Production + Preview |
