@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { PublicRoom, RoomIntent } from "@friends/types";
 import { t } from "./i18n";
 import { lobbyWaitingForDiscordJoin } from "./lobbyHints";
+import { PromptDealBox } from "./PromptDealBox";
 import { playersWaitingOnIntent, awaitingLobbyStart } from "./roomOptimistic";
 import { colors } from "./theme";
 
@@ -76,7 +77,7 @@ export function LobbyPanel(props: {
       {iAmContinue && waitingOnIntent > 0 && !starting && (
         <p className="hint">{t("lobby.waitingOnOthers", { count: String(waitingOnIntent) })}</p>
       )}
-      {starting && <p className="hint">{t("lobby.starting")}</p>}
+      {starting && <PromptDealBox variant="start" />}
 
       <div className="actions">
         <button

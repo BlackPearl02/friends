@@ -392,6 +392,30 @@ export class GameService {
   } | null> {
     const locale = "en" as const;
     const room = await this.prisma.gameRoom.findUniqueOrThrow({ where: { id: roomId } });
+
+    // Concurrent last-Ready: another request already opened voting — return it, do not create a second round.
+    if (room.status === "playing") {
+      const open = await this.prisma.round.findFirst({
+        where: { roomId, sessionKey: room.sessionKey, status: "voting" },
+        include: { prompt: true },
+        orderBy: { index: "desc" },
+      });
+      if (open) {
+        return {
+          roundId: open.id,
+          index: open.index,
+          prompt: {
+            id: open.prompt.id,
+            kind: open.prompt.kind as PublicPrompt["kind"],
+            category: open.prompt.category,
+            body: open.prompt.body,
+            optionA: open.prompt.optionA,
+            optionB: open.prompt.optionB,
+          },
+        };
+      }
+    }
+
     // One parallel wave: session used ids + max index + candidate bank (no count+skip RTT).
     const [sessionRounds, allRounds, candidates] = await Promise.all([
       this.prisma.round.findMany({
@@ -418,6 +442,27 @@ export class GameService {
 
     const index = (allRounds[0]?.index ?? -1) + 1;
     const created = await this.prisma.$transaction(async (tx) => {
+      // Re-check inside the transaction so two Ready clicks cannot double-create.
+      const latest = await tx.gameRoom.findUniqueOrThrow({
+        where: { id: roomId },
+        select: { status: true, sessionKey: true },
+      });
+      if (latest.status === "playing") {
+        const open = await tx.round.findFirst({
+          where: { roomId, sessionKey: latest.sessionKey, status: "voting" },
+          include: { prompt: true },
+          orderBy: { index: "desc" },
+        });
+        if (open) {
+          return {
+            reused: true as const,
+            id: open.id,
+            index: open.index,
+            prompt: open.prompt,
+          };
+        }
+      }
+
       await tx.gameRoom.update({
         where: { id: roomId },
         data: { status: "playing", locale },
@@ -436,12 +481,27 @@ export class GameService {
         where: { roomId },
         data: { intent: "none" },
       });
-      return round;
+      return { reused: false as const, id: round.id, index, prompt };
     });
+
+    if (created.reused) {
+      return {
+        roundId: created.id,
+        index: created.index,
+        prompt: {
+          id: created.prompt.id,
+          kind: created.prompt.kind as PublicPrompt["kind"],
+          category: created.prompt.category,
+          body: created.prompt.body,
+          optionA: created.prompt.optionA,
+          optionB: created.prompt.optionB,
+        },
+      };
+    }
 
     return {
       roundId: created.id,
-      index,
+      index: created.index,
       prompt: {
         id: prompt.id,
         kind: "most_likely",
@@ -742,7 +802,10 @@ export class GameService {
         },
       },
     });
-    const round = room.rounds[0] ?? null;
+    const roundRow = room.rounds[0] ?? null;
+    // Lobby must not expose a leftover done round from an earlier session — clients treat
+    // round:null as lobby-only and merge would otherwise fight Ready → first question.
+    const round = room.status === "lobby" ? null : roundRow;
     const showResults = clientVisibleRoundResults(round?.status);
     const voting = round != null && round.status === "voting";
     const voterIds = voting ? new Set(round.votes.map((v) => v.voterId)) : null;

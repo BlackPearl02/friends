@@ -479,6 +479,18 @@ describe("mergePublicRoom", () => {
     expect(merged.players.find((p) => p.userId === "a")?.intent).toBe("none");
   });
 
+  it("keeps playing when a stale poll returns lobby", () => {
+    const prev = baseRoom({ status: "playing" });
+    const stale = baseRoom({ status: "lobby", round: null });
+    expect(mergePublicRoom(prev, stale)).toBe(prev);
+  });
+
+  it("keeps playing when a stale poll omits the round", () => {
+    const prev = baseRoom({ status: "playing" });
+    const stale = baseRoom({ status: "playing", round: null });
+    expect(mergePublicRoom(prev, stale)).toBe(prev);
+  });
+
   it("accepts a fresher peer voteCount", () => {
     const prev = baseRoom({
       players: [

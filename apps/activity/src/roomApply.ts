@@ -54,9 +54,11 @@ export function mergePublicRoom(prev: PublicRoom, next: PublicRoom): PublicRoom 
     return prev;
   }
 
-  // Stale lobby must not undo an already-started round (slow intent HTTP).
-  if (prev.status === "playing" && prev.round && next.status === "lobby") {
-    return prev;
+  // Never rewind an in-progress round to lobby / a round-less snapshot.
+  if (prev.status === "playing" && prev.round) {
+    if (next.status === "lobby" || !next.round) {
+      return prev;
+    }
   }
 
   // Lobby → lobby: sticky intents so peer Ready fanout survives a slow Nest GET.
@@ -70,7 +72,8 @@ export function mergePublicRoom(prev: PublicRoom, next: PublicRoom): PublicRoom 
     }
     return next;
   }
-  if (!prev.round || !next.round) return next;
+  if (!prev.round) return next;
+  if (!next.round) return prev;
 
   // Different rounds: keep the newer index (stale GET must not rewind after round start).
   if (prev.round.id !== next.round.id) {

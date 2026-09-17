@@ -544,7 +544,8 @@ function App() {
         });
       }
     } catch {
-      setRoom(snapshot);
+      // Realtime may already have applied kind:round — do not wipe back to lobby Ready.
+      setRoom((prev) => (prev?.status === "playing" && prev.round ? prev : snapshot));
       setActionError(t("shell.actionFailed"));
     } finally {
       mutationsInFlight.current -= 1;
