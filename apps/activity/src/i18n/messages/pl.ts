@@ -32,6 +32,7 @@ export const pl: ActivityMessages = {
       "Ktoś jest w Activity Discorda, ale jeszcze nie dokończył dołączania do Squimbo. Niech otworzy Squimbo i zaakceptuje uprawnienia.",
     sweetSpot: "Najlepiej 3–8 osób na kanale.",
     waitingOnOthers: "Jesteś gotowy — czekamy na jeszcze {count}.",
+    starting: "Wszyscy gotowi — startujemy…",
   },
   round: {
     vote: "Głosuj",

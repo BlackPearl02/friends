@@ -157,6 +157,230 @@ describe("mergePublicRoom", () => {
     expect(mergePublicRoom(prev, stale)).toBe(prev);
   });
 
+  it("keeps playing when a stale mutation response is still lobby", () => {
+    const prev = baseRoom({ status: "playing" });
+    const stale = baseRoom({ status: "lobby", round: null });
+    expect(mergePublicRoom(prev, stale)).toBe(prev);
+  });
+
+  it("keeps lobby Ready when a stale poll still says none", () => {
+    const prev = baseRoom({
+      status: "lobby",
+      round: null,
+      players: [
+        {
+          userId: "a",
+          displayName: "A",
+          avatarUrl: null,
+          score: 0,
+          intent: "continue",
+          hasVoted: false,
+        },
+        {
+          userId: "b",
+          displayName: "B",
+          avatarUrl: null,
+          score: 0,
+          intent: "none",
+          hasVoted: false,
+        },
+      ],
+    });
+    const stale = baseRoom({
+      status: "lobby",
+      round: null,
+      players: [
+        {
+          userId: "a",
+          displayName: "A",
+          avatarUrl: null,
+          score: 0,
+          intent: "none",
+          hasVoted: false,
+        },
+        {
+          userId: "b",
+          displayName: "B",
+          avatarUrl: null,
+          score: 0,
+          intent: "none",
+          hasVoted: false,
+        },
+      ],
+    });
+    const merged = mergePublicRoom(prev, stale);
+    expect(merged.players.find((p) => p.userId === "a")?.intent).toBe("continue");
+    expect(merged.players.find((p) => p.userId === "b")?.intent).toBe("none");
+  });
+
+  it("accepts lobby → playing so beginRound cleared intents win", () => {
+    const prev = baseRoom({
+      status: "lobby",
+      round: null,
+      players: [
+        {
+          userId: "a",
+          displayName: "A",
+          avatarUrl: null,
+          score: 0,
+          intent: "continue",
+          hasVoted: false,
+        },
+        {
+          userId: "b",
+          displayName: "B",
+          avatarUrl: null,
+          score: 0,
+          intent: "continue",
+          hasVoted: false,
+        },
+      ],
+    });
+    const next = baseRoom({
+      status: "playing",
+      players: [
+        {
+          userId: "a",
+          displayName: "A",
+          avatarUrl: null,
+          score: 0,
+          intent: "none",
+          hasVoted: false,
+        },
+        {
+          userId: "b",
+          displayName: "B",
+          avatarUrl: null,
+          score: 0,
+          intent: "none",
+          hasVoted: false,
+        },
+      ],
+    });
+    const merged = mergePublicRoom(prev, next);
+    expect(merged.status).toBe("playing");
+    expect(merged.round?.id).toBe("r1");
+    expect(merged.players.every((p) => p.intent === "none")).toBe(true);
+  });
+
+  it("keeps reveal continue when a stale poll still says none", () => {
+    const prev = baseRoom({
+      players: [
+        {
+          userId: "a",
+          displayName: "A",
+          avatarUrl: null,
+          score: 0,
+          intent: "continue",
+          hasVoted: true,
+        },
+        {
+          userId: "b",
+          displayName: "B",
+          avatarUrl: null,
+          score: 0,
+          intent: "none",
+          hasVoted: true,
+        },
+      ],
+      round: {
+        id: "r1",
+        index: 0,
+        status: "reveal",
+        revealedAt: "2026-09-16T18:00:00.600Z",
+        prompt: {
+          id: "p1",
+          kind: "most_likely",
+          category: null,
+          body: "Who?",
+          optionA: null,
+          optionB: null,
+        },
+        voteCount: 2,
+        results: { tallies: { a: 1, b: 1 } },
+      },
+    });
+    const stale = baseRoom({
+      players: [
+        {
+          userId: "a",
+          displayName: "A",
+          avatarUrl: null,
+          score: 0,
+          intent: "none",
+          hasVoted: true,
+        },
+        {
+          userId: "b",
+          displayName: "B",
+          avatarUrl: null,
+          score: 0,
+          intent: "none",
+          hasVoted: true,
+        },
+      ],
+      round: {
+        id: "r1",
+        index: 0,
+        status: "reveal",
+        revealedAt: "2026-09-16T18:00:00.600Z",
+        prompt: {
+          id: "p1",
+          kind: "most_likely",
+          category: null,
+          body: "Who?",
+          optionA: null,
+          optionB: null,
+        },
+        voteCount: 2,
+        results: { tallies: { a: 1, b: 1 } },
+      },
+    });
+    const merged = mergePublicRoom(prev, stale);
+    expect(merged.players.find((p) => p.userId === "a")?.intent).toBe("continue");
+  });
+
+  it("upgrades reveal tallies without extending revealedAt", () => {
+    const prev = baseRoom({
+      round: {
+        id: "r1",
+        index: 0,
+        status: "reveal",
+        revealedAt: "2026-09-16T18:00:00.600Z",
+        prompt: {
+          id: "p1",
+          kind: "most_likely",
+          category: null,
+          body: "Who?",
+          optionA: null,
+          optionB: null,
+        },
+        voteCount: 2,
+      },
+    });
+    const next = baseRoom({
+      round: {
+        id: "r1",
+        index: 0,
+        status: "reveal",
+        revealedAt: "2026-09-16T18:00:01.200Z",
+        prompt: {
+          id: "p1",
+          kind: "most_likely",
+          category: null,
+          body: "Who?",
+          optionA: null,
+          optionB: null,
+        },
+        voteCount: 2,
+        results: { tallies: { a: 1, b: 1 } },
+      },
+    });
+    const merged = mergePublicRoom(prev, next);
+    expect(merged.round?.revealedAt).toBe("2026-09-16T18:00:00.600Z");
+    expect(merged.round?.results?.tallies).toEqual({ a: 1, b: 1 });
+  });
+
   it("accepts a fresher peer voteCount", () => {
     const prev = baseRoom({
       players: [

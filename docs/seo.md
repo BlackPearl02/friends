@@ -17,7 +17,6 @@ Marketing site: **https://squimbo.app** (English only, canonical paths under `/e
 | Discord Activity / play inside Discord | `/en/discord-activity` |
 | How to play Squimbo / start Activity | `/en/how-to-play` |
 | Most likely / vote in the dark | `/en/most-likely` |
-| No join code Discord game | `/en/no-join-code` |
 | FAQ / long-tail Q&A | `/en/faq` |
 | Support / legal | `/en/support`, `/en/privacy`, `/en/terms` |
 

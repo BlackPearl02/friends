@@ -1,0 +1,26 @@
+---
+description: Maintainer-voice project docs — facts from the repo only
+globs: README.md,**/README.md,CONTRIBUTING.md,LICENSE,SECURITY.md,docs/**/*.md
+alwaysApply: false
+---
+
+# Squimbo — project documentation
+
+Skill: [friends-docs](../skills/friends-docs/SKILL.md). Style: [style.md](../skills/friends-docs/style.md).
+
+Applies to GitHub and `docs/` prose. Not Activity UI (`friends-copywriting`), not code comments (`code-documentation`).
+
+## MUST
+
+- Facts from this repo (existing docs, scripts, source). If a fact is missing, ask or mark the gap.
+- Engineering docs and module READMEs in **English**. Polish only when the user asked for a Polish doc.
+- Sections the document actually needs. First: what it is, what it is for, how to run, how to use, where the rest lives.
+- Commands, paths, env names, and config in backticks. Secret **values** never go in docs.
+- Read the skill and run its QA checklist before returning the file.
+
+## MUST NOT
+
+- Invent features, commands, env vars, ports, licenses, authors, or behavior.
+- Marketing filler, empty adjectives, emoji, em dash, en dash.
+- Rewrite `LICENSE` unless the user named a license and asked for the standard text.
+- Duplicate product UI copy rules or invent CONTRIBUTING process the repo does not have.

@@ -41,11 +41,21 @@ export type RoomIntent = "none" | "continue" | "wrap_up" | "revote";
  */
 export type RoomRealtimePayload = {
   t: 1;
-  kind?: "vote" | "intent" | "roster";
+  kind?: "vote" | "intent" | "roster" | "reveal" | "round";
   votedUserId?: string;
   voteCount?: number;
   intentUserId?: string;
   intent?: RoomIntent;
+  /** ISO — start of reveal hold (absolute). */
+  revealedAt?: string;
+  /** ISO — server clock when the event was sent (skew correction). */
+  serverTime?: string;
+  /** New round id after beginRound (public prompt follows). */
+  roundId?: string;
+  /** Round index within the room. */
+  roundIndex?: number;
+  /** Public prompt fields for instant first-question UI. */
+  prompt?: PublicPrompt;
 };
 
 export type ActivityExchangeRequest = {

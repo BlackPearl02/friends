@@ -20,7 +20,10 @@ export function topTallyKeys(tallies: Record<string, number>): { keys: string[];
   if (entries.length === 0) return { keys: [], max: 0 };
   const max = Math.max(...entries.map(([, n]) => n));
   return {
-    keys: entries.filter(([, n]) => n === max).map(([key]) => key),
+    keys: entries
+      .filter(([, n]) => n === max)
+      .map(([key]) => key)
+      .sort((a, b) => a.localeCompare(b)),
     max,
   };
 }

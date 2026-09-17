@@ -20,6 +20,8 @@ You are hosting a living-room game, not selling SaaS. Short. Concrete. A little 
 
 ## HUMAN WRITING TEST
 
-Read it out loud. If it sounds like a landing page or like Kumple’s store listing pasted in, rewrite.
+Read it out loud. If it sounds like a landing page or like another game’s store listing pasted in, rewrite.
 
 Facts only from [docs/product.md](../../../docs/product.md).
+
+README and `docs/` prose: [friends-docs](../friends-docs/SKILL.md), not this skill.

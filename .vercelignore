@@ -1,0 +1,6 @@
+# Never upload local secrets / env into Vercel build context.
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*

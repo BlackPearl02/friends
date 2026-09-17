@@ -21,6 +21,7 @@ Project-specific agent skills. Cursor discovers this folder automatically.
 | [friends-testing](./friends-testing/SKILL.md) | Vitest, integration, CI |
 | [friends-security](./friends-security/SKILL.md) | AppSec audit, IDOR, Discord tokens |
 | [friends-copywriting](./friends-copywriting/SKILL.md) | Activity UI voice, en+pl |
+| [friends-docs](./friends-docs/SKILL.md) | README, CONTRIBUTING, `docs/`: maintainer voice, no invented facts |
 | [friends-git-staging](./friends-git-staging/SKILL.md) | Atomic conventional commits |
 
 ## Adding a skill

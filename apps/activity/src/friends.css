@@ -1,3 +1,10 @@
+:root {
+  --bg: #1e1f22;
+  --accent: #eb459e;
+  --accent2: #5865f2;
+  --scrollbar-thumb: #5c6068;
+}
+
 html,
 body,
 #root {
@@ -10,6 +17,8 @@ body,
 html {
   font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
   font-weight: 500;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--bg);
 }
 
 body {
@@ -21,6 +30,35 @@ body {
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+/* ── Scrollbars ─────────────────────────────────────── */
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid var(--bg);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--accent2);
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background: var(--accent);
+}
+
+*::-webkit-scrollbar-corner {
+  background: var(--bg);
 }
 
 button,

@@ -26,7 +26,12 @@ export class RoomRealtimeService {
     const base = this.readConfig("SUPABASE_URL")?.replace(/\/+$/, "");
     const key =
       this.readConfig("SUPABASE_SERVICE_ROLE_KEY") ?? this.readConfig("SUPABASE_ANON_KEY");
-    if (!base || !key || !discordInstanceId) return;
+    if (!base || !key || !discordInstanceId) {
+      this.logger.warn(
+        `dbg-rt H2 broadcast_skip missing_env hasUrl=${Boolean(base)} hasKey=${Boolean(key)}`,
+      );
+      return;
+    }
 
     const payload: RoomRealtimePayload = { t: 1, ...patch };
 
@@ -53,12 +58,16 @@ export class RoomRealtimeService {
       if (!res.ok) {
         const detail = await res.text().catch(() => "");
         this.logger.warn(
-          `Realtime broadcast failed: HTTP ${res.status}${detail ? ` ${detail.slice(0, 120)}` : ""}`,
+          `dbg-rt H2 broadcast_fail HTTP ${res.status} kind=${payload.kind ?? "wake"}${detail ? ` ${detail.slice(0, 120)}` : ""}`,
+        );
+      } else {
+        this.logger.log(
+          `dbg-rt H2 broadcast_ok kind=${payload.kind ?? "wake"} topic=${roomRealtimeTopic(discordInstanceId)}`,
         );
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "unknown";
-      this.logger.warn(`Realtime broadcast error: ${message}`);
+      this.logger.warn(`dbg-rt H2 broadcast_error kind=${payload.kind ?? "wake"} ${message}`);
     }
   }
 

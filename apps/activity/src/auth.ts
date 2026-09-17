@@ -1,5 +1,6 @@
 import type { DiscordSDK } from "@discord/embedded-app-sdk";
-import { exchangeActivityCode, type ActivityExchangeResponse } from "./api";
+import { activityUrl, exchangeActivityCode, type ActivityExchangeResponse } from "./api";
+import { dbgRt } from "./dbgRt";
 
 /** Required to join a room — keep minimal so authorize cannot hang on optional scopes. */
 export const ACTIVITY_CORE_OAUTH_SCOPES = ["identify", "guilds"] as const;
@@ -15,8 +16,15 @@ export const ACTIVITY_OAUTH_SCOPES = [
 
 /** Discord authorize / ready can hang — fail soft into a visible error. */
 export const AUTHORIZE_TIMEOUT_MS = 12_000;
-export const READY_TIMEOUT_MS = 12_000;
-export const EXCHANGE_TIMEOUT_MS = 15_000;
+/** Consent modal needs human time; do not use AUTHORIZE_TIMEOUT_MS here. */
+export const AUTHORIZE_CONSENT_TIMEOUT_MS = 120_000;
+/**
+ * `sdk.ready()` waits on the Discord client handshake. 12s was too aggressive —
+ * runtime evidence: boot_failed "Discord SDK ready timed out after 12000ms".
+ */
+export const READY_TIMEOUT_MS = 60_000;
+/** Nest on Vercel may cold-start for tens of seconds. */
+export const EXCHANGE_TIMEOUT_MS = 45_000;
 
 type OAuthScope = (typeof ACTIVITY_CORE_OAUTH_SCOPES)[number];
 
@@ -79,10 +87,11 @@ export async function authorizeActivityCode(
       "authorize-fallback",
       err instanceof Error ? err.message : "consent",
     );
+    // User may need to accept Discord permissions — allow up to 2 minutes.
     const authz = await withTimeout(
       sdk.commands.authorize(base),
-      AUTHORIZE_TIMEOUT_MS,
-      "Discord authorize",
+      AUTHORIZE_CONSENT_TIMEOUT_MS,
+      "Discord authorize (consent)",
     );
     return authz.code;
   }
@@ -92,22 +101,62 @@ export async function authenticateActivity(
   sdk: DiscordSDK,
   clientId: string,
 ): Promise<ActivityExchangeResponse> {
+  // Kick Nest cold-start while Discord handshake runs.
+  void fetch(activityUrl("/health")).catch(() => undefined);
+
   authLog("ready");
-  await withTimeout(sdk.ready(), READY_TIMEOUT_MS, "Discord SDK ready");
+  const readyStarted = Date.now();
+  // #region agent log
+  dbgRt("H6a", "auth.ts:ready", "ready_start", {
+    readyTimeoutMs: READY_TIMEOUT_MS,
+    clientIdLen: clientId.length,
+    hasInstanceId: Boolean(sdk.instanceId),
+  });
+  // #endregion
+  try {
+    await withTimeout(sdk.ready(), READY_TIMEOUT_MS, "Discord SDK ready");
+  } catch (err: unknown) {
+    // #region agent log
+    dbgRt("H6a", "auth.ts:ready", "ready_failed", {
+      readyTimeoutMs: READY_TIMEOUT_MS,
+      elapsedMs: Date.now() - readyStarted,
+      err: err instanceof Error ? err.message.slice(0, 120) : "unknown",
+    });
+    // #endregion
+    throw err;
+  }
+  authLog("ready-ok", `${Date.now() - readyStarted}ms`);
+  // #region agent log
+  dbgRt("H6a", "auth.ts:ready", "ready_ok", {
+    elapsedMs: Date.now() - readyStarted,
+    readyTimeoutMs: READY_TIMEOUT_MS,
+  });
+  // #endregion
 
   const code = await authorizeActivityCode(sdk, clientId);
   authLog("exchange");
+  // #region agent log
+  dbgRt("H6c", "auth.ts:exchange", "exchange_start", {
+    codeLen: typeof code === "string" ? code.length : 0,
+  });
+  // #endregion
   const auth = await withTimeout(
     exchangeActivityCode({ code }),
     EXCHANGE_TIMEOUT_MS,
     "Activity code exchange",
   );
   authLog("authenticate");
+  // #region agent log
+  dbgRt("H6d", "auth.ts:authenticate", "authenticate_start", {});
+  // #endregion
   await withTimeout(
     sdk.commands.authenticate({ access_token: auth.discordAccessToken }),
     AUTHORIZE_TIMEOUT_MS,
     "Discord authenticate",
   );
   authLog("ok");
+  // #region agent log
+  dbgRt("H6", "auth.ts:ok", "auth_ok", { elapsedMs: Date.now() - readyStarted });
+  // #endregion
   return auth;
 }

@@ -325,7 +325,7 @@ describe("GameService session finale", () => {
   });
 
   it("reveals when the last player votes", async () => {
-    const revealRound = vi.fn().mockResolvedValue(undefined);
+    const revealRound = vi.fn().mockResolvedValue(new Date("2026-09-16T18:00:00.900Z"));
     const loadPublic = vi.fn().mockResolvedValue({ id: "room-1" });
     const prisma = {
       gameRoom: {
@@ -395,8 +395,9 @@ describe("GameService session finale", () => {
     });
     const revealedAt = (roundUpdate.mock.calls[0][0] as { data: { revealedAt: Date } }).data
       .revealedAt;
-    expect(revealedAt.getTime()).toBeGreaterThanOrEqual(before + 600);
-    expect(revealedAt.getTime()).toBeLessThanOrEqual(after + 600);
+    const { REVEAL_SYNC_MS } = await import("./reveal-sync");
+    expect(revealedAt.getTime()).toBeGreaterThanOrEqual(before + REVEAL_SYNC_MS);
+    expect(revealedAt.getTime()).toBeLessThanOrEqual(after + REVEAL_SYNC_MS);
   });
 
   it("replays with a new sessionKey and cleared scores", async () => {
@@ -493,13 +494,15 @@ describe("GameService session finale", () => {
   });
 
   it("rejects join for a new player while a round is in progress", async () => {
+    const playingRoom = {
+      id: "room-1",
+      status: "playing",
+      discordInstanceId: "inst-long",
+    };
     const prisma = {
       gameRoom: {
-        findUnique: vi.fn().mockResolvedValue({
-          id: "room-1",
-          status: "playing",
-          discordInstanceId: "inst-long",
-        }),
+        findUnique: vi.fn().mockResolvedValue(playingRoom),
+        upsert: vi.fn().mockResolvedValue(playingRoom),
       },
       roomPlayer: {
         deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
@@ -522,14 +525,16 @@ describe("GameService session finale", () => {
 
   it("allows an existing member to rejoin while playing", async () => {
     const loadPublic = vi.fn().mockResolvedValue({ id: "room-1", status: "playing" });
+    const playingRoom = {
+      id: "room-1",
+      status: "playing",
+      discordInstanceId: "inst-long",
+    };
     const upsert = vi.fn().mockResolvedValue({});
     const prisma = {
       gameRoom: {
-        findUnique: vi.fn().mockResolvedValue({
-          id: "room-1",
-          status: "playing",
-          discordInstanceId: "inst-long",
-        }),
+        findUnique: vi.fn().mockResolvedValue(playingRoom),
+        upsert: vi.fn().mockResolvedValue(playingRoom),
       },
       roomPlayer: {
         deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
@@ -543,6 +548,84 @@ describe("GameService session finale", () => {
     await service.join({ id: "member" } as never, { instanceId: "inst-long" });
 
     expect(upsert).toHaveBeenCalled();
+  });
+
+  it("joins the existing room when concurrent create races on discordInstanceId", async () => {
+    const { Prisma } = await import("@friends/db");
+    const existingRoom = {
+      id: "room-1",
+      status: "lobby",
+      discordInstanceId: "inst-long",
+      hostUserId: "host-a",
+    };
+    const loadPublic = vi.fn().mockResolvedValue({ id: "room-1", status: "lobby" });
+    const conflict = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+      code: "P2002",
+      clientVersion: "test",
+      meta: { target: ["discordInstanceId"] },
+    });
+    const prisma = {
+      gameRoom: {
+        findUnique: vi
+          .fn()
+          .mockResolvedValueOnce(null)
+          .mockResolvedValueOnce(existingRoom),
+        upsert: vi.fn().mockRejectedValue(conflict),
+      },
+      roomPlayer: {
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        upsert: vi.fn().mockResolvedValue({}),
+      },
+    };
+    const service = new GameService(prisma as never);
+    (service as unknown as { loadPublic: typeof loadPublic }).loadPublic = loadPublic;
+
+    const room = await service.join({ id: "player-b" } as never, { instanceId: "inst-long" });
+
+    expect(room).toEqual({ id: "room-1", status: "lobby" });
+    expect(prisma.roomPlayer.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { roomId_userId: { roomId: "room-1", userId: "player-b" } },
+      }),
+    );
+  });
+
+  it("survives a roomPlayer upsert unique conflict on double boot", async () => {
+    const { Prisma } = await import("@friends/db");
+    const lobbyRoom = {
+      id: "room-1",
+      status: "lobby",
+      discordInstanceId: "inst-long",
+      hostUserId: "player-a",
+    };
+    const loadPublic = vi.fn().mockResolvedValue({ id: "room-1", status: "lobby" });
+    const conflict = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+      code: "P2002",
+      clientVersion: "test",
+      meta: { target: ["roomId", "userId"] },
+    });
+    const prisma = {
+      gameRoom: {
+        findUnique: vi.fn().mockResolvedValue(lobbyRoom),
+        upsert: vi.fn().mockResolvedValue(lobbyRoom),
+      },
+      roomPlayer: {
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        upsert: vi.fn().mockRejectedValue(conflict),
+        update: vi.fn().mockResolvedValue({}),
+      },
+    };
+    const service = new GameService(prisma as never);
+    (service as unknown as { loadPublic: typeof loadPublic }).loadPublic = loadPublic;
+
+    await expect(
+      service.join({ id: "player-a" } as never, { instanceId: "inst-long" }),
+    ).resolves.toEqual({ id: "room-1", status: "lobby" });
+    expect(prisma.roomPlayer.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { roomId_userId: { roomId: "room-1", userId: "player-a" } },
+      }),
+    );
   });
 
   it("prunes stale players using the lobby presence cutoff", async () => {
@@ -594,7 +677,12 @@ describe("GameService session finale", () => {
 
   it("picks a random unused prompt when beginning a round", async () => {
     const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0.5);
-    const transaction = vi.fn(async (ops: unknown) => ops);
+    const tx = {
+      gameRoom: { update: vi.fn() },
+      round: { create: vi.fn().mockResolvedValue({ id: "round-new" }) },
+      roomPlayer: { updateMany: vi.fn() },
+    };
+    const transaction = vi.fn(async (fn: (client: typeof tx) => Promise<unknown>) => fn(tx));
     const prisma = {
       gameRoom: {
         findUniqueOrThrow: vi.fn().mockResolvedValue({
@@ -614,6 +702,10 @@ describe("GameService session finale", () => {
           id: "p-random",
           kind: "most_likely",
           locale: "en",
+          category: null,
+          body: "Who?",
+          optionA: null,
+          optionB: null,
         }),
       },
       roomPlayer: { updateMany: vi.fn() },
@@ -621,10 +713,13 @@ describe("GameService session finale", () => {
     };
     const service = new GameService(prisma as never);
 
-    await (service as unknown as { beginRound: (id: string) => Promise<void> }).beginRound(
-      "room-1",
-    );
+    const started = await (
+      service as unknown as {
+        beginRound: (id: string) => Promise<{ roundId: string } | null>;
+      }
+    ).beginRound("room-1");
 
+    expect(started?.roundId).toBe("round-new");
     expect(prisma.prompt.findFirst).toHaveBeenCalledWith({
       where: {
         kind: "most_likely",

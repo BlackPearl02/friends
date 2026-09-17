@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   isRoomRealtimeConfigured,
   parseRoomRealtimePayload,
+  readFanoutSentAt,
   resolveMappedBase,
 } from "./roomRealtime";
 
@@ -26,6 +27,48 @@ describe("parseRoomRealtimePayload", () => {
   it("falls back to a bare wake-up for invalid shapes", () => {
     expect(parseRoomRealtimePayload(null)).toEqual({ t: 1 });
     expect(parseRoomRealtimePayload({ kind: "hack", intent: "drop_tables" })).toEqual({ t: 1 });
+  });
+
+  it("keeps public round-start prompt fields", () => {
+    expect(
+      parseRoomRealtimePayload({
+        t: 1,
+        kind: "round",
+        roundId: "r2",
+        roundIndex: 1,
+        prompt: {
+          id: "p2",
+          kind: "most_likely",
+          category: null,
+          body: "Who is most likely?",
+          optionA: null,
+          optionB: null,
+          secret: true,
+        },
+        serverTime: "2026-09-16T18:00:00.000Z",
+      }),
+    ).toEqual({
+      t: 1,
+      kind: "round",
+      roundId: "r2",
+      roundIndex: 1,
+      prompt: {
+        id: "p2",
+        kind: "most_likely",
+        category: null,
+        body: "Who is most likely?",
+        optionA: null,
+        optionB: null,
+      },
+      serverTime: "2026-09-16T18:00:00.000Z",
+    });
+  });
+});
+
+describe("readFanoutSentAt", () => {
+  it("reads client fanout clock for latency dbg", () => {
+    expect(readFanoutSentAt({ tSent: 123 })).toBe(123);
+    expect(readFanoutSentAt({})).toBeNull();
   });
 });
 

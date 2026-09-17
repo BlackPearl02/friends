@@ -233,8 +233,8 @@ export default async function LandingPage({ params }: Props) {
             <li>{messages.landing.fitPoint3}</li>
           </ul>
           <p className="fit__more">
-            <Link href={`/${raw}/no-join-code`}>
-              {messages.landing.learnNoJoinCode}
+            <Link href={`/${raw}/discord-activity`}>
+              {messages.landing.learnDiscordActivity}
             </Link>
           </p>
         </div>

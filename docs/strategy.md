@@ -58,7 +58,7 @@ Example B-lite (later phases, not MVP UI): after a reveal, “Send this question
 
 - **Discord Activities** — co-located multiplayer in the conversation (desktop + mobile). Social graph + invite is the distribution edge. Case studies like Death by AI show group sessions (often 3+ friends) can scale when the product fits “we’re already together.”
 - **Jackbox** — short shared space, ~1–8 players, voting, optional audience. Benchmark for sync energy, not for building a second solo game inside the same pitch.
-- **Kumple** — proves party “who knows you” on mobile; we take the *job*, not their bank/brand. Our bet: that job is *better* when native in Discord.
+- **Mobile party / “who knows you” apps** — prove the social quiz job exists off Discord. Our bet: that job lands better when native in the channel.
 - **How Well Do You Know Me?** — proves async “quiz about me → friends guess” as its own category. Treat as evidence for **Phase 5 B**, not as MVP scope.
 
 Hypothesis to prove: *this format wins when it is native in Discord* — not that humans like social quizzes (they already do).
