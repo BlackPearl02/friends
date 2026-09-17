@@ -205,15 +205,33 @@ export class GameService {
       where: { roomId_userId: { roomId: room.id, userId: user.id } },
       data: { intent, lastSeenAt: new Date() },
     });
-    await this.pruneStalePlayers(room.id);
 
-    const players = await this.prisma.roomPlayer.findMany({ where: { roomId: room.id } });
-    const allContinue =
+    // Fast path: if the roster already agrees to advance, skip prune until after fanout.
+    // Otherwise prune first so a stale "none" cannot block Ready / continue.
+    let players = await this.prisma.roomPlayer.findMany({ where: { roomId: room.id } });
+    let allContinue =
       players.length >= MIN_PLAYERS && players.every((p) => p.intent === "continue");
-    const allWrapUp =
+    let allWrapUp =
       players.length >= MIN_PLAYERS && players.every((p) => p.intent === "wrap_up");
-    const allRevote =
+    let allRevote =
       players.length >= MIN_PLAYERS && players.every((p) => p.intent === "revote");
+    const looksLikeAdvance =
+      (allContinue && (room.status === "lobby" || latest?.status === "reveal")) ||
+      (allWrapUp && latest?.status === "reveal") ||
+      (allRevote && latest?.status === "reveal");
+    let deferredPrune = false;
+    if (looksLikeAdvance) {
+      deferredPrune = true;
+    } else {
+      await this.pruneStalePlayers(room.id);
+      players = await this.prisma.roomPlayer.findMany({ where: { roomId: room.id } });
+      allContinue =
+        players.length >= MIN_PLAYERS && players.every((p) => p.intent === "continue");
+      allWrapUp =
+        players.length >= MIN_PLAYERS && players.every((p) => p.intent === "wrap_up");
+      allRevote =
+        players.length >= MIN_PLAYERS && players.every((p) => p.intent === "revote");
+    }
 
     let phaseAdvanced = false;
     let roundStart: Awaited<ReturnType<GameService["beginRound"]>> = null;
@@ -222,8 +240,7 @@ export class GameService {
       roundStart = await this.beginRound(room.id);
       phaseAdvanced = true;
     } else if (allContinue && room.status === "playing" && latest?.status === "reveal") {
-      await this.settleRevealRound(room.id);
-      roundStart = await this.beginRound(room.id);
+      roundStart = await this.settleAndBeginRound(room.id);
       phaseAdvanced = true;
     } else if (allWrapUp && room.status === "playing" && latest?.status === "reveal") {
       const revealedInSession = await this.prisma.round.count({
@@ -240,7 +257,7 @@ export class GameService {
       await this.finishSession(room.id);
       phaseAdvanced = true;
     } else if (allRevote && room.status === "playing" && latest?.status === "reveal") {
-      await this.reopenTiedRound(room.id);
+      roundStart = await this.reopenTiedRound(room.id);
       phaseAdvanced = true;
     }
 
@@ -259,6 +276,9 @@ export class GameService {
     }
 
     const publicRoom = await this.loadPublic(room.id);
+    if (deferredPrune) {
+      void this.pruneStalePlayers(room.id);
+    }
     if (!phaseAdvanced) {
       // Don't await Realtime — peers should not wait on Nest→Supabase RTT.
       void this.pingRealtime(instanceId, {
@@ -311,6 +331,7 @@ export class GameService {
     void this.pingRealtime(round.room.discordInstanceId, {
       kind: "vote",
       votedUserId: user.id,
+      roundId: round.id,
     });
 
     const [playerCount, voteCount] = await Promise.all([
@@ -321,6 +342,7 @@ export class GameService {
       kind: "vote",
       votedUserId: user.id,
       voteCount,
+      roundId: round.id,
     });
 
     await this.touchPresence(round.roomId, user.id);
@@ -334,6 +356,7 @@ export class GameService {
         serverTime: new Date().toISOString(),
         votedUserId: user.id,
         voteCount,
+        roundId: round.id,
       });
     }
 
@@ -369,7 +392,8 @@ export class GameService {
   } | null> {
     const locale = "en" as const;
     const room = await this.prisma.gameRoom.findUniqueOrThrow({ where: { id: roomId } });
-    const [sessionRounds, allRounds] = await Promise.all([
+    // One parallel wave: session used ids + max index + candidate bank (no count+skip RTT).
+    const [sessionRounds, allRounds, candidates] = await Promise.all([
       this.prisma.round.findMany({
         where: { roomId, sessionKey: room.sessionKey },
         select: { promptId: true },
@@ -380,26 +404,17 @@ export class GameService {
         orderBy: { index: "desc" },
         take: 1,
       }),
+      this.prisma.prompt.findMany({
+        where: { kind: "most_likely", locale },
+      }),
     ]);
-    // Random unused most_likely — fixed id order made every night feel identical.
-    const unusedWhere = {
-      kind: "most_likely" as const,
-      locale,
-      id: { notIn: sessionRounds.map((r) => r.promptId) },
-    };
-    const remaining = await this.prisma.prompt.count({ where: unusedWhere });
-    if (remaining === 0) {
+    const used = new Set(sessionRounds.map((r) => r.promptId));
+    const unused = candidates.filter((p) => !used.has(p.id));
+    if (unused.length === 0) {
       await this.finishSession(roomId);
       return null;
     }
-    const prompt = await this.prisma.prompt.findFirst({
-      where: unusedWhere,
-      skip: pickRandomOffset(remaining),
-    });
-    if (!prompt) {
-      await this.finishSession(roomId);
-      return null;
-    }
+    const prompt = unused[pickRandomOffset(unused.length)]!;
 
     const index = (allRounds[0]?.index ?? -1) + 1;
     const created = await this.prisma.$transaction(async (tx) => {
@@ -423,6 +438,95 @@ export class GameService {
       });
       return round;
     });
+
+    return {
+      roundId: created.id,
+      index,
+      prompt: {
+        id: prompt.id,
+        kind: "most_likely",
+        category: prompt.category,
+        body: prompt.body,
+        optionA: prompt.optionA,
+        optionB: prompt.optionB,
+      },
+    };
+  }
+
+  /**
+   * Continue after reveal: settle scores and open the next voting round in one transaction
+   * so peers get `kind:round` sooner.
+   */
+  private async settleAndBeginRound(roomId: string): Promise<{
+    roundId: string;
+    index: number;
+    prompt: PublicPrompt;
+  } | null> {
+    const locale = "en" as const;
+    const round = await this.prisma.round.findFirst({
+      where: { roomId, status: "reveal" },
+      include: { votes: true, prompt: true },
+      orderBy: { index: "desc" },
+    });
+    if (!round) return null;
+
+    const [sessionRounds, candidates] = await Promise.all([
+      this.prisma.round.findMany({
+        where: { roomId, sessionKey: round.sessionKey },
+        select: { promptId: true },
+      }),
+      this.prisma.prompt.findMany({
+        where: { kind: "most_likely", locale },
+      }),
+    ]);
+    const used = new Set(sessionRounds.map((r) => r.promptId));
+    const unused = candidates.filter((p) => !used.has(p.id));
+    if (unused.length === 0) {
+      await this.settleRevealRound(roomId);
+      await this.finishSession(roomId);
+      return null;
+    }
+    const prompt = unused[pickRandomOffset(unused.length)]!;
+    const index = round.index + 1;
+
+    const created = await this.prisma.$transaction(async (tx) => {
+      const stillReveal = await tx.round.findFirst({
+        where: { id: round.id, status: "reveal" },
+      });
+      if (!stillReveal) return null;
+
+      const increments = aggregateScoreIncrements(round.prompt.kind, round.votes);
+      await Promise.all(
+        [...increments.entries()].map(([userId, delta]) =>
+          tx.roomPlayer.update({
+            where: { roomId_userId: { roomId, userId } },
+            data: { score: { increment: delta } },
+          }),
+        ),
+      );
+      await tx.round.update({ where: { id: round.id }, data: { status: "done" } });
+      await tx.gameRoom.update({
+        where: { id: roomId },
+        data: { status: "playing", locale },
+      });
+      const next = await tx.round.create({
+        data: {
+          roomId,
+          promptId: prompt.id,
+          sessionKey: round.sessionKey,
+          index,
+          status: "voting",
+        },
+        select: { id: true },
+      });
+      await tx.roomPlayer.updateMany({
+        where: { roomId },
+        data: { intent: "none" },
+      });
+      return next;
+    });
+
+    if (!created) return null;
 
     return {
       roundId: created.id,
@@ -513,10 +617,14 @@ export class GameService {
   }
 
   /** Keep the tied ballot for history; open a fresh voting round on the same prompt. */
-  private async reopenTiedRound(roomId: string) {
+  private async reopenTiedRound(roomId: string): Promise<{
+    roundId: string;
+    index: number;
+    prompt: PublicPrompt;
+  } | null> {
     const round = await this.prisma.round.findFirst({
       where: { roomId, status: "reveal" },
-      include: { votes: true },
+      include: { votes: true, prompt: true },
       orderBy: { index: "desc" },
     });
     if (!round) throw new NotFoundException("Nothing to revote");
@@ -524,23 +632,39 @@ export class GameService {
       throw new BadRequestException("Revote is only available when the round is tied");
     }
 
-    await this.prisma.$transaction([
+    const index = round.index + 1;
+    const created = await this.prisma.$transaction(async (tx) => {
       // Done without settleRevealRound — no points for a voided tie ballot.
-      this.prisma.round.update({ where: { id: round.id }, data: { status: "done" } }),
-      this.prisma.round.create({
+      await tx.round.update({ where: { id: round.id }, data: { status: "done" } });
+      const next = await tx.round.create({
         data: {
           roomId,
           promptId: round.promptId,
           sessionKey: round.sessionKey,
-          index: round.index + 1,
+          index,
           status: "voting",
         },
-      }),
-      this.prisma.roomPlayer.updateMany({
+        select: { id: true },
+      });
+      await tx.roomPlayer.updateMany({
         where: { roomId },
         data: { intent: "none" },
-      }),
-    ]);
+      });
+      return next;
+    });
+
+    return {
+      roundId: created.id,
+      index,
+      prompt: {
+        id: round.prompt.id,
+        kind: round.prompt.kind as PublicPrompt["kind"],
+        category: round.prompt.category,
+        body: round.prompt.body,
+        optionA: round.prompt.optionA,
+        optionB: round.prompt.optionB,
+      },
+    };
   }
 
   private async pingRealtime(

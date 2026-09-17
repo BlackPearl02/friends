@@ -50,6 +50,7 @@ export const en = {
     waitingVotes: "Waiting for everyone to vote…",
     revealHold: "Votes are in — results drop together…",
     waitingOnOthers: "You're in — waiting on {count} more.",
+    advancing: "Everyone's in — next up…",
     pickPlayer: "Tap someone",
     votesInFlight: "{voted}/{total} voted",
     votesLocked: "Votes are in.",

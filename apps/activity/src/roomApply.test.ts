@@ -381,6 +381,104 @@ describe("mergePublicRoom", () => {
     expect(merged.round?.results?.tallies).toEqual({ a: 1, b: 1 });
   });
 
+  it("keeps a newer round when a stale poll returns an older index", () => {
+    const prev = baseRoom({
+      round: {
+        id: "r2",
+        index: 1,
+        status: "voting",
+        revealedAt: null,
+        prompt: {
+          id: "p2",
+          kind: "most_likely",
+          category: null,
+          body: "Next?",
+          optionA: null,
+          optionB: null,
+        },
+        voteCount: 0,
+      },
+    });
+    const stale = baseRoom({
+      round: {
+        id: "r1",
+        index: 0,
+        status: "reveal",
+        revealedAt: "2026-09-16T18:00:00.600Z",
+        prompt: {
+          id: "p1",
+          kind: "most_likely",
+          category: null,
+          body: "Who?",
+          optionA: null,
+          optionB: null,
+        },
+        voteCount: 2,
+        results: { tallies: { a: 1, b: 1 } },
+      },
+    });
+    expect(mergePublicRoom(prev, stale)).toBe(prev);
+  });
+
+  it("keeps lobby when a stale poll returns finished after replay", () => {
+    const prev = baseRoom({
+      status: "lobby",
+      sessionKey: "sess-2",
+      round: null,
+    });
+    const stale = baseRoom({
+      status: "finished",
+      sessionKey: "sess-1",
+      round: null,
+    });
+    expect(mergePublicRoom(prev, stale)).toBe(prev);
+  });
+
+  it("does not sticky-intent while voting", () => {
+    const prev = baseRoom({
+      players: [
+        {
+          userId: "a",
+          displayName: "A",
+          avatarUrl: null,
+          score: 0,
+          intent: "continue",
+          hasVoted: false,
+        },
+        {
+          userId: "b",
+          displayName: "B",
+          avatarUrl: null,
+          score: 0,
+          intent: "none",
+          hasVoted: false,
+        },
+      ],
+    });
+    const next = baseRoom({
+      players: [
+        {
+          userId: "a",
+          displayName: "A",
+          avatarUrl: null,
+          score: 0,
+          intent: "none",
+          hasVoted: false,
+        },
+        {
+          userId: "b",
+          displayName: "B",
+          avatarUrl: null,
+          score: 0,
+          intent: "none",
+          hasVoted: false,
+        },
+      ],
+    });
+    const merged = mergePublicRoom(prev, next);
+    expect(merged.players.find((p) => p.userId === "a")?.intent).toBe("none");
+  });
+
   it("accepts a fresher peer voteCount", () => {
     const prev = baseRoom({
       players: [

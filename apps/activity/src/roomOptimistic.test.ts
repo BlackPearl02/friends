@@ -11,6 +11,7 @@ import {
   awaitingLobbyStart,
   maybeStartRevealHold,
   playersWaitingOnIntent,
+  roundFanoutFromRoom,
 } from "./roomOptimistic";
 import { REVEAL_HOLD_MS } from "./revealHold";
 
@@ -146,13 +147,24 @@ describe("applyPeerVote", () => {
     });
     expect(applyPeerVote(revealed, "b", 2)).toBe(revealed);
   });
+
+  it("ignores votes for a different round id", () => {
+    const room = baseRoom();
+    expect(applyPeerVote(room, "b", 1, "other-round")).toBe(room);
+  });
 });
 
 describe("applyPeerIntent", () => {
-  it("updates only the named peer intent", () => {
-    const next = applyPeerIntent(baseRoom(), "b", "wrap_up");
+  it("updates only the named peer intent in lobby", () => {
+    const lobby = baseRoom({ status: "lobby", round: null });
+    const next = applyPeerIntent(lobby, "b", "wrap_up");
     expect(next.players.find((p) => p.userId === "b")?.intent).toBe("wrap_up");
     expect(next.players.find((p) => p.userId === "a")?.intent).toBe("none");
+  });
+
+  it("ignores intent patches while voting", () => {
+    const room = baseRoom();
+    expect(applyPeerIntent(room, "b", "continue")).toBe(room);
   });
 });
 
@@ -182,6 +194,13 @@ describe("applyPeerReveal", () => {
     );
     expect(second.round?.revealedAt).toBe("2026-09-16T18:00:00.900Z");
     expect(second.serverTime).toBe("2026-09-16T18:00:00.300Z");
+  });
+
+  it("ignores reveal for a different round id", () => {
+    const room = baseRoom();
+    expect(
+      applyPeerReveal(room, "2026-09-16T18:00:00.900Z", "2026-09-16T18:00:00.000Z", "other-round"),
+    ).toBe(room);
   });
 });
 
@@ -271,5 +290,27 @@ describe("applyPeerRoundStart", () => {
         prompt: room.round!.prompt,
       }),
     ).toBe(room);
+  });
+});
+
+describe("roundFanoutFromRoom", () => {
+  it("returns round fields for a voting room", () => {
+    const room = baseRoom();
+    expect(roundFanoutFromRoom(room)).toEqual({
+      roundId: "r1",
+      roundIndex: 0,
+      prompt: room.round!.prompt,
+      serverTime: room.serverTime,
+    });
+  });
+
+  it("returns null without a voting round", () => {
+    expect(roundFanoutFromRoom(baseRoom({ status: "lobby", round: null }))).toBeNull();
+    const revealing = applyPeerReveal(
+      baseRoom(),
+      "2026-09-16T18:00:00.900Z",
+      "2026-09-16T18:00:00.000Z",
+    );
+    expect(roundFanoutFromRoom(revealing)).toBeNull();
   });
 });
