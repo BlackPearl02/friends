@@ -7,11 +7,11 @@ alwaysApply: true
 
 ## Product
 
-**Squimbo** is a Discord Activity party game inspired by Kumple (Buddies): questions, challenges, and “who is most likely” among people already in a Discord channel. No join code — the Activity `instanceId` is the room. Marketing site: **squimbo.app**. Engineering packages remain `@friends/*` until a later rename.
+**Squimbo** is a Discord Activity party game: questions, challenges, and “who is most likely” among people already in a Discord channel. The Activity `instanceId` is the room. Marketing site: **squimbo.app**. Engineering packages remain `@friends/*` until a later rename.
 
 Canonical: [docs/product.md](../../docs/product.md), [docs/strategy.md](../../docs/strategy.md), [docs/roadmap.md](../../docs/roadmap.md). Setup: [docs/discord-activity-setup.md](../../docs/discord-activity-setup.md). Launch: [docs/squimbo-launch-checklist.md](../../docs/squimbo-launch-checklist.md).
 
-**Do not** copy Kumple’s question bank, assets, or brand. **Do not** pull in PlayGrid library / sessions / store OAuth. **Do not** add a second equal async game mode until roadmap unlocks it.
+**Do not** copy third-party party-game question banks, assets, or brands. **Do not** pull in PlayGrid library / sessions / store OAuth. **Do not** add a second equal async game mode until roadmap unlocks it.
 
 ## i18n (en + pl)
 
@@ -40,11 +40,12 @@ Root **`.env.development`** (or `.env`) via `scripts/with-friends-env.mjs`. Requ
 - Schema changes: `packages/db/prisma/schema.prisma` + migration (`pnpm db:migrate`).
 - Commits: skill `friends-git-staging` — no `git add -A` without a plan; no push unless asked.
 - Tests: `testing.mdc` in the same PR as business logic.
+- Project docs (README, CONTRIBUTING, `docs/`): skill `friends-docs`. Facts from the repo only.
 
 ## Docs vs Cursor
 
 | Where | What |
 |-------|------|
-| `docs/` | Product, strategy, roadmap, metrics, Discord ops, AppSec, testing |
+| `docs/` | Product, strategy, roadmap, metrics, Discord ops, AppSec, testing. Prose: `friends-docs`. |
 | `.cursor/rules/` | Short MUST/MUST NOT (this file + testing + security always on) |
 | `.cursor/skills/` | Multi-step workflows |

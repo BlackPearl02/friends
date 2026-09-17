@@ -17,7 +17,7 @@ Product: [docs/product.md](../../docs/product.md). Strategy: [docs/strategy.md](
 - Do not reveal running session scores to clients mid-session — public DTO masks them until `finished`.
 - After all votes, `reveal` exposes **per-round tallies** (winner or tie). Finale scoreboard remains the only place for night totals.
 - On a tied reveal, consensus **revote** (same prompt, prior ballot kept as `done` without scoring) or **continue** (settle scores, next round). Unique winner: **Next** vs **Wrap up** as before.
-- Original prompts only — never paste Kumple’s question bank.
+- Original prompts only — never paste a third-party proprietary question bank.
 - Preserve round/vote history when adding end/replay — needed for future Friend Profile (B-lite).
 
 ## SHOULD
