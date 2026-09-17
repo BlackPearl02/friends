@@ -17,7 +17,11 @@ export const ACTIVITY_OAUTH_SCOPES = [
 export const AUTHORIZE_TIMEOUT_MS = 12_000;
 /** Consent modal needs human time; do not use AUTHORIZE_TIMEOUT_MS here. */
 export const AUTHORIZE_CONSENT_TIMEOUT_MS = 120_000;
-export const READY_TIMEOUT_MS = 12_000;
+/**
+ * `sdk.ready()` waits on the Discord client handshake. 12s was too aggressive —
+ * runtime evidence: boot_failed "Discord SDK ready timed out after 12000ms".
+ */
+export const READY_TIMEOUT_MS = 60_000;
 /** Nest on Vercel may cold-start for tens of seconds. */
 export const EXCHANGE_TIMEOUT_MS = 45_000;
 
@@ -96,11 +100,13 @@ export async function authenticateActivity(
   sdk: DiscordSDK,
   clientId: string,
 ): Promise<ActivityExchangeResponse> {
-  // Kick Nest cold-start while Discord authorize runs.
+  // Kick Nest cold-start while Discord handshake runs.
   void fetch(activityUrl("/health")).catch(() => undefined);
 
   authLog("ready");
+  const readyStarted = Date.now();
   await withTimeout(sdk.ready(), READY_TIMEOUT_MS, "Discord SDK ready");
+  authLog("ready-ok", `${Date.now() - readyStarted}ms`);
 
   const code = await authorizeActivityCode(sdk, clientId);
   authLog("exchange");
