@@ -11,9 +11,21 @@ export function roomRealtimeTopic(discordInstanceId: string): string {
 /** Mirrors `@friends/types` RoomRealtimePayload — safe public fields only. */
 export type RoomRealtimePayload = {
   t: 1;
-  kind?: "vote" | "intent" | "roster";
+  kind?: "vote" | "intent" | "roster" | "reveal" | "round";
   votedUserId?: string;
   voteCount?: number;
   intentUserId?: string;
   intent?: "none" | "continue" | "wrap_up" | "revote";
+  revealedAt?: string;
+  serverTime?: string;
+  roundId?: string;
+  roundIndex?: number;
+  prompt?: {
+    id: string;
+    kind: string;
+    category: string | null;
+    body: string;
+    optionA: string | null;
+    optionB: string | null;
+  };
 };
