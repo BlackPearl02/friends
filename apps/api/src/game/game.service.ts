@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
   Optional,
 } from "@nestjs/common";
@@ -22,8 +23,14 @@ import { aggregateScoreIncrements } from "./scoring";
 
 const MIN_PLAYERS = 2;
 
+function shortInstanceId(instanceId: string): string {
+  return instanceId.length <= 12 ? instanceId : `${instanceId.slice(0, 8)}…`;
+}
+
 @Injectable()
 export class GameService {
+  private readonly logger = new Logger(GameService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     @Optional() private readonly party?: RoomPartyService,
@@ -37,6 +44,7 @@ export class GameService {
     const existing = await this.prisma.gameRoom.findUnique({
       where: { discordInstanceId: input.instanceId },
     });
+    const created = !existing;
     const room = existing
       ? existing
       : await this.prisma.gameRoom.create({
@@ -57,6 +65,9 @@ export class GameService {
       if (!member) {
         const playerCount = await this.prisma.roomPlayer.count({ where: { roomId: room.id } });
         if (playerCount > 0) {
+          this.logger.warn(
+            `join rejected in-progress room=${room.id} instance=${shortInstanceId(input.instanceId)}`,
+          );
           throw new ConflictException(ROOM_IN_PROGRESS_CODE);
         }
         // Everyone left mid-session — reclaim so a new party can lobby again.
@@ -64,6 +75,7 @@ export class GameService {
           where: { id: room.id },
           data: { status: "lobby", sessionKey: randomUUID() },
         });
+        this.logger.log(`join reclaimed empty playing room=${room.id}`);
       }
     }
 
@@ -74,8 +86,13 @@ export class GameService {
       update: { lastSeenAt: now },
     });
 
+    this.logger.log(
+      `join ${created ? "created" : "joined"} room=${room.id} instance=${shortInstanceId(input.instanceId)}`,
+    );
+
     const publicRoom = await this.loadPublic(room.id);
-    await this.pingRealtime(input.instanceId, { kind: "roster" });
+    // Fire-and-forget — never block sign-in on Party/Supabase latency.
+    void this.pingRealtime(input.instanceId, { kind: "roster" });
     return publicRoom;
   }
 
@@ -95,7 +112,8 @@ export class GameService {
     await this.prisma.roomPlayer.deleteMany({
       where: { roomId: room.id, userId: user.id },
     });
-    await this.pingRealtime(instanceId, { kind: "roster" });
+    this.logger.log(`leave room=${room.id} instance=${shortInstanceId(instanceId)}`);
+    void this.pingRealtime(instanceId, { kind: "roster" });
     return { ok: true };
   }
 
@@ -216,6 +234,7 @@ export class GameService {
         text: input.text?.slice(0, 280) ?? null,
       },
     });
+    this.logger.log(`vote round=${round.id} room=${round.roomId}`);
     await this.touchPresence(round.roomId, user.id);
     await this.pruneStalePlayers(round.roomId);
 
@@ -258,6 +277,7 @@ export class GameService {
         data: { score: 0, intent: "none" },
       }),
     ]);
+    this.logger.log(`replay room=${room.id} instance=${shortInstanceId(instanceId)}`);
     const publicRoom = await this.loadPublic(room.id);
     await this.pingRealtime(instanceId, { kind: "roster" });
     return publicRoom;
@@ -340,6 +360,8 @@ export class GameService {
       orderBy: { index: "desc" },
     });
     if (!round) throw new NotFoundException("Nothing to reveal");
+
+    this.logger.log(`reveal start round=${round.id} room=${roomId}`);
 
     await this.prisma.$transaction(async (tx) => {
       const stillVoting = await tx.round.findFirst({

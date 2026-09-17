@@ -2,6 +2,9 @@ import { Injectable, Logger, Optional } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { partyRoomPath, type RoomRealtimePayload } from "./room-party.constants";
 
+/** Cap so a dead Worker cannot block Activity join / vote responses. */
+export const PARTY_NOTIFY_TIMEOUT_MS = 2_500;
+
 /**
  * Best-effort PartyKit HTTP notify after room mutations.
  * No-ops when PARTYKIT_HOST / PARTY_SERVER_SECRET are unset.
@@ -31,6 +34,7 @@ export class RoomPartyService {
           Authorization: `Bearer ${secret}`,
         },
         body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(PARTY_NOTIFY_TIMEOUT_MS),
       });
       if (!res.ok) {
         const detail = await res.text().catch(() => "");

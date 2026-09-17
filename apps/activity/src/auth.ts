@@ -13,6 +13,9 @@ export const ACTIVITY_OAUTH_SCOPES = [
   ...ACTIVITY_PRESENCE_OAUTH_SCOPES,
 ] as const;
 
+/** Discord authorize can hang if the consent modal never resolves — fail soft. */
+export const AUTHORIZE_TIMEOUT_MS = 20_000;
+
 type OAuthScope = (typeof ACTIVITY_OAUTH_SCOPES)[number];
 
 type AuthorizeArgs = {
@@ -22,6 +25,24 @@ type AuthorizeArgs = {
   scope: OAuthScope[];
   prompt?: "none";
 };
+
+export function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${ms}ms`));
+    }, ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err: unknown) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
 
 async function authorizeWithScopes(
   sdk: Pick<DiscordSDK, "commands">,
@@ -36,10 +57,18 @@ async function authorizeWithScopes(
   };
 
   try {
-    const authz = await sdk.commands.authorize({ ...base, prompt: "none" });
+    const authz = await withTimeout(
+      sdk.commands.authorize({ ...base, prompt: "none" }),
+      AUTHORIZE_TIMEOUT_MS,
+      "Discord authorize (prompt=none)",
+    );
     return authz.code;
   } catch {
-    const authz = await sdk.commands.authorize(base);
+    const authz = await withTimeout(
+      sdk.commands.authorize(base),
+      AUTHORIZE_TIMEOUT_MS,
+      "Discord authorize",
+    );
     return authz.code;
   }
 }

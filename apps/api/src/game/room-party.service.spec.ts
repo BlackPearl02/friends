@@ -41,6 +41,17 @@ describe("RoomPartyService", () => {
     });
     const headers = init.headers as Record<string, string>;
     expect(headers.Authorization).toBe("Bearer party-secret");
+    expect(init.signal).toBeDefined();
+  });
+
+  it("swallows AbortError when the Worker is too slow", async () => {
+    process.env.PARTYKIT_HOST = "https://squimbo.example.partykit.dev";
+    process.env.PARTY_SERVER_SECRET = "party-secret";
+    const fetchMock = vi.fn().mockRejectedValue(new DOMException("The operation was aborted.", "AbortError"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const service = new RoomPartyService();
+    await expect(service.notifyRoomChanged("inst-slow", { kind: "roster" })).resolves.toBeUndefined();
   });
 
   it("strips quoted CRLF artifacts from env piping", async () => {

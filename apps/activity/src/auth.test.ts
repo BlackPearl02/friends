@@ -3,7 +3,19 @@ import {
   ACTIVITY_CORE_OAUTH_SCOPES,
   ACTIVITY_OAUTH_SCOPES,
   authorizeActivityCode,
+  withTimeout,
 } from "./auth";
+
+describe("withTimeout", () => {
+  it("rejects when the promise never settles", async () => {
+    vi.useFakeTimers();
+    const pending = withTimeout(new Promise<string>(() => undefined), 100, "test");
+    const assertion = expect(pending).rejects.toThrow(/timed out/);
+    await vi.advanceTimersByTimeAsync(100);
+    await assertion;
+    vi.useRealTimers();
+  });
+});
 
 describe("authorizeActivityCode", () => {
   it("returns the code from silent authorize when it succeeds", async () => {

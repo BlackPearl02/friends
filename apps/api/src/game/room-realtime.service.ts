@@ -6,6 +6,9 @@ import {
   type RoomRealtimePayload,
 } from "./room-realtime.constants";
 
+/** Cap so a hung Realtime HTTP call cannot block Activity join / vote. */
+export const SUPABASE_NOTIFY_TIMEOUT_MS = 2_500;
+
 /**
  * Best-effort Supabase Realtime Broadcast after room mutations.
  * No-ops when SUPABASE_URL / key are unset (local Docker without Realtime).
@@ -45,6 +48,7 @@ export class RoomRealtimeService {
             },
           ],
         }),
+        signal: AbortSignal.timeout(SUPABASE_NOTIFY_TIMEOUT_MS),
       });
       if (!res.ok) {
         const detail = await res.text().catch(() => "");
