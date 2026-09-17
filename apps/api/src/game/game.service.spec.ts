@@ -147,8 +147,18 @@ describe("GameService session finale", () => {
   });
 
   it("settles scores then starts the next round when all continue after reveal", async () => {
-    const beginRound = vi.fn().mockResolvedValue(undefined);
-    const settleRevealRound = vi.fn().mockResolvedValue(undefined);
+    const settleAndBeginRound = vi.fn().mockResolvedValue({
+      roundId: "r2",
+      index: 1,
+      prompt: {
+        id: "p2",
+        kind: "most_likely",
+        category: null,
+        body: "Next?",
+        optionA: null,
+        optionB: null,
+      },
+    });
     const loadPublic = vi.fn().mockResolvedValue({ id: "room-1", status: "playing" });
     const prisma = {
       gameRoom: {
@@ -173,20 +183,19 @@ describe("GameService session finale", () => {
       },
     };
     const service = new GameService(prisma as never);
-    (service as unknown as { beginRound: typeof beginRound }).beginRound = beginRound;
-    (service as unknown as { settleRevealRound: typeof settleRevealRound }).settleRevealRound =
-      settleRevealRound;
+    (service as unknown as { settleAndBeginRound: typeof settleAndBeginRound }).settleAndBeginRound =
+      settleAndBeginRound;
     (service as unknown as { loadPublic: typeof loadPublic }).loadPublic = loadPublic;
 
     await service.setIntent({ id: "a" } as never, "inst-long", "continue");
 
-    expect(settleRevealRound).toHaveBeenCalledWith("room-1");
-    expect(beginRound).toHaveBeenCalledWith("room-1");
+    expect(settleAndBeginRound).toHaveBeenCalledWith("room-1");
   });
 
   it("does not settle or begin a round when only some players continue after reveal", async () => {
     const beginRound = vi.fn().mockResolvedValue(undefined);
     const settleRevealRound = vi.fn().mockResolvedValue(undefined);
+    const settleAndBeginRound = vi.fn().mockResolvedValue(undefined);
     const loadPublic = vi.fn().mockResolvedValue({ id: "room-1", status: "playing" });
     const prisma = {
       gameRoom: {
@@ -214,11 +223,14 @@ describe("GameService session finale", () => {
     (service as unknown as { beginRound: typeof beginRound }).beginRound = beginRound;
     (service as unknown as { settleRevealRound: typeof settleRevealRound }).settleRevealRound =
       settleRevealRound;
+    (service as unknown as { settleAndBeginRound: typeof settleAndBeginRound }).settleAndBeginRound =
+      settleAndBeginRound;
     (service as unknown as { loadPublic: typeof loadPublic }).loadPublic = loadPublic;
 
     await service.setIntent({ id: "a" } as never, "inst-long", "continue");
 
     expect(settleRevealRound).not.toHaveBeenCalled();
+    expect(settleAndBeginRound).not.toHaveBeenCalled();
     expect(beginRound).not.toHaveBeenCalled();
     expect(loadPublic).toHaveBeenCalledWith("room-1");
   });
@@ -457,8 +469,7 @@ describe("GameService session finale", () => {
           .mockResolvedValueOnce([{ index: 0 }]),
       },
       prompt: {
-        count: vi.fn().mockResolvedValue(0),
-        findFirst: vi.fn(),
+        findMany: vi.fn().mockResolvedValue([{ id: "p1", kind: "most_likely", locale: "en" }]),
       },
     };
     const service = new GameService(prisma as never);
@@ -469,7 +480,6 @@ describe("GameService session finale", () => {
     );
 
     expect(finishSession).toHaveBeenCalledWith("room-1");
-    expect(prisma.prompt.findFirst).not.toHaveBeenCalled();
   });
 
   it("leaves remove the caller from the roster", async () => {
@@ -697,16 +707,44 @@ describe("GameService session finale", () => {
         create: vi.fn(),
       },
       prompt: {
-        count: vi.fn().mockResolvedValue(4),
-        findFirst: vi.fn().mockResolvedValue({
-          id: "p-random",
-          kind: "most_likely",
-          locale: "en",
-          category: null,
-          body: "Who?",
-          optionA: null,
-          optionB: null,
-        }),
+        findMany: vi.fn().mockResolvedValue([
+          {
+            id: "p0",
+            kind: "most_likely",
+            locale: "en",
+            category: null,
+            body: "A?",
+            optionA: null,
+            optionB: null,
+          },
+          {
+            id: "p1",
+            kind: "most_likely",
+            locale: "en",
+            category: null,
+            body: "B?",
+            optionA: null,
+            optionB: null,
+          },
+          {
+            id: "p-random",
+            kind: "most_likely",
+            locale: "en",
+            category: null,
+            body: "Who?",
+            optionA: null,
+            optionB: null,
+          },
+          {
+            id: "p3",
+            kind: "most_likely",
+            locale: "en",
+            category: null,
+            body: "C?",
+            optionA: null,
+            optionB: null,
+          },
+        ]),
       },
       roomPlayer: { updateMany: vi.fn() },
       $transaction: transaction,
@@ -720,13 +758,9 @@ describe("GameService session finale", () => {
     ).beginRound("room-1");
 
     expect(started?.roundId).toBe("round-new");
-    expect(prisma.prompt.findFirst).toHaveBeenCalledWith({
-      where: {
-        kind: "most_likely",
-        locale: "en",
-        id: { notIn: [] },
-      },
-      skip: 2,
+    expect(started?.prompt.id).toBe("p-random");
+    expect(prisma.prompt.findMany).toHaveBeenCalledWith({
+      where: { kind: "most_likely", locale: "en" },
     });
     expect(transaction).toHaveBeenCalled();
     randomSpy.mockRestore();
