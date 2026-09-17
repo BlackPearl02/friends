@@ -3,7 +3,6 @@ import { NestFactory } from "@nestjs/core";
 import { Logger, ValidationPipe } from "@nestjs/common";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
-import { HttpExceptionFilter } from "./common/http-exception.filter";
 import { stripDiscordApiPrefix } from "./discord-api-prefix";
 
 async function bootstrap() {
@@ -25,7 +24,6 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  app.useGlobalFilters(new HttpExceptionFilter());
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port);
 }
