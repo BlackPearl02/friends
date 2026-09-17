@@ -23,11 +23,6 @@ export const SEO_CONTENT_ROUTES = [
     priority: 0.75,
   },
   {
-    path: "/no-join-code",
-    changeFrequency: "monthly" as const,
-    priority: 0.75,
-  },
-  {
     path: "/faq",
     changeFrequency: "monthly" as const,
     priority: 0.7,
@@ -57,11 +52,6 @@ export function getSeoContentCopy(messages: Messages, path: SeoContentPath) {
       return {
         footerLabel: messages.footer.mostLikely,
         description: messages.meta.mostLikelyDescription,
-      };
-    case "/no-join-code":
-      return {
-        footerLabel: messages.footer.noJoinCode,
-        description: messages.meta.noJoinCodeDescription,
       };
     case "/faq":
       return {

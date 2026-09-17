@@ -39,7 +39,6 @@ export function buildPageMetadata({
       "Discord party game",
       "Discord Activity",
       "most likely",
-      "no join code",
     ],
     alternates: {
       canonical: canonicalPath,

@@ -3,7 +3,7 @@ export const en = {
     siteName: "Squimbo",
     landingTitle: "Squimbo, a Discord party game",
     landingDescription:
-      "Who knows the group best? Vote in the dark inside Discord. No join code.",
+      "Who knows the group best? Vote in the dark inside Discord.",
     privacyTitle: "Privacy Policy",
     privacyDescription:
       "How Rafał Szołtysik (Squimbo) processes Discord identity, game data, and website analytics under EU and US privacy law.",
@@ -15,22 +15,19 @@ export const en = {
       "Get help with Squimbo on Discord. Troubleshooting tips and how to contact support.",
     discordPartyGameTitle: "Discord party game",
     discordPartyGameDescription:
-      "Squimbo is a Discord Activity party game for voice channels. No join code. Open it, vote sealed, score at the finale.",
+      "Squimbo is a Discord Activity party game for voice channels. Open it, vote sealed, score at the finale.",
     howToPlayTitle: "How to play Squimbo",
     howToPlayDescription:
-      "Start Squimbo in a Discord voice channel, vote on most likely rounds in the dark, then face the finale. No join code.",
+      "Start Squimbo in a Discord voice channel, vote on most likely rounds in the dark, then face the finale.",
     mostLikelyTitle: "Most likely on Discord",
     mostLikelyDescription:
       "Play sealed “who is most likely” rounds inside Discord. Votes stay hidden until lock-in. Scores wait for the finale.",
     discordActivityTitle: "Discord Activity party game",
     discordActivityDescription:
-      "Squimbo runs as a Discord Activity in voice. Same channel, sealed votes, finale scores. No separate app or join code.",
-    noJoinCodeTitle: "No join code Discord game",
-    noJoinCodeDescription:
-      "Squimbo needs no join code. Open the Discord Activity in your voice channel and everyone who joins is in the same room.",
+      "Squimbo runs as a Discord Activity in voice. Same channel, sealed votes, finale scores. No separate app.",
     faqTitle: "Squimbo FAQ",
     faqDescription:
-      "Answers about Squimbo: Discord Activity setup, players, sealed votes, join codes, platforms, and support.",
+      "Answers about Squimbo: Discord Activity setup, players, sealed votes, platforms, and support.",
     ogImageAlt: "Squimbo: Discord party game cover art",
   },
   nav: {
@@ -42,7 +39,6 @@ export const en = {
     discordActivity: "Discord Activity",
     howToPlay: "How to play",
     mostLikely: "Most likely",
-    noJoinCode: "No join code",
     faq: "FAQ",
   },
   landing: {
@@ -51,7 +47,7 @@ export const en = {
     subhead:
       "A Discord Activity party game. Open it in voice, vote in the dark, then face the finale.",
     entityBlurb:
-      "Squimbo is a Discord Activity party game for groups already in a voice channel. There is no join code: whoever opens the Activity is in. Players vote on “who is most likely” rounds with sealed tallies, then see scores only at the finale. It feels best with about 3 to 8 people.",
+      "Squimbo is a Discord Activity party game for groups already in a voice channel. Whoever opens the Activity is in. Players vote on “who is most likely” rounds with sealed tallies, then see scores only at the finale. It feels best with about 3 to 8 people.",
     cta: "Play on Discord",
     ctaFallback: "Open Discord",
     ctaSecondary: "See how it works",
@@ -72,17 +68,17 @@ export const en = {
     howLead: "Three beats. Everyone plays. No host privileges.",
     step1Title: "Start in the channel",
     step1Body:
-      "Open Squimbo in voice. Whoever joins is in. No join code, no extra apps.",
+      "Open Squimbo in voice. Whoever joins is in. No extra apps.",
     step2Title: "Vote sealed",
     step2Body:
       "Each round asks who is most likely. Everyone picks someone else. Votes stay hidden until the last person locks in.",
     step3Title: "Score at the end",
     step3Body:
       "Keep going or wrap when the night feels done. The scoreboard waits for the finale, then play again.",
-    fitTitle: "Same voice channel. No lobby.",
+    fitTitle: "Same voice channel. Same room.",
     fitBody:
-      "Squimbo is a Discord Activity, not a separate app and not a lobby with codes. Your display names and avatars come with you. Best with about 3 to 8 people in voice.",
-    fitPoint1: "No join code",
+      "Squimbo is a Discord Activity, not a separate app. Your display names and avatars come with you. Best with about 3 to 8 people in voice.",
+    fitPoint1: "Open the Activity in voice",
     fitPoint2: "Same controls for everyone",
     fitPoint3: "Scores only at the finale",
     faqTitle: "FAQ",
@@ -92,9 +88,9 @@ export const en = {
     faq2Q: "How many players do I need?",
     faq2A:
       "Squimbo needs at least two players to start. It feels best with about 3 to 8 people already in the channel.",
-    faq3Q: "Do I need a join code?",
+    faq3Q: "How do people join?",
     faq3A:
-      "No. Squimbo does not use a join code. Everyone who opens the Activity in that channel is in the same room.",
+      "They open Squimbo in the same voice channel. Whoever opens the Activity there is in the same room.",
     faq4Q: "Is it a separate app?",
     faq4A:
       "No. Squimbo launches inside Discord on desktop and mobile. There is no extra install for the game itself.",
@@ -112,7 +108,6 @@ export const en = {
     learnHowToPlay: "Full how-to play walkthrough",
     learnMostLikely: "How sealed most likely rounds work",
     learnDiscordActivity: "What is a Discord Activity?",
-    learnNoJoinCode: "Why there is no join code",
     learnFaq: "All FAQ answers",
   },
   footer: {
@@ -123,7 +118,6 @@ export const en = {
     discordActivity: "Discord Activity",
     howToPlay: "How to play",
     mostLikely: "Most likely",
-    noJoinCode: "No join code",
     faq: "FAQ",
     privacy: "Privacy",
     terms: "Terms",
@@ -139,11 +133,11 @@ export const en = {
       "Squimbo is a Discord Activity party game. Your group is already in voice. Open the Activity, play sealed “most likely” rounds, and see who knows the crew best at the finale.",
     section1Title: "What counts as a Discord party game",
     section1Body:
-      "A Discord party game runs inside Discord, usually as an Activity on a voice channel. Nobody hunts for a lobby code on their phone. The people already talking are the players.",
+      "A Discord party game runs inside Discord, usually as an Activity on a voice channel. The people already talking are the players.",
     section2Title: "Why Squimbo fits",
     section2Body:
-      "Squimbo uses Discord display names and avatars. There is no join code: whoever opens the Activity in that channel is in. It feels best with about 3 to 8 people.",
-    section2Point1: "No join code",
+      "Squimbo uses Discord display names and avatars. Whoever opens the Activity in that channel is in. It feels best with about 3 to 8 people.",
+    section2Point1: "Open the Activity in voice",
     section2Point2: "Sealed votes mid-round",
     section2Point3: "Scores only at the finale",
     section3Title: "Not a separate app",
@@ -153,9 +147,9 @@ export const en = {
     faq1Q: "Is Squimbo a Discord party game?",
     faq1A:
       "Yes. Squimbo is a party game that runs as a Discord Activity for groups already in a voice channel.",
-    faq2Q: "Do I need a join code?",
+    faq2Q: "How do people join?",
     faq2A:
-      "No. Squimbo does not use a join code. Everyone who opens the Activity in that channel shares the same room.",
+      "They open Squimbo in the same voice channel. Whoever opens the Activity there shares the same room.",
     faq3Q: "How many players?",
     faq3A:
       "At least two to start. About 3 to 8 people in voice feels best.",
@@ -165,7 +159,7 @@ export const en = {
   howToPlay: {
     title: "How to play Squimbo",
     lead:
-      "Three beats: open the Activity in voice, vote sealed on most likely rounds, then face the finale. No join code, no host privileges.",
+      "Three beats: open the Activity in voice, vote sealed on most likely rounds, then face the finale. No host privileges.",
     section1Title: "1. Start in the voice channel",
     section1Body:
       "Join a Discord voice channel with your friends. Open Squimbo as an Activity. Whoever joins is in the same room. Discord’s instance is the lobby.",
@@ -178,14 +172,14 @@ export const en = {
     section4Title: "Tips for a good night",
     tip1: "Best with about 3 to 8 people already in voice.",
     tip2: "Make sure Discord has finished loading before you launch.",
-    tip3: "If someone joins late, they open the same Activity in the same channel. Still no code.",
+    tip3: "If someone joins late, they open the same Activity in the same channel.",
     faqTitle: "FAQ",
     faq1Q: "How do I start Squimbo?",
     faq1A:
       "Open a Discord voice channel, launch the Squimbo Activity, and play. There is no separate install for the game itself.",
     faq2Q: "Can someone join mid-game?",
     faq2A:
-      "They open Squimbo in the same voice channel. There is no join code to share.",
+      "They open Squimbo in the same voice channel.",
     faq3Q: "Where do scores show?",
     faq3A:
       "Scores wait for the finale. Mid-round tallies stay sealed.",
@@ -208,7 +202,7 @@ export const en = {
       "If tallies updated live, the joke would collapse. Sealed votes keep the roast fair and the reveal worth waiting for. Scores still wait for the finale, not every round.",
     section3Title: "Made for the voice channel",
     section3Body:
-      "You hear reactions while you play. Display names and avatars come from Discord. No lobby code between you and the next prompt.",
+      "You hear reactions while you play. Display names and avatars come from Discord. Open the Activity and you are in the next prompt with the group.",
     faqTitle: "FAQ",
     faq1Q: "What is a most likely round?",
     faq1A:
@@ -251,39 +245,10 @@ export const en = {
     cta: "Play on Discord",
     relatedTitle: "Keep reading",
   },
-  noJoinCode: {
-    title: "No join code. Just open the Activity.",
-    lead:
-      "Squimbo does not use a lobby code. The Discord voice channel and Activity instance are enough. Whoever opens Squimbo there joins the same room.",
-    section1Title: "Why skip the code",
-    section1Body:
-      "Party games that live outside Discord often need a code so strangers find one lobby. You are already together in voice. Squimbo skips that step.",
-    section2Title: "How people join",
-    section2Body:
-      "Someone starts Squimbo in the channel. Friends open the same Activity. Late arrivals do the same. Still no code to paste in chat.",
-    section2Point1: "No code to share",
-    section2Point2: "No separate lobby app",
-    section2Point3: "Same controls for everyone",
-    section3Title: "Still a real room",
-    section3Body:
-      "Membership is server-side for that Activity instance. Votes and scores stay in the game. You are not guessing a code; you are in the channel you already opened.",
-    faqTitle: "FAQ",
-    faq1Q: "Does Squimbo have a join code?",
-    faq1A:
-      "No. Squimbo never asks for a join code. Open the Activity in the voice channel to play.",
-    faq2Q: "How do I invite someone?",
-    faq2A:
-      "Get them into the same Discord voice channel and have them open Squimbo. That is the invite.",
-    faq3Q: "What if someone is in another channel?",
-    faq3A:
-      "They need your voice channel (and the Activity there). A code will not bridge separate channels.",
-    cta: "Play on Discord",
-    relatedTitle: "Keep reading",
-  },
   faqPage: {
     title: "Squimbo FAQ",
     lead:
-      "Short answers about the Discord Activity party game: players, sealed votes, join codes, platforms, and where to get help.",
+      "Short answers about the Discord Activity party game: players, sealed votes, platforms, and where to get help.",
     faqTitle: "Questions",
     faq1Q: "What is Squimbo?",
     faq1A:
@@ -291,9 +256,9 @@ export const en = {
     faq2Q: "How many players do I need?",
     faq2A:
       "At least two to start. About 3 to 8 people already in voice feels best.",
-    faq3Q: "Do I need a join code?",
+    faq3Q: "How do people join?",
     faq3A:
-      "No. Squimbo does not use a join code. Everyone who opens the Activity in that channel is in the same room.",
+      "They open Squimbo in the same voice channel. Whoever opens the Activity there is in the same room.",
     faq4Q: "Is it a separate app?",
     faq4A:
       "No. Squimbo launches inside Discord on desktop and mobile. There is no extra install for the game itself.",
@@ -466,8 +431,8 @@ export const en = {
       {
         title: "2. The service",
         paragraphs: [
-          "Squimbo is a party game that runs as a Discord Activity. Groups already in a Discord channel can open the Activity, play “most likely” style rounds with sealed votes, and see scores at the finale. There is no separate join code: the Discord Activity instance identifies the room.",
-          "Squimbo is not affiliated with Discord Inc., except that it runs on Discord’s Activity platform. Squimbo is also not affiliated with third-party mobile party games that may offer a similar genre.",
+          "Squimbo is a party game that runs as a Discord Activity. Groups already in a Discord channel can open the Activity, play “most likely” style rounds with sealed votes, and see scores at the finale. The Discord Activity instance identifies the room.",
+          "Squimbo is not affiliated with Discord Inc., except that it runs on Discord’s Activity platform.",
         ],
       },
       {
