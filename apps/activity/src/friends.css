@@ -488,6 +488,84 @@ input {
   }
 }
 
+.prompt-deal {
+  margin-top: 0.85rem;
+  padding: 0.85rem 0.9rem 1rem;
+  border-radius: 0.85rem;
+  background: #2b2d31;
+  border: 1px solid rgba(88, 101, 242, 0.35);
+}
+
+.friends-card > .prompt-deal:first-child {
+  margin-top: 0;
+}
+
+.prompt-deal-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #f2f3f5;
+}
+
+.prompt-deal-subtitle {
+  margin: 0.3rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #b5bac1;
+}
+
+.prompt-deal-card {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.prompt-deal-line {
+  display: block;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(88, 101, 242, 0.18) 0%,
+    rgba(88, 101, 242, 0.45) 45%,
+    rgba(88, 101, 242, 0.18) 100%
+  );
+  background-size: 200% 100%;
+  animation: prompt-deal-shimmer 1.15s ease-in-out infinite;
+}
+
+.prompt-deal-line-lg {
+  width: 92%;
+}
+
+.prompt-deal-line-md {
+  width: 74%;
+  animation-delay: 0.12s;
+}
+
+.prompt-deal-line-sm {
+  width: 52%;
+  animation-delay: 0.24s;
+}
+
+@keyframes prompt-deal-shimmer {
+  0% {
+    background-position: 100% 0;
+    opacity: 0.65;
+  }
+  50% {
+    background-position: 0% 0;
+    opacity: 1;
+  }
+  100% {
+    background-position: -100% 0;
+    opacity: 0.65;
+  }
+}
+
 /* Desktop / roomy iframe: slightly wider stage, not full bleed. */
 @media (min-width: 640px) {
   .friends-stage {

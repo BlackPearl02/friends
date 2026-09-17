@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { PublicRoom, RoomIntent } from "@friends/types";
 import { t } from "./i18n";
+import { PromptDealBox } from "./PromptDealBox";
 import { playersWaitingOnIntent } from "./roomOptimistic";
 import { isRevealTie, leadersFromTallies, msUntilReveal, shouldShowRevealResults } from "./roundReveal";
 import { colors } from "./theme";
@@ -84,9 +85,7 @@ export function RoundPanel(props: {
   const tied = isRevealTie(tallies);
   const advancing = advanceLatched || advancingNow;
 
-  const continueCount = advancing
-    ? playerCount
-    : props.room.players.filter((p) => p.intent === "continue").length;
+  const continueCount = props.room.players.filter((p) => p.intent === "continue").length;
   const wrapCount = props.room.players.filter((p) => p.intent === "wrap_up").length;
   const revoteCount = props.room.players.filter((p) => p.intent === "revote").length;
   const waitingOnIntent = playersWaitingOnIntent(props.room);
@@ -105,6 +104,14 @@ export function RoundPanel(props: {
       intentInFlight.current = false;
     });
   };
+
+  if (advancing) {
+    return (
+      <section className="friends-card">
+        <PromptDealBox variant="next" />
+      </section>
+    );
+  }
 
   return (
     <section className="friends-card">
@@ -224,18 +231,15 @@ export function RoundPanel(props: {
               </ul>
             </>
           ) : (
-            <p className="reveal-line">{t("round.votesLocked")}</p>
+            <p className="hint">{t("round.votesLocked")}</p>
           )}
-
           {tied && <p className="hint">{t("round.tieHint")}</p>}
           {!tied && <p className="hint">{t("round.scoresAtEnd")}</p>}
           {softWrap && !tied && <p className="hint">{t("round.softWrapHint")}</p>}
 
           <ul className="player-list" style={{ marginTop: "0.85rem" }}>
             {props.room.players.map((p) => {
-              const badge = advancing
-                ? { label: t("round.continueBadge"), color: colors.accent2 }
-                : intentBadge(p.intent);
+              const badge = intentBadge(p.intent);
               return (
                 <li key={p.userId} className="player-row">
                   <span className="player-row-main">
@@ -249,19 +253,17 @@ export function RoundPanel(props: {
             })}
           </ul>
           <p className="hint">
-            {advancing
-              ? t("round.advancing")
-              : tied
-                ? t("round.tieIntentCount", {
-                    continue: String(continueCount),
-                    revote: String(revoteCount),
-                    total: String(playerCount),
-                  })
-                : t("round.intentCount", {
-                    continue: String(continueCount),
-                    wrap: String(wrapCount),
-                    total: String(playerCount),
-                  })}
+            {tied
+              ? t("round.tieIntentCount", {
+                  continue: String(continueCount),
+                  revote: String(revoteCount),
+                  total: String(playerCount),
+                })
+              : t("round.intentCount", {
+                  continue: String(continueCount),
+                  wrap: String(wrapCount),
+                  total: String(playerCount),
+                })}
           </p>
           {showWaitingOnOthers && (
             <p className="hint">
@@ -271,7 +273,7 @@ export function RoundPanel(props: {
         </div>
       )}
 
-      {revealed && tied && !advancing && (
+      {revealed && tied && (
         <div className="actions">
           <button
             type="button"
@@ -290,7 +292,7 @@ export function RoundPanel(props: {
         </div>
       )}
 
-      {revealed && !tied && !advancing && (
+      {revealed && !tied && (
         <div className="actions">
           <button
             type="button"
