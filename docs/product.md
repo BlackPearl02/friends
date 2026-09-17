@@ -1,33 +1,23 @@
-# Squimbo — product (Kumple → Discord Activity)
+# Squimbo — product
 
 **Pitch:** You're already together. Find out who knows the group best.
 
-**Squimbo** is a Discord Activity party game. The mobile reference is **Kumple** (`com.kumple`, Buddies Games Inc.): questions and “who knows you best” energy among friends.
-
-This is **not** a clone of Kumple’s catalog, UI, or brand. Same *job*: a fast party night in a group, using Discord identity instead of a join code.
+**Squimbo** is a Discord Activity party game: “who is most likely” rounds among people already in a Discord channel. Discord identity and the Activity instance are the room.
 
 **Strategy (canonical):** [strategy.md](./strategy.md) · [roadmap.md](./roadmap.md) · [metrics.md](./metrics.md)
 
 - **A (MVP)** = sync party in the channel — the product.
 - **B** = future growth / share layer that feeds people back into A — **not** a second in-Activity game mode yet.
 
-## What Kumple does (reference)
-
-- One player creates a room; others join with a code (same room or remote).
-- Categories for the situation: **Family**, **Party**, **Colleagues**, **Spicy** (and similar packs).
-- Rounds mix: truths / questions, challenges / dares, “who is most likely to…”, this-or-that.
-- Points for completed challenges and received votes; reveal / roast energy.
-- Custom questions; many languages; optional drinking-game framing.
-
 ## What Squimbo does on Discord
 
-| Kumple | Squimbo |
-|--------|---------|
-| Join code | Discord Activity instance — everyone who opens the Activity in the channel is in |
-| Typed player names | Discord display names + avatars from Embedded App SDK |
-| Phone as controller | Discord iframe (desktop + mobile Discord) |
-| Host creates lobby | First joiner is stored as technical `hostUserId` only — **no in-game privileges** |
-| Category packs | **Not in MVP** — one shared prompt bank, no pack picker |
+| Aspect | Behavior |
+|--------|----------|
+| Room | Discord Activity instance — everyone who opens the Activity in the channel is in |
+| Players | Discord display names + avatars from Embedded App SDK |
+| Surface | Discord iframe (desktop + mobile Discord) |
+| Host | First joiner is stored as technical `hostUserId` only — **no in-game privileges** |
+| Categories | **Not in MVP** — one shared prompt bank, no pack picker |
 | Scoreboard | Per-room `RoomPlayer.score` |
 
 ## Viral loop (MVP = A)
@@ -55,7 +45,7 @@ North-star thinking: **groups completing sessions**, not solo DAU — see [metri
 ## Out of scope (until roadmap says otherwise)
 
 - Second equal mode: async “make your quiz” / Friend Quiz inside the Activity lobby
-- Kumple’s proprietary question bank or assets
+- Third-party proprietary question banks, assets, or brands
 - Paid IAP / question packs in the lobby (see monetization thesis in [strategy.md](./strategy.md))
 - Standalone mobile app as MVP
 - Discord bot / chat slash surface (`/play`, moderation, economy) — Activity Entry Point + launcher only
