@@ -1,22 +1,24 @@
 import type { DiscordSDK } from "@discord/embedded-app-sdk";
 import { exchangeActivityCode, type ActivityExchangeResponse } from "./api";
 
-/** Required to join a room — keep minimal; extra RPC scopes can block authorize on some clients. */
+/** Required to join a room — keep minimal so authorize cannot hang on optional scopes. */
 export const ACTIVITY_CORE_OAUTH_SCOPES = ["identify", "guilds"] as const;
 
-/** Best-effort Rich Presence (`setActivity`). Must never block Activity boot. */
+/** Best-effort Rich Presence (`setActivity`) — requested after boot, never blocks sign-in. */
 export const ACTIVITY_PRESENCE_OAUTH_SCOPES = ["rpc.activities.write"] as const;
 
-/** Preferred authorize scopes (core + presence). */
+/** @deprecated Boot uses core only; kept for tests / presence helpers. */
 export const ACTIVITY_OAUTH_SCOPES = [
   ...ACTIVITY_CORE_OAUTH_SCOPES,
   ...ACTIVITY_PRESENCE_OAUTH_SCOPES,
 ] as const;
 
-/** Discord authorize can hang if the consent modal never resolves — fail soft. */
-export const AUTHORIZE_TIMEOUT_MS = 20_000;
+/** Discord authorize / ready can hang — fail soft into a visible error. */
+export const AUTHORIZE_TIMEOUT_MS = 12_000;
+export const READY_TIMEOUT_MS = 12_000;
+export const EXCHANGE_TIMEOUT_MS = 15_000;
 
-type OAuthScope = (typeof ACTIVITY_OAUTH_SCOPES)[number];
+type OAuthScope = (typeof ACTIVITY_CORE_OAUTH_SCOPES)[number];
 
 type AuthorizeArgs = {
   client_id: string;
@@ -44,26 +46,39 @@ export function withTimeout<T>(promise: Promise<T>, ms: number, label: string): 
   });
 }
 
-async function authorizeWithScopes(
+function authLog(step: string, detail?: string): void {
+  if (detail) console.info("[squimbo-auth]", step, detail);
+  else console.info("[squimbo-auth]", step);
+}
+
+/**
+ * Silent authorize first; if Discord needs consent, open the modal once.
+ * Core scopes only — presence is optional and must not block boot.
+ */
+export async function authorizeActivityCode(
   sdk: Pick<DiscordSDK, "commands">,
   clientId: string,
-  scopes: readonly OAuthScope[],
 ): Promise<string> {
   const base: AuthorizeArgs = {
     client_id: clientId,
     response_type: "code",
     state: "",
-    scope: [...scopes],
+    scope: [...ACTIVITY_CORE_OAUTH_SCOPES],
   };
 
   try {
+    authLog("authorize", "prompt=none");
     const authz = await withTimeout(
       sdk.commands.authorize({ ...base, prompt: "none" }),
       AUTHORIZE_TIMEOUT_MS,
       "Discord authorize (prompt=none)",
     );
     return authz.code;
-  } catch {
+  } catch (err: unknown) {
+    authLog(
+      "authorize-fallback",
+      err instanceof Error ? err.message : "consent",
+    );
     const authz = await withTimeout(
       sdk.commands.authorize(base),
       AUTHORIZE_TIMEOUT_MS,
@@ -73,28 +88,26 @@ async function authorizeWithScopes(
   }
 }
 
-/**
- * Discord opens an OAuth modal when the user lacks a token for the requested scopes.
- * Prefer core + presence; if that fails (scope unavailable / consent cancelled),
- * fall back to core only so gameplay still starts.
- */
-export async function authorizeActivityCode(
-  sdk: Pick<DiscordSDK, "commands">,
-  clientId: string,
-): Promise<string> {
-  try {
-    return await authorizeWithScopes(sdk, clientId, ACTIVITY_OAUTH_SCOPES);
-  } catch {
-    return authorizeWithScopes(sdk, clientId, ACTIVITY_CORE_OAUTH_SCOPES);
-  }
-}
-
 export async function authenticateActivity(
   sdk: DiscordSDK,
   clientId: string,
 ): Promise<ActivityExchangeResponse> {
+  authLog("ready");
+  await withTimeout(sdk.ready(), READY_TIMEOUT_MS, "Discord SDK ready");
+
   const code = await authorizeActivityCode(sdk, clientId);
-  const auth = await exchangeActivityCode({ code });
-  await sdk.commands.authenticate({ access_token: auth.discordAccessToken });
+  authLog("exchange");
+  const auth = await withTimeout(
+    exchangeActivityCode({ code }),
+    EXCHANGE_TIMEOUT_MS,
+    "Activity code exchange",
+  );
+  authLog("authenticate");
+  await withTimeout(
+    sdk.commands.authenticate({ access_token: auth.discordAccessToken }),
+    AUTHORIZE_TIMEOUT_MS,
+    "Discord authenticate",
+  );
+  authLog("ok");
   return auth;
 }

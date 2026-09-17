@@ -58,7 +58,7 @@ function authenticateSession(clientId: string): Promise<AuthSession> {
   if (!authSessionPromise) {
     authSessionPromise = (async () => {
       const sdk = new DiscordSDK(clientId);
-      await sdk.ready();
+      // ready() is awaited inside authenticateActivity (with timeout).
       const auth = await authenticateActivity(sdk, clientId);
       return {
         sdk,
@@ -78,11 +78,13 @@ function bootstrapActivity(clientId: string): Promise<BootResult> {
   if (!bootPromise) {
     bootPromise = (async () => {
       const session = await authenticateSession(clientId);
+      console.info("[squimbo-auth] join");
       const room = await joinRoom(session.accessToken, {
         instanceId: session.instanceId,
         channelId: session.sdk.channelId,
         guildId: session.sdk.guildId,
       });
+      console.info("[squimbo-auth] ready");
       return { ...session, room };
     })().catch((err: unknown) => {
       bootPromise = null;
