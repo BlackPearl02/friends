@@ -1,5 +1,5 @@
 import type { DiscordSDK } from "@discord/embedded-app-sdk";
-import { exchangeActivityCode, type ActivityExchangeResponse } from "./api";
+import { activityUrl, exchangeActivityCode, type ActivityExchangeResponse } from "./api";
 
 /** Required to join a room — keep minimal so authorize cannot hang on optional scopes. */
 export const ACTIVITY_CORE_OAUTH_SCOPES = ["identify", "guilds"] as const;
@@ -15,8 +15,11 @@ export const ACTIVITY_OAUTH_SCOPES = [
 
 /** Discord authorize / ready can hang — fail soft into a visible error. */
 export const AUTHORIZE_TIMEOUT_MS = 12_000;
+/** Consent modal needs human time; do not use AUTHORIZE_TIMEOUT_MS here. */
+export const AUTHORIZE_CONSENT_TIMEOUT_MS = 120_000;
 export const READY_TIMEOUT_MS = 12_000;
-export const EXCHANGE_TIMEOUT_MS = 15_000;
+/** Nest on Vercel may cold-start for tens of seconds. */
+export const EXCHANGE_TIMEOUT_MS = 45_000;
 
 type OAuthScope = (typeof ACTIVITY_CORE_OAUTH_SCOPES)[number];
 
@@ -79,10 +82,11 @@ export async function authorizeActivityCode(
       "authorize-fallback",
       err instanceof Error ? err.message : "consent",
     );
+    // User may need to accept Discord permissions — allow up to 2 minutes.
     const authz = await withTimeout(
       sdk.commands.authorize(base),
-      AUTHORIZE_TIMEOUT_MS,
-      "Discord authorize",
+      AUTHORIZE_CONSENT_TIMEOUT_MS,
+      "Discord authorize (consent)",
     );
     return authz.code;
   }
@@ -92,6 +96,9 @@ export async function authenticateActivity(
   sdk: DiscordSDK,
   clientId: string,
 ): Promise<ActivityExchangeResponse> {
+  // Kick Nest cold-start while Discord authorize runs.
+  void fetch(activityUrl("/health")).catch(() => undefined);
+
   authLog("ready");
   await withTimeout(sdk.ready(), READY_TIMEOUT_MS, "Discord SDK ready");
 

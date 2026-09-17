@@ -33,6 +33,12 @@ describe("shellBannerKind", () => {
   it("classifies sign-in style failures from the message", () => {
     expect(shellBannerKind("error", "HTTP 401")).toBe("signInFailed");
     expect(shellBannerKind("error", "Sign-in failed")).toBe("signInFailed");
+    expect(shellBannerKind("error", "Discord authorize timed out after 12000ms")).toBe(
+      "signInFailed",
+    );
+    expect(shellBannerKind("error", "Activity code exchange timed out after 15000ms")).toBe(
+      "signInFailed",
+    );
   });
 
   it("falls back to generic for other errors", () => {

@@ -20,6 +20,14 @@ export function shellBannerKind(
   if (isShellLoading(phase)) return "loading";
   if (phase !== "error") return "genericError";
   const msg = (errorMessage ?? "").toLowerCase();
-  if (msg.includes("http") || msg.includes("sign")) return "signInFailed";
+  if (
+    msg.includes("http") ||
+    msg.includes("sign") ||
+    msg.includes("timed out") ||
+    msg.includes("authorize") ||
+    msg.includes("exchange")
+  ) {
+    return "signInFailed";
+  }
   return "genericError";
 }

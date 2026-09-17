@@ -180,7 +180,14 @@ function App() {
           });
           return;
         }
-        setBootError(err instanceof Error ? err.message : null);
+        const message = err instanceof Error ? err.message : null;
+        // #region agent log
+        dbgRt("H6", "main.tsx:boot", "boot_failed", {
+          err: message?.slice(0, 160) ?? "unknown",
+          tClient: Date.now(),
+        });
+        // #endregion
+        setBootError(message);
         setPhase("error");
       });
 
