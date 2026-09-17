@@ -26,6 +26,7 @@ import {
   syncDiscordPresence,
 } from "./discordPresence";
 import { applyLocalIntent, applyLocalVote, applyPeerIntent, applyPeerVote } from "./roomOptimistic";
+import { dbgRt } from "./dbgRt";
 import { mergePublicRoom, shouldApplyPollResult } from "./roomApply";
 import { createRoomRefreshGate, isRoomMembershipLostError } from "./roomRefresh";
 import { subscribeRoomInvalidation } from "./roomRealtime";
@@ -272,12 +273,38 @@ function App() {
       if (payload.kind === "vote" && payload.votedUserId) {
         const voterId = payload.votedUserId;
         const voteCount = payload.voteCount;
-        setRoom((prev) => (prev ? applyPeerVote(prev, voterId, voteCount) : prev));
+        setRoom((prev) => {
+          if (!prev) return prev;
+          const next = applyPeerVote(prev, voterId, voteCount);
+          // #region agent log
+          const peer = prev.players.find((p) => p.userId === voterId);
+          dbgRt("H4", "main.tsx:onInvalidate", "apply_peer_vote_result", {
+            changed: next !== prev,
+            roundStatus: prev.round?.status ?? null,
+            peerFound: Boolean(peer),
+            alreadyVoted: peer?.hasVoted ?? null,
+            voteCount: voteCount ?? null,
+            prevVoteCount: prev.round?.voteCount ?? null,
+            tClient: Date.now(),
+          });
+          // #endregion
+          return next;
+        });
       } else if (payload.kind === "intent" && payload.intentUserId && payload.intent) {
         const intentUserId = payload.intentUserId;
         const intent = payload.intent;
         setRoom((prev) => (prev ? applyPeerIntent(prev, intentUserId, intent) : prev));
+      } else {
+        // #region agent log
+        dbgRt("H3", "main.tsx:onInvalidate", "wake_only_no_patch", {
+          kind: payload.kind ?? "none",
+          tClient: Date.now(),
+        });
+        // #endregion
       }
+      // #region agent log
+      dbgRt("H5", "main.tsx:onInvalidate", "gate_request_after_rt", { tClient: Date.now() });
+      // #endregion
       gate.request();
     });
     return () => {

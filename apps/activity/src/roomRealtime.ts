@@ -4,6 +4,7 @@ import {
   roomRealtimeTopic,
   type RoomRealtimePayload,
 } from "@friends/types";
+import { dbgRt } from "./dbgRt";
 
 /**
  * Resolve a Discord-mapped relative path (e.g. `/sb`) against the Activity origin.
@@ -73,8 +74,22 @@ export function subscribeRoomInvalidation(
   const url = getSupabaseUrl();
   const anon = getSupabaseAnonKey();
   if (!discordInstanceId || !url || !anon) {
+    // #region agent log
+    dbgRt("H1", "roomRealtime.ts:subscribe", "realtime_not_configured", {
+      hasUrl: Boolean(url),
+      hasAnon: Boolean(anon),
+      instanceLen: discordInstanceId.length,
+    });
+    // #endregion
     return () => undefined;
   }
+
+  // #region agent log
+  dbgRt("H1", "roomRealtime.ts:subscribe", "subscribe_start", {
+    urlHost: url.slice(0, 48),
+    topic: roomRealtimeTopic(discordInstanceId),
+  });
+  // #endregion
 
   let client: SupabaseClient | null = null;
   let channel: RealtimeChannel | null = null;
@@ -88,17 +103,33 @@ export function subscribeRoomInvalidation(
       .channel(roomRealtimeTopic(discordInstanceId), { config: { broadcast: { self: false } } })
       .on("broadcast", { event: ROOM_REALTIME_EVENT }, ({ payload }) => {
         const parsed = parseRoomRealtimePayload(payload);
+        // #region agent log
+        dbgRt("H3", "roomRealtime.ts:broadcast", "broadcast_received", {
+          kind: parsed.kind ?? "wake",
+          hasVotedUserId: Boolean(parsed.votedUserId),
+          voteCount: parsed.voteCount ?? null,
+          tClient: Date.now(),
+        });
+        // #endregion
         if (parsed.kind === "vote") {
           console.info("[squimbo-rt] vote", parsed.votedUserId, parsed.voteCount);
         }
         onInvalidate(parsed);
       })
       .subscribe((status) => {
+        // #region agent log
+        dbgRt("H1", "roomRealtime.ts:subscribe", "subscribe_status", { status });
+        // #endregion
         if (status === "SUBSCRIBED") {
           console.info("[squimbo-rt] supabase open", discordInstanceId);
         }
       });
-  } catch {
+  } catch (err: unknown) {
+    // #region agent log
+    dbgRt("H1", "roomRealtime.ts:subscribe", "subscribe_throw", {
+      err: err instanceof Error ? err.message : "unknown",
+    });
+    // #endregion
     return () => undefined;
   }
 
